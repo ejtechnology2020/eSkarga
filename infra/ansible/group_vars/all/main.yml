@@ -13,3 +13,6 @@ eskarga_user: eskarga
 eskarga_home: /opt/eskarga
 wildfly_home: /opt/operaton
 # Sekrety – w vault.yml (zaszyfrowane ansible-vault); nazwy zmiennych w vault.yml.example
+# Znacznik czasu (ADR 0023): KIR Szafir – adres i konto z umowy; sekrety w vault.yml (vault_tsa_password, vault_tsa_keystore_password)
+tsa_url: "http://www.ts.kir.com.pl/HttpTspServer"
+tsa_user: ""

@@ -1,6 +1,6 @@
 # ADR 0023 – Znacznik czasu (TSA): serwer deweloperski RFC 3161, produkcyjnie kwalifikowany dostawca
 
-Status: propozycja (odpowiedź na „zaproponuj coś”)
+Status: zaakceptowana 03.11.2026 – produkcyjnie KIR Szafir (kwalifikowany znacznik czasu)
 
 ## Propozycja
 1. **Dev/preprod:** własny serwer RFC 3161 w kontenerze `tsa` (`infra/docker/tsa`: OpenSSL `ts` za minimalnym HTTP, certyfikat
@@ -12,5 +12,13 @@ Status: propozycja (odpowiedź na „zaproponuj coś”)
    konfiguracja się nie zmienia.
 3. Brak TSA = podpis B-B (dopuszczalny w dev); walidacja DSS raportuje poziom w `signatureReport`.
 
-## Decyzja do podjęcia
-Wybór dostawcy kwalifikowanego TSA i tryb jego uwierzytelnienia – do czasu decyzji pozostaje serwer deweloperski.
+## Decyzja (03.11.2026)
+Dostawcą znacznika czasu na produkcji i preprodukcji jest **KIR Szafir** (usługa kwalifikowana). Konfiguracja:
+`eskarga.docs.tsaUrl` = adres usługi TSA KIR z umowy (publiczny adres usługi KIR to `http://www.ts.kir.com.pl/HttpTspServer`;
+TK używa adresu i trybu dostępu z umowy), `eskarga.docs.tsaUser`/`eskarga.docs.tsaPassword` (HTTP Basic) albo certyfikat
+klienta w `eskarga.docs.tsaKeyStore` – zależnie od sposobu uwierzytelnienia konta KIR. Łańcuch certyfikatów TSA KIR (Narodowe
+Centrum Certyfikacji → KIR Szafir TSA) trafia do magazynu zaufania usługi dokumentów (`eskarga.docs.trustStore`), żeby walidacja
+DSS potwierdzała znacznik (PAdES-B-T, a po dodaniu dowodów walidacji – B-LT).
+
+Do uzupełnienia przez TK: umowa z KIR (konto / certyfikat dostępu, limity wywołań), adres w `infra/ansible/group_vars/all/main.yml` (`tsa_url`).
+Dev pozostaje na serwerze `tsa` z Compose.
