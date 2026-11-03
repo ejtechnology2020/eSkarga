@@ -1,0 +1,19 @@
+# Źródło danych aplikacji (T-003): jedna baza PostgreSQL, schematy repertorium (Flyway) i operaton (skrypty dystrybucji).
+# Wywołanie: jboss-cli.sh --file=eskarga-datasource.cli -Ddb.host=... -Ddb.name=... -Ddb.user=... -Ddb.password=...
+embed-server --server-config=standalone.xml --std-out=echo
+if (outcome != success) of /subsystem=datasources/jdbc-driver=postgresql:read-resource
+  /subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql, driver-module-name=org.postgresql, driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)
+end-if
+if (outcome != success) of /subsystem=datasources/xa-data-source=EskargaDS:read-resource
+  xa-data-source add --name=EskargaDS --jndi-name=java:jboss/datasources/EskargaDS --driver-name=postgresql \
+    --user-name=${db.user} --password=${db.password} --use-ccm=true --min-pool-size=5 --max-pool-size=40 \
+    --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker \
+    --xa-datasource-properties={"ServerName"=>"${db.host}","PortNumber"=>"5432","DatabaseName"=>"${db.name}","CurrentSchema"=>"repertorium,operaton"}
+end-if
+# Silnik Operaton korzysta z tego samego źródła danych (schemat operaton)
+/subsystem=operaton-bpm-platform/process-engines=default:write-attribute(name=datasource, value=java:jboss/datasources/EskargaDS)
+/subsystem=operaton-bpm-platform/process-engines=default/properties=historyLevel:add(value=audit) 
+/subsystem=operaton-bpm-platform/process-engines=default/properties=databaseTablePrefix:add(value=operaton.)
+/subsystem=operaton-bpm-platform/process-engines=default/properties=jobExecutorDeploymentAware:add(value=false)
+/subsystem=operaton-bpm-platform/process-engines=default/properties=scriptEnabled:add(value=false)
+stop-embedded-server

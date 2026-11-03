@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html">
+  <!-- Kartka dokumentu w podglądzie (do czasu widżetu pdf.js z T-034 pokazuje warstwę tekstową OCR).
+       Znak wodny „PROJEKT” dla pism niepodpisanych. -->
+  <cc:interface>
+    <cc:attribute name="label" required="true" />
+    <cc:attribute name="watermark" default="" />
+    <cc:attribute name="styleClass" default="" />
+  </cc:interface>
+  <cc:implementation>
+    <article class="paper #{cc.attrs.styleClass}" aria-label="#{cc.attrs.label}">
+      <h:outputText rendered="#{not empty cc.attrs.watermark}" styleClass="wm" value="#{cc.attrs.watermark}" pt:aria-hidden="true"
+                    xmlns:pt="jakarta.faces.passthrough" />
+      <cc:insertChildren />
+    </article>
+  </cc:implementation>
+</ui:component>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-20 Raporty i statystyki (UC-19): okres i repertorium, wykres liniowy (p:chart), słupki z wartościami w tekście,
+       tabela aktów, eksport XLSX/CSV/PDF, stan „brak danych w okresie” (stan=brak). -->
+  <f:metadata><f:viewParam name="stan" value="#{raporty.stan}" /><f:viewAction action="#{raporty.applyState}" /></f:metadata>
+  <ui:define name="title">Raporty i statystyki</ui:define>
+  <ui:define name="eyebrow">S-20 · dane przykładowe</ui:define>
+  <ui:define name="subtitle">Liczby na ekranie są przykładowe i służą tylko do pokazania układu.</ui:define>
+  <ui:define name="actions"><button type="button" class="btn">XLSX</button><button type="button" class="btn">CSV</button><button type="button" class="btn p">#{msg['common.exportPdf']}</button></ui:define>
+  <ui:define name="content">
+    <h:form id="rf" styleClass="card filters" pt:aria-label="Zakres raportu">
+      <div class="fld"><p:outputLabel for="r-od" value="Okres od" /><p:datePicker id="r-od" value="#{raporty.od}" pattern="dd.MM.yyyy" showIcon="false" styleClass="w160" /></div>
+      <div class="fld"><p:outputLabel for="r-do" value="Okres do" /><p:datePicker id="r-do" value="#{raporty.doDnia}" pattern="dd.MM.yyyy" showIcon="false" styleClass="w160" /></div>
+      <div class="fld"><p:outputLabel for="r-rep" value="Repertorium" /><p:selectOneMenu id="r-rep" value="#{raporty.repertorium}" styleClass="w180"><f:selectItem itemLabel="Ts" itemValue="Ts" /><f:selectItem itemLabel="Tw" itemValue="Tw" /><f:selectItem itemLabel="Ts i Tw" itemValue="TsTw" /></p:selectOneMenu></div>
+      <p:commandButton value="Pokaż" action="#{raporty.show}" update="@all" styleClass="p" />
+    </h:form>
+
+    <h:panelGroup rendered="#{raporty.emptyPeriod}">
+      <section class="tw"><tk:empty icon="chart" title="Brak danych w okresie #{fmt.date(raporty.od)} – #{fmt.date(raporty.doDnia)}" text="W tym okresie nie zarejestrowano żadnej sprawy. Wybierz wcześniejszy okres."><h:link outcome="/nadzor/raporty" styleClass="btn s" value="Pokaż 2026" /></tk:empty></section>
+    </h:panelGroup>
+    <h:panelGroup rendered="#{not raporty.emptyPeriod}" layout="block" styleClass="col" style="gap: 16px;">
+      <div class="grid g4"><ui:repeat value="#{raporty.kpis}" var="k"><div class="#{k.cssClass()} static"><span class="v">#{k.value}</span><span class="l">#{k.label}</span><span class="h">#{k.hint}</span></div></ui:repeat></div>
+      <div class="grid g2">
+        <section class="card" aria-labelledby="h-l">
+          <div class="card-h"><h2 id="h-l">Wpływ i załatwienia w miesiącach</h2><span class="tag info">p:chart · line</span></div>
+          <div class="legend"><span><i style="background: #233A6B;"></i>Wpływ</span><span><i style="background: repeating-linear-gradient(90deg,#8A5A00 0 6px,transparent 6px 10px);"></i>Załatwienia (linia przerywana)</span></div>
+          <p:chart value="#{raporty.chartConfig}" style="height: 280px;" ariaLabel="Wykres liniowy: wpływ i załatwienia od stycznia do października 2026. Wpływ od 27 do 36 spraw miesięcznie, załatwienia od 22 do 33." />
+          <details><summary style="min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600;">Pokaż dane w tabeli</summary><p class="mut">#{raporty.dataText}</p></details>
+        </section>
+        <section class="card" aria-labelledby="h-b">
+          <div class="card-h"><h2 id="h-b">Sposoby zakończenia</h2><span class="tag info">p:chart · bar</span></div>
+          <tk:hbars value="#{raporty.outcomes}" wide="true" />
+          <p class="hint">Razem 289. Wartości w tekście obok słupków.</p>
+        </section>
+      </div>
+      <section class="tw" aria-labelledby="h-a">
+        <div class="tt"><h2 id="h-a" class="h2-17">Najczęściej zaskarżane akty</h2><span class="sp"></span><button type="button" class="btn s">CSV</button></div>
+        <p:dataTable value="#{raporty.akty}" var="a" summary="Najczęściej zaskarżane akty normatywne">
+          <p:column headerText="Miejsce">#{a.miejsce}</p:column><p:column headerText="Akt">#{a.akt}</p:column><p:column headerText="Skargi">#{a.skargi}</p:column><p:column headerText="Udział">#{a.udzial}</p:column><p:column headerText="Nadano bieg">#{a.nadanoBieg}</p:column>
+        </p:dataTable>
+      </section>
+    </h:panelGroup>
+  </ui:define>
+  <ui:define name="footerNote">Dane przykładowe</ui:define>
+</ui:composition>

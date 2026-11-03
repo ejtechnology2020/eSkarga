@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html">
+  <!-- Ikona liniowa SVG. Dekoracyjna (aria-hidden) – znaczenie niesie zawsze tekst obok. -->
+  <cc:interface>
+    <cc:attribute name="name" required="true" />
+    <cc:attribute name="small" default="false" />
+    <cc:attribute name="size" default="" />
+    <cc:attribute name="label" default="" />
+    <cc:attribute name="styleClass" default="" />
+    <cc:attribute name="color" default="" />
+  </cc:interface>
+  <cc:implementation>
+    <svg class="ico #{cc.attrs.small ? 's' : ''} #{cc.attrs.size} #{cc.attrs.styleClass}" viewBox="0 0 24 24" fill="none"
+         stroke="#{empty cc.attrs.color ? 'currentColor' : cc.attrs.color}" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="#{empty cc.attrs.label ? 'true' : 'false'}" role="#{empty cc.attrs.label ? null : 'img'}"
+         aria-label="#{empty cc.attrs.label ? null : cc.attrs.label}">
+      <path d="#{icons.path(cc.attrs.name)}" />
+    </svg>
+  </cc:implementation>
+</ui:component>

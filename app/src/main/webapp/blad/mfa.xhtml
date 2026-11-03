@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/system.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core" xmlns:ui="jakarta.faces.facelets" xmlns:tk="jakarta.faces.composite/tk">
+  <ui:param name="bare" value="#{true}" />
+  <ui:define name="title">Wymagane logowanie z MFA</ui:define>
+  <ui:define name="content">
+    <tk:icon name="shield-check" size="xxl" color="#233A6B" />
+    <h1 id="sys-h" class="h1-26">#{msg['sys.mfa.title']}</h1>
+    <p>#{msg['sys.mfa.text']}</p>
+    <div class="row"><h:outputLink value="#{request.contextPath}/" styleClass="btn p">#{msg['sys.mfa.back']}</h:outputLink></div>
+    <p class="hint">#{msg['sys.mfa.hint']}</p>
+  </ui:define>
+</ui:composition>

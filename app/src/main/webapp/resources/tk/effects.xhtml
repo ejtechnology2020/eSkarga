@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html"
+              xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Lista skutków czynności w oknie potwierdzenia: ikona + zdanie. Ostrzeżenie oznacza krok nieodwracalny. -->
+  <cc:interface>
+    <cc:attribute name="value" required="true" />
+  </cc:interface>
+  <cc:implementation>
+    <ul class="effects">
+      <ui:repeat value="#{cc.attrs.value}" var="e">
+        <li>
+          <tk:icon name="#{e.warn ? 'alert-triangle' : e.icon}" color="#{e.warn ? '#5C3700' : '#233A6B'}" />
+          <span><h:outputText value="#{e.text}" escape="false" /></span>
+        </li>
+      </ui:repeat>
+    </ul>
+  </cc:implementation>
+</ui:component>

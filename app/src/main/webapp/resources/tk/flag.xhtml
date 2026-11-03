@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html"
+              xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Flaga sprawy: ikona + tekst, pokazywana tylko, gdy aktywna. -->
+  <cc:interface>
+    <cc:attribute name="value" required="true" type="pl.ejtechnology.tk.eSkarga.domain.CaseFlag" />
+    <cc:attribute name="short" default="false" />
+  </cc:interface>
+  <cc:implementation>
+    <span class="flag #{cc.attrs.value.css()}">
+      <tk:icon name="#{cc.attrs.value.icon()}" small="true" />
+      <h:outputText value="#{msg['flag.'.concat(cc.attrs.value)]}" />
+    </span>
+  </cc:implementation>
+</ui:component>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Aplikacja jako process application na współdzielonym silniku dystrybucji Operaton dla WildFly 41 (D9). -->
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.3">
+  <deployment>
+    <dependencies>
+      <module name="org.operaton.bpm.operaton-engine" />
+      <module name="org.operaton.bpm.dmn.operaton-engine-dmn" />
+      <module name="org.operaton.bpm.model.operaton-bpmn-model" />
+    </dependencies>
+    <exclusions>
+      <!-- WAR niesie własny PrimeFaces; nie używamy modułów Jackson/Jakarta JSON-B z serwera w UI -->
+    </exclusions>
+  </deployment>
+</jboss-deployment-structure>

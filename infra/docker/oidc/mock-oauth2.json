@@ -1,0 +1,23 @@
+{
+  "interactiveLogin": true,
+  "httpServer": "NettyWrapper",
+  "tokenCallbacks": [
+    {
+      "issuerId": "tk",
+      "tokenExpiry": 3600,
+      "requestMappings": [
+        {
+          "requestParam": "scope",
+          "match": "*",
+          "claims": {
+            "preferred_username": "mprzykladowski",
+            "name": "Marek Przykładowski",
+            "roles": ["TK_REFERENT"],
+            "groups": ["Wydział Weryfikacyjny"],
+            "acr": "mfa"
+          }
+        }
+      ]
+    }
+  ]
+}

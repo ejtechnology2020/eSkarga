@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html"
+              xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Komunikat w treści (p:messages): błąd, ostrzeżenie, potwierdzenie, informacja. Treść w ciele komponentu. -->
+  <cc:interface>
+    <cc:attribute name="tone" default="" />
+    <cc:attribute name="icon" default="info" />
+    <cc:attribute name="role" default="status" />
+    <cc:attribute name="rendered" default="true" />
+  </cc:interface>
+  <cc:implementation>
+    <h:panelGroup rendered="#{cc.attrs.rendered}" layout="block" styleClass="msg #{cc.attrs.tone}" pt:role="#{cc.attrs.role}"
+                  xmlns:pt="jakarta.faces.passthrough">
+      <tk:icon name="#{cc.attrs.icon}" />
+      <div><cc:insertChildren /></div>
+    </h:panelGroup>
+  </cc:implementation>
+</ui:component>

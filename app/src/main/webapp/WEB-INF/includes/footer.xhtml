@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets">
+  <!-- Stopka: wersja systemu i środowisko; „TEST” jako wyraźny znacznik poza produkcją. -->
+  <footer class="e-foot">
+    <span>#{msg['app.name']} · #{fmt.msg('app.version', appInfo.version)}</span>
+    <span class="#{appInfo.footerEnvClass}">#{msg['app.env.'.concat(appInfo.environment)]}</span>
+    <span class="sp"></span>
+    <span><ui:insert name="footerNote">#{msg['app.help']}</ui:insert></span>
+  </footer>
+</ui:composition>

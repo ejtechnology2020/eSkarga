@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-25 Dziennik zdarzeń (NFR-02): tabela zdarzeń, filtry, szczegóły, wynik weryfikacji łańcucha skrótów (lancuch=alarm pokazuje alarm). Tylko do odczytu. -->
+  <f:metadata><f:viewParam name="lancuch" value="#{administracja.lancuch}" /></f:metadata>
+  <ui:define name="title">Dziennik zdarzeń (audyt)</ui:define>
+  <ui:define name="eyebrow">S-25 · tylko do odczytu</ui:define>
+  <ui:define name="subtitle">Każda czynność w systemie z czasem, osobą i adresem. Wpisów nie można zmienić ani usunąć.</ui:define>
+  <ui:define name="actions"><button type="button" class="btn">#{msg['common.exportCsv']}</button><button type="button" class="btn">Zweryfikuj łańcuch teraz</button></ui:define>
+  <ui:define name="banners">
+    <tk:banner rendered="#{not administracja.alarm}" tone="ok" icon="check" title="Łańcuch spójny do 03.11.2026 06:00." text="Sprawdzono 184 240 wpisów. Następna weryfikacja: 04.11.2026 06:00." />
+    <tk:banner rendered="#{administracja.alarm}" tone="err" icon="alert-circle" role="alert" title="Alarm: łańcuch skrótów niespójny."
+               text="Wpis nr 184 233 (02.11.2026 23:14) ma skrót niezgodny z poprzednim. Spójność potwierdzona do wpisu nr 184 232. Powiadomiono IOD i administratora bezpieczeństwa.">
+      <f:facet name="actions"><a href="#">Pokaż wpis 184 233</a></f:facet></tk:banner>
+  </ui:define>
+  <ui:define name="content">
+    <h:form id="auf" styleClass="card filters" pt:aria-label="Filtry dziennika">
+      <div class="fld"><p:outputLabel for="a-od" value="Od" /><p:inputText id="a-od" value="03.11.2026 00:00" styleClass="w190" /></div>
+      <div class="fld"><p:outputLabel for="a-do" value="Do" /><p:inputText id="a-do" value="03.11.2026 23:59" styleClass="w190" /></div>
+      <div class="fld"><p:outputLabel for="a-us" value="Użytkownik" /><p:inputText id="a-us" value="#{administracja.uzytkownikFiltr}" styleClass="w220" /></div>
+      <div class="fld"><p:outputLabel for="a-cz" value="Czynność" /><p:selectOneMenu id="a-cz" styleClass="w220"><f:selectItem itemLabel="#{msg['common.all']}" itemValue="" /><f:selectItem itemLabel="podpis dokumentu" itemValue="podpis" /><f:selectItem itemLabel="wyświetlenie akt" itemValue="odczyt" /></p:selectOneMenu></div>
+      <div class="fld"><p:outputLabel for="a-sp" value="Sprawa" /><p:inputText id="a-sp" value="#{administracja.sprawaFiltr}" placeholder="np. Ts 312/26" styleClass="w180" /></div>
+      <p:commandButton value="Filtruj" styleClass="p" />
+    </h:form>
+    <div class="flow">
+      <section class="main tw fb960" aria-labelledby="h-z">
+        <div class="tt"><h2 id="h-z" class="h2-17">Zdarzenia</h2><span class="count">#{administracja.zdarzenia.size()} z 1 284 dziś</span></div>
+        <p:dataTable value="#{administracja.zdarzenia}" var="a" rowKey="#{a.nr}" rowStyleClass="#{a.wybrany ? 'sel' : ''}" summary="Zdarzenia z 03.11.2026">
+          <p:column headerText="Czas ▼" sortBy="#{a.czas}"><span class="mono">#{fmt.timeSeconds(a.czas)}</span></p:column>
+          <p:column headerText="Użytkownik">#{a.uzytkownik}</p:column><p:column headerText="Rola">#{a.rola}</p:column><p:column headerText="Czynność">#{a.czynnosc}</p:column>
+          <p:column headerText="Sprawa">#{a.sprawa}</p:column><p:column headerText="Obiekt">#{a.obiekt}</p:column><p:column headerText="Adres"><span class="mono">#{a.adres}</span></p:column>
+        </p:dataTable>
+        <div class="pager"><span class="mut">Strona 1 z 214</span><span class="sp"></span><button type="button" class="pg" aria-current="page">1</button><button type="button" class="pg">2</button><button type="button" class="pg">…</button></div>
+      </section>
+      <aside class="side card" aria-labelledby="h-d">
+        <h2 id="h-d">Szczegóły zdarzenia</h2>
+        <dl class="dl"><dt>Nr wpisu</dt><dd class="mono">#{administracja.wybraneZdarzenie.nr}</dd><dt>Czas</dt><dd>#{fmt.dateTime(administracja.wybraneZdarzenie.czas)}:14,382</dd>
+          <dt>Użytkownik</dt><dd>#{administracja.wybraneZdarzenie.uzytkownik} (ID-users: #{administracja.wybraneZdarzenie.login})</dd><dt>Podstawa</dt><dd>#{administracja.wybraneZdarzenie.podstawa}</dd>
+          <dt>Czynność</dt><dd>podpis kwalifikowany dokumentu</dd><dt>Obiekt</dt><dd>#{administracja.wybraneZdarzenie.sprawa} · zarządzenie o wyznaczeniu sędziego · k. 12</dd>
+          <dt>Adres</dt><dd class="mono">#{administracja.wybraneZdarzenie.adres}</dd><dt>Skrót wpisu</dt><dd class="mono" style="word-break: break-all;">#{administracja.wybraneZdarzenie.skrot}</dd>
+          <dt>Skrót poprzedni</dt><dd class="mono" style="word-break: break-all;">#{administracja.wybraneZdarzenie.skrotPoprzedni}</dd></dl>
+      </aside>
+    </div>
+  </ui:define>
+  <ui:define name="footerNote">Dostęp: administrator, IOD</ui:define>
+</ui:composition>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html"
+              xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Baner kontekstowy (p:messages closable=false): informacja o stanie całego ekranu –
+       tylko do odczytu, wersja zanonimizowana, upoważnienie, alarm. -->
+  <cc:interface>
+    <cc:attribute name="tone" default="" />
+    <cc:attribute name="icon" default="info" />
+    <cc:attribute name="title" required="true" />
+    <cc:attribute name="text" default="" />
+    <cc:attribute name="role" default="status" />
+    <cc:attribute name="rendered" default="true" />
+    <cc:facet name="actions" />
+  </cc:interface>
+  <cc:implementation>
+    <h:panelGroup rendered="#{cc.attrs.rendered}" layout="block" styleClass="banner #{cc.attrs.tone}" pt:role="#{cc.attrs.role}"
+                  xmlns:pt="jakarta.faces.passthrough">
+      <tk:icon name="#{cc.attrs.icon}" />
+      <h:outputText value="#{cc.attrs.title}" />
+      <h:outputText rendered="#{not empty cc.attrs.text}" styleClass="t" value="#{cc.attrs.text}" />
+      <span class="sp"></span>
+      <cc:renderFacet name="actions" />
+    </h:panelGroup>
+  </cc:implementation>
+</ui:component>

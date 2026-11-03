@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:jsf="jakarta.faces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-22 Użytkownicy, role i przydziały (UC-23): dane z ID-users tylko do odczytu (szare tło, kłódka), przydziały edytowalne w aplikacji (D4). -->
+  <ui:define name="title">Użytkownicy, role i przydziały</ui:define>
+  <ui:define name="eyebrow">S-22</ui:define>
+  <ui:define name="subtitle">Dane osobowe i role ogólne pochodzą z ID-users i są tylko do odczytu. Tutaj zmieniasz tylko przydziały w aplikacji.</ui:define>
+  <ui:define name="actions"><button type="button" class="btn">Synchronizuj z ID-users</button></ui:define>
+  <ui:define name="content">
+    <div class="legend"><span><tk:icon name="lock" small="true" /><b>zarządzane w ID-users</b> — szare tło, kłódka, bez edycji</span><span><tk:icon name="pen" small="true" color="#233A6B" /><b>przydział w aplikacji</b> — białe pole, edytowalne</span></div>
+    <h:form id="uf">
+      <section class="tw" aria-labelledby="h-u">
+        <div class="tt"><h2 id="h-u" class="h2-17">Użytkownicy</h2><span class="count">#{administracja.uzytkownicy.size()}</span></div>
+        <p:dataTable value="#{administracja.uzytkownicy}" var="u" rowStyleClass="#{u.wybrany ? 'sel' : ''}" summary="Użytkownicy i przydziały">
+          <p:column headerText="Imię i nazwisko (ID-users)" styleClass="lk" headerStyleClass="lk"><b jsf:rendered="#{u.wybrany}">#{u.nazwa}</b><h:outputText rendered="#{not u.wybrany}" value="#{u.nazwa}" /></p:column>
+          <p:column headerText="Komórka" styleClass="lk" headerStyleClass="lk">#{u.komorka}</p:column>
+          <p:column headerText="Role ogólne" styleClass="lk" headerStyleClass="lk">#{u.role}</p:column>
+          <p:column headerText="Ostatnie logowanie" styleClass="lk" headerStyleClass="lk">#{fmt.dateTime(u.logowanie)}</p:column>
+          <p:column headerText="Przydział w aplikacji" headerStyleClass="acc">
+            <h:panelGroup rendered="#{u.przydzialEdytowalny}"><p:selectOneMenu pt:aria-label="Przydział: #{u.nazwa}"><f:selectItem itemLabel="#{u.przydzial}" itemValue="a" /></p:selectOneMenu></h:panelGroup>
+            <h:panelGroup rendered="#{not empty u.upowaznienie}"><span class="tag info">#{u.upowaznienie}</span> <h:link outcome="/admin/upowaznienia" value="rejestr" /></h:panelGroup>
+            <h:outputText rendered="#{not u.przydzialEdytowalny and empty u.upowaznienie}" value="—" />
+          </p:column>
+        </p:dataTable>
+      </section>
+      <section class="card mw1000" aria-labelledby="h-pr" style="margin-top: 16px;">
+        <div class="card-h"><h2 id="h-pr">Przydziały asystentów do sędziów</h2><button type="button" class="btn s">Dodaj przydział</button></div>
+        <div class="form">
+          <div class="fld"><p:outputLabel for="pa1" value="sędzia TK Piotr Fikcyjny" /><p:inputText id="pa1" value="Tomasz Próbny" /></div>
+          <div class="fld"><p:outputLabel for="pa2" value="sędzia TK Ewa Wzorcowa" /><p:inputText id="pa2" placeholder="Wybierz asystenta" /><span class="hint">Brak przydziału — zadania idą do sędziego.</span></div>
+        </div>
+        <div class="row"><button type="button" class="btn p">Zapisz przydziały</button><span class="mut">Zmiana trafi do dziennika zdarzeń.</span></div>
+      </section>
+    </h:form>
+  </ui:define>
+  <ui:define name="footerNote">Ostatnia synchronizacja ID-users: 03.11.2026 06:00</ui:define>
+</ui:composition>

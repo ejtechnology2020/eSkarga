@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/system.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core" xmlns:ui="jakarta.faces.facelets" xmlns:tk="jakarta.faces.composite/tk">
+  <ui:define name="title">Strona nie istnieje</ui:define>
+  <ui:define name="content">
+    <span class="code" aria-hidden="true">404</span>
+    <h1 id="sys-h" class="h1-26">#{msg['sys.404.title']}</h1>
+    <p>#{msg['sys.404.text']}</p>
+    <h:form role="search" styleClass="row"><h:outputLabel styleClass="sr" for="s404" value="Sygnatura" /><h:inputText id="s404" value="#{quickSearch.query}" styleClass="in w260" pt:placeholder="np. Ts 312/26" xmlns:pt="jakarta.faces.passthrough" /><h:commandButton value="Szukaj" action="#{quickSearch.go}" styleClass="btn p" /></h:form>
+    <h:link outcome="/pulpit" value="#{msg['sys.backToDesk']}" />
+  </ui:define>
+</ui:composition>

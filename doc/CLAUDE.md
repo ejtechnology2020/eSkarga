@@ -76,11 +76,16 @@ Pakiet bazowy: `pl.ejtechnology.tk.eSkarga` (zatwierdzony 3.11.2026). Maven: gro
 ## Polecenia
 
 ```bash
-mvn -B verify                                   # build + testy jednostkowe i procesowe
-mvn -B verify -Pit                              # testy integracyjne (Testcontainers)
-docker compose -f infra/docker/compose.yml up -d    # środowisko dev
+mvn -B verify                                   # build + testy jednostkowe i procesowe (JUnit 5, operaton-bpm-assert na H2)
+mvn -B verify -Pit                              # testy integracyjne (Testcontainers) – profil gotowy, testy w T-003/T-012
+mvn -B verify -Psecurity                        # skan zależności OWASP Dependency-Check (CVSS ≥ 7 przerywa build)
+cp infra/docker/.env.example infra/docker/.env  # uzupełnij hasła przed pierwszym startem
+docker compose -f infra/docker/compose.yml up -d --build   # środowisko dev
 docker compose -f infra/docker/compose.yml logs -f app
 ```
+
+Tryb pracy nad interfejsem bez ID-users (tylko stacja deweloperska): `-Deskarga.security.mode=demo -Deskarga.demo.today=2026-11-03`;
+warianty ról i stanów ekranów parametrami `?rola=`, `?stan=`, `?widok=` (ADR 0004).
 
 Aktualizuj tę sekcję, gdy dodajesz nowe polecenia.
 

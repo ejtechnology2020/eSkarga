@@ -1,0 +1,5 @@
+{
+  "request": {"method": "POST", "urlPath": "/repertoria/sk/sprawy", "headers": {"Idempotency-Key": {"matches": ".+"}}},
+  "response": {"status": 201, "headers": {"Content-Type": "application/json"},
+    "jsonBody": {"sygnatura": "SK 41/26", "idempotencyKey": "{{request.headers.Idempotency-Key}}"}}
+}

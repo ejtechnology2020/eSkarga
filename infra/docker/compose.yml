@@ -1,0 +1,152 @@
+# Środowisko deweloperskie eSkarga (T-002, D11). Jedno polecenie: docker compose -f infra/docker/compose.yml up -d
+# Sekrety i hasła w .env (skopiuj .env.example). Produkcja działa na VM (Ansible), nie na tych obrazach.
+name: eskarga
+
+services:
+  app:
+    # Dystrybucja Operaton dla WildFly 41 (silnik współdzielony) + WAR aplikacji montowany do deployments/
+    build:
+      context: .
+      dockerfile: wildfly/Dockerfile
+      args:
+        OPERATON_VERSION: ${OPERATON_VERSION:-2.2.0}
+    environment:
+      DB_HOST: db
+      DB_NAME: ${POSTGRES_DB:-eskarga}
+      DB_USER_APP: ${DB_USER_APP:-eskarga_app}
+      DB_PASSWORD_APP: ${DB_PASSWORD_APP:?ustaw w .env}
+      ESKARGA_ENVIRONMENT: TEST
+      ESKARGA_FACES_STAGE: Development
+      ESKARGA_SECURITY_MODE: ${ESKARGA_SECURITY_MODE:-oidc}
+      ESKARGA_OIDC_ISSUER: http://oidc:8081/tk
+      ESKARGA_OIDC_CLIENTID: eskarga
+      ESKARGA_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
+      ESKARGA_OIDC_ROLESCLAIM: ${OIDC_ROLES_CLAIM:-roles}
+      ESKARGA_OIDC_MFACLAIM: ${OIDC_MFA_CLAIM:-acr}
+      ESKARGA_OIDC_MFAREQUIREDVALUE: ${OIDC_MFA_VALUE:-mfa}
+      ESKARGA_S3_ENDPOINT: http://s3:8333
+      ESKARGA_S3_BUCKET: eskarga-akta
+      ESKARGA_S3_ACCESSKEY: ${S3_ACCESS_KEY:?ustaw w .env}
+      ESKARGA_S3_SECRETKEY: ${S3_SECRET_KEY:?ustaw w .env}
+      ESKARGA_DEMO_TODAY: ${ESKARGA_DEMO_TODAY:-}
+    ports:
+      - "8080:8080"   # aplikacja /eskarga, Cockpit /operaton
+      - "9990:9990"   # konsola WildFly (tylko dev)
+    volumes:
+      - ../../app/target/eskarga.war:/opt/operaton/standalone/deployments/eskarga.war:ro
+      - ../../docs-service/target/eskarga-docs-service.war:/opt/operaton/standalone/deployments/eskarga-docs-service.war:ro
+      - ./wildfly/eskarga-datasource.cli:/opt/operaton/eskarga-datasource.cli:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      oidc:
+        condition: service_started
+      s3:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/operaton/app/cockpit/"]
+      interval: 20s
+      timeout: 5s
+      retries: 15
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-eskarga}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?ustaw w .env}
+      DB_USER_APP: ${DB_USER_APP:-eskarga_app}
+      DB_PASSWORD_APP: ${DB_PASSWORD_APP:?ustaw w .env}
+      DB_USER_MIGRATION: ${DB_USER_MIGRATION:-eskarga_migration}
+      DB_PASSWORD_MIGRATION: ${DB_PASSWORD_MIGRATION:?ustaw w .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-init-roles.sh:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  s3:
+    # Lekkie S3 na dev (SeaweedFS); produkcja: nowe repozytorium z Object Lock (D12)
+    image: chrislusf/seaweedfs:latest
+    command: server -s3 -s3.port=8333 -dir=/data -master.volumeSizeLimitMB=1024 -s3.config=/etc/seaweedfs/s3.json
+    volumes:
+      - s3-data:/data
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    ports:
+      - "8333:8333"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8333/"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  opensearch:
+    image: opensearchproject/opensearch:2
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_ADMIN_PASSWORD:?ustaw w .env}
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  softhsm:
+    # Emulator PKCS#11 (D12); produkcja: para sieciowych HSM
+    build:
+      context: ./softhsm
+    volumes:
+      - softhsm-tokens:/var/lib/softhsm/tokens
+    environment:
+      SOFTHSM_SO_PIN: ${SOFTHSM_SO_PIN:?ustaw w .env}
+      SOFTHSM_USER_PIN: ${SOFTHSM_USER_PIN:?ustaw w .env}
+
+  oidc:
+    # Mock ID-users (OIDC): konfigurowalne claimy ról i acr – kontrakt ID-users do potwierdzenia (T-004)
+    image: ghcr.io/navikt/mock-oauth2-server:2.1.10
+    environment:
+      SERVER_PORT: 8081
+      JSON_CONFIG_PATH: /config/mock-oauth2.json
+    volumes:
+      - ./oidc/mock-oauth2.json:/config/mock-oauth2.json:ro
+    ports:
+      - "8081:8081"
+
+  wiremock:
+    # Zaślepki systemów zewnętrznych: e-Doręczenia, operator pocztowy, repertoria SK/K/U (D7)
+    image: wiremock/wiremock:3.10.0
+    command: ["--global-response-templating", "--verbose"]
+    volumes:
+      - ./wiremock:/home/wiremock:ro
+    ports:
+      - "8089:8080"
+
+  workers:
+    build:
+      context: ../..
+      dockerfile: infra/docker/workers/Dockerfile
+    environment:
+      ESKARGA_ENGINE_REST: http://app:8080/engine-rest
+      ESKARGA_WORKER_ID: eskarga-worker-dev
+      ESKARGA_EXTERNAL_BASE_URL: http://wiremock:8080
+      ESKARGA_OIDC_TOKEN_URL: ""
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  db-data:
+  s3-data:
+  opensearch-data:
+  softhsm-tokens:

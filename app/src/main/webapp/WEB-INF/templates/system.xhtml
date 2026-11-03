@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html lang="pl" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:tk="jakarta.faces.composite/tk">
+<!-- Szablon ekranów systemowych (S-26): bez szczegółów technicznych; wariant „bare” (bez menu) dla MFA i sesji. -->
+<h:head>
+  <f:facet name="first"><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></f:facet>
+  <title><ui:insert name="title">Komunikat</ui:insert> – #{msg['app.name']}</title>
+  <h:outputStylesheet library="css" name="eskarga.css" />
+</h:head>
+<h:body styleClass="e-app">
+  <ui:param name="bare" value="#{empty bare ? false : bare}" />
+  <h:panelGroup rendered="#{not bare}"><ui:include src="/WEB-INF/includes/top.xhtml" /></h:panelGroup>
+  <h:panelGroup rendered="#{bare}"><header class="e-top"><span class="e-brand"><span class="logo" aria-hidden="true"></span>#{msg['app.name']}</span></header></h:panelGroup>
+  <div class="e-body">
+    <h:panelGroup rendered="#{not bare}" layout="block" styleClass="e-navwrap"><ui:include src="/WEB-INF/includes/menu.xhtml"><ui:param name="mini" value="#{false}" /></ui:include></h:panelGroup>
+    <main id="tresc" class="e-main" tabindex="-1">
+      <div class="sys">
+        <section class="box" aria-labelledby="sys-h">
+          <ui:insert name="content" />
+        </section>
+      </div>
+      <ui:include src="/WEB-INF/includes/footer.xhtml" />
+    </main>
+  </div>
+</h:body>
+</html>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/system.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core" xmlns:ui="jakarta.faces.facelets" xmlns:tk="jakarta.faces.composite/tk">
+  <ui:param name="bare" value="#{true}" />
+  <ui:define name="title">Sesja wygasła</ui:define>
+  <ui:define name="content">
+    <tk:icon name="timer" size="xxl" color="#233A6B" />
+    <h1 id="sys-h" class="h1-26">#{msg['sys.session.title']}</h1>
+    <p>#{msg['sys.session.text']}</p>
+    <div class="row"><h:outputLink value="#{request.contextPath}/" styleClass="btn p">#{msg['sys.session.login']}</h:outputLink></div>
+  </ui:define>
+</ui:composition>

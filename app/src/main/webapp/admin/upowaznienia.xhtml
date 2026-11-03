@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-23 Upoważnienia (UC-23, BR-10, FR-36): rejestr z aktem podstawowym, statusem; ostrzeżenia o nakładaniu się i wygasaniu w 7 dni. -->
+  <ui:define name="title">Upoważnienia</ui:define>
+  <ui:define name="eyebrow">S-23</ui:define>
+  <ui:define name="subtitle">Rejestr upoważnień do czynności Prezesa TK i innych funkcji. Od upoważnienia zależy, czy osoba widzi akcje w S-17 i S-18.</ui:define>
+  <ui:define name="actions"><button type="button" class="btn">#{msg['common.exportXlsx']}</button><button type="button" class="btn p">Dodaj upoważnienie</button></ui:define>
+  <ui:define name="content">
+    <tk:message tone="warn" icon="alert-triangle" role="alert"><b>Upoważnienia nakładają się.</b> W dniach 01.12–15.12.2026 obowiązki Prezesa TK wykonywałyby jednocześnie Maria Makietowa i Ewa Wzorcowa. <a href="#u2">Pokaż upoważnienie</a></tk:message>
+    <h:form id="upf">
+      <section class="tw" aria-labelledby="h-u">
+        <div class="tt"><h2 id="h-u" class="h2-17">Upoważnienia</h2><span class="count">#{administracja.upowaznienia.size()}</span><span class="sp"></span>
+          <div class="saved" role="group" aria-label="#{msg['common.savedFilters']}"><button type="button" class="chip" aria-pressed="false">Wygasające w 7 dni · 1</button><button type="button" class="chip" aria-pressed="false">Aktywne · 2</button></div></div>
+        <p:dataTable value="#{administracja.upowaznienia}" var="d" rowKey="#{d.id}" rowStyleClass="#{d.rowClass()}" summary="Rejestr upoważnień">
+          <p:column headerText="Osoba"><b jsf:rendered="#{d.wybrany}" xmlns:jsf="jakarta.faces">#{d.osoba}</b><h:outputText rendered="#{not d.wybrany}" value="#{d.osoba}" /></p:column>
+          <p:column headerText="Zakres">#{d.zakres}</p:column>
+          <p:column headerText="Od – do">#{fmt.date(d.od)} – #{fmt.date(d.doDnia)}</p:column>
+          <p:column headerText="Akt podstawowy"><a href="#">#{d.akt}</a></p:column>
+          <p:column headerText="Wprowadził">#{d.wprowadzil}</p:column>
+          <p:column headerText="Status"><tk:tag value="#{d.status}" tone="#{d.statusTone}" icon="#{empty d.statusIcon ? '' : d.statusIcon}" /></p:column>
+        </p:dataTable>
+      </section>
+      <div class="flow" style="margin-top: 16px;">
+        <section class="main card" aria-labelledby="h-f">
+          <h2 id="h-f">Dodaj upoważnienie</h2>
+          <div class="form">
+            <div class="fld"><p:outputLabel for="u-os" value="Osoba" indicateRequired="true" /><p:inputText id="u-os" value="#{administracja.osoba}" placeholder="Wpisz nazwisko (autouzupełnianie)" /></div>
+            <div class="fld"><p:outputLabel for="u-zk" value="Zakres" indicateRequired="true" /><p:selectOneMenu id="u-zk" value="#{administracja.zakres}"><f:selectItem itemLabel="wykonywanie obowiązków Prezesa TK" itemValue="prezes" /><f:selectItem itemLabel="podpisywanie zarządzeń o wyznaczeniu sędziego" itemValue="wyznaczenie" /><f:selectItem itemLabel="kierowanie zażaleń do składu" itemValue="sklad" /></p:selectOneMenu></div>
+            <div class="fld"><p:outputLabel for="u-od" value="Od" indicateRequired="true" /><p:datePicker id="u-od" pattern="dd.MM.yyyy" showIcon="false" placeholder="DD.MM.RRRR" /></div>
+            <div class="fld"><p:outputLabel for="u-do" value="Do" indicateRequired="true" /><p:datePicker id="u-do" pattern="dd.MM.yyyy" showIcon="false" placeholder="DD.MM.RRRR" /></div>
+            <div class="fld full"><span class="lbl">Akt podstawowy <span class="req" aria-hidden="true">*</span></span><p:fileUpload mode="advanced" dragDropSupport="true" allowTypes="/(\.|\/)(pdf)$/" label="Wybierz plik" uploadLabel="Prześlij" cancelLabel="#{msg['common.cancel']}" /></div>
+          </div>
+          <div class="row"><p:commandButton value="Zapisz upoważnienie" styleClass="p" /><button type="button" class="btn q">Wyczyść</button></div>
+        </section>
+        <aside class="side card" aria-labelledby="h-h"><h2 id="h-h">Historia zmian · Maria Makietowa</h2><tk:timeline value="#{administracja.historiaUpowaznienia}" /></aside>
+      </div>
+    </h:form>
+  </ui:define>
+</ui:composition>

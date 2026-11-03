@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:jsf="jakarta.faces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-19 Monitor terminów i zaległości (UC-18): kafelki filtrują tabelę; akcje: przekazanie zadania, przypomnienie; słupki obciążenia. -->
+  <ui:define name="title">Monitor terminów i zaległości</ui:define>
+  <ui:define name="eyebrow">S-19 · stan na 03.11.2026, 09:00</ui:define>
+  <ui:define name="subtitle">#{monitor.rows.size()} spraw wymaga uwagi. Kliknij kafelek, żeby przefiltrować tabelę.</ui:define>
+  <ui:define name="actions"><button type="button" class="btn">#{msg['common.exportXlsx']}</button><button type="button" class="btn">Odśwież</button></ui:define>
+  <ui:define name="content">
+    <div class="grid g4" role="group" aria-label="Liczniki"><ui:repeat value="#{monitor.kpis}" var="k"><tk:kpi value="#{k}" /></ui:repeat></div>
+    <div class="flow">
+      <h:form id="mf" styleClass="main">
+        <section class="tw" id="t" aria-labelledby="h-t">
+          <div class="tt"><h2 id="h-t" class="h2-17">Sprawy wymagające uwagi</h2><span class="count">#{monitor.rows.size()}</span><span class="sp"></span>
+            <div class="dens" role="group" aria-label="#{msg['common.density']}"><button type="button" aria-pressed="true">#{msg['common.compact']}</button><button type="button" aria-pressed="false">#{msg['common.comfy']}</button></div></div>
+          <p:dataTable value="#{monitor.rows}" var="r" rowStyleClass="#{r.wiersz.css()}" summary="Sprawy wymagające uwagi">
+            <p:column styleClass="chk"><input type="checkbox" class="chk22" aria-label="#{fmt.msg('common.select', r.sprawa)}" /></p:column>
+            <p:column headerText="Sprawa"><h:panelGroup rendered="#{r.sygnatura}"><tk:sig value="#{demo.caseBy(r.sprawa).sygnatura}" /><h:panelGroup rendered="#{demo.caseBy(r.sprawa).hasFlag('PILNA_ART_79')}"> <span class="flag pil">Pilna</span></h:panelGroup></h:panelGroup><span class="mono" jsf:rendered="#{not r.sygnatura}">#{r.sprawa}</span></p:column>
+            <p:column headerText="Przyczyna">#{r.przyczyna}</p:column>
+            <p:column headerText="Termin"><tk:deadline value="#{r.termin}" /></p:column>
+            <p:column headerText="Odpowiedzialny">#{r.odpowiedzialny} <span class="mut" jsf:rendered="#{not empty r.odpUwaga}">#{r.odpUwaga}</span></p:column>
+            <p:column headerText="#{msg['common.actions']}"><div class="row"><button type="button" class="btn s" jsf:rendered="#{r.przekaz}">Przekaż</button><button type="button" class="btn s q">Przypomnij</button></div></p:column>
+          </p:dataTable>
+          <div class="pager"><b>Zaznaczone: 0</b><span class="sp"></span><button type="button" class="btn" disabled="disabled">Przekaż zaznaczone innemu referentowi</button></div>
+        </section>
+      </h:form>
+      <aside class="side" aria-label="Obciążenie zespołu">
+        <section class="card" aria-labelledby="h-ob1"><h2 id="h-ob1">Obciążenie referentów</h2><tk:hbars value="#{monitor.referenci}" /><p class="hint">Otwarte zadania. Pasek ostrzegawczy powyżej 12 zadań na osobę.</p></section>
+        <section class="card" aria-labelledby="h-ob2"><h2 id="h-ob2">Obciążenie sędziów · wstępna kontrola</h2><tk:hbars value="#{monitor.sedziowie}" /></section>
+      </aside>
+    </div>
+  </ui:define>
+</ui:composition>

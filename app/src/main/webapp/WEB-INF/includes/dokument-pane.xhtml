@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Panel dokumentu (brief §4.3): pasek z tytułem, wersją, stanem podpisu i przyciskami; podgląd; dokument niejawny
+       jako plansza bez miniatury. Parametry: doc (RecordPage), showSplit (boolean). Widżet pdf.js dołącza T-034. -->
+  <div class="pane-h">
+    <div class="pane-tt"><b>#{doc.tytul}</b>
+      <span class="mut"><h:outputText rendered="#{not doc.niejawny}" value="#{doc.karty} · v1 z 1 · skan z OCR · #{doc.opis}" /><h:outputText rendered="#{doc.niejawny}" value="dokument niejawny · tylko metadane" /></span></div>
+    <span class="sp"></span>
+    <h:panelGroup rendered="#{not doc.niejawny}">
+      <div class="row" role="group" aria-label="Powiększenie"><button type="button" class="ibtn" aria-label="Pomniejsz">−</button><b>100 %</b><button type="button" class="ibtn" aria-label="Powiększ">+</button></div>
+      <button type="button" class="btn s">Pobierz</button><button type="button" class="btn s">Drukuj</button><button type="button" class="btn s">Porównaj wersje</button>
+      <p:commandButton rendered="#{showSplit}" value="Podziel widok" action="#{akta.toggleSplit}" update="akta-body" styleClass="s" process="@this" />
+    </h:panelGroup>
+  </div>
+  <h:panelGroup rendered="#{not doc.niejawny}">
+    <div class="pane-sub"><span>karta akt #{doc.karty.replace('k. ', '')} · <b style="color: #171B24;">strona 1 z 14</b></span><span class="sp"></span><button type="button" class="btn s q" aria-expanded="false">Pokaż miniatury stron</button></div>
+    <div class="viewer">
+      <tk:paper label="Treść dokumentu: #{doc.tytul}, strona 1">
+        <h:panelGroup rendered="#{doc.id eq 'k1'}">
+          <p class="r">Przykładowo, dnia 13.10.2026 r.</p>
+          <p class="ind">Trybunał Konstytucyjny<br />w Warszawie</p>
+          <p>Skarżący: <b>#{akta.anon('Jan Przykładowy')}</b><br />reprezentowany przez adw. #{akta.anonim ? 'A.T.' : 'Annę Testową'}</p>
+          <h2>SKARGA KONSTYTUCYJNA</h2>
+          <p>Na podstawie art. 79 ust. 1 Konstytucji Rzeczypospolitej Polskiej wnoszę o stwierdzenie, że <span class="hl">art. 505¹ § 1 ustawy z dnia 17 listopada 1964 r. – Kodeks postępowania cywilnego</span> w zakresie, w jakim wyłącza prawo strony do wysłuchania w postępowaniu uproszczonym, jest niezgodny z art. 45 ust. 1 oraz art. 78 Konstytucji.</p>
+          <p>Skarga dotyczy ostatecznego orzeczenia, którym jest wyrok Sądu Okręgowego w Przykładowie, sygn. akt II Ca 123/26, doręczony pełnomocnikowi skarżącego w dniu 14.07.2026 r.</p>
+          <h3 style="margin: 18px 0 8px; font-size: 15px;">Uzasadnienie</h3>
+          <p>1. Wyrokiem Sądu Rejonowego w Przykładowie, wydanym w postępowaniu uproszczonym, oddalono powództwo skarżącego…</p>
+        </h:panelGroup>
+        <h:panelGroup rendered="#{doc.id eq 'k15'}">
+          <p class="r">Sygn. akt II Ca 123/26</p>
+          <h2>WYROK<br />W IMIENIU RZECZYPOSPOLITEJ POLSKIEJ</h2>
+          <p>Dnia 30 czerwca 2026 r. Sąd Okręgowy w Przykładowie, II Wydział Cywilny Odwoławczy, po rozpoznaniu apelacji powoda od wyroku Sądu Rejonowego w Przykładowie…</p>
+          <p class="c">oddala apelację.</p>
+        </h:panelGroup>
+        <h:panelGroup rendered="#{doc.id ne 'k1' and doc.id ne 'k15'}">
+          <p class="r">Warszawa, #{fmt.date(doc.data)} r.</p>
+          <p>Sygn. akt #{akta.sprawa.sygnatura.format()}</p>
+          <h2>#{doc.tytul.toUpperCase()}</h2>
+          <p>Warstwa tekstowa (OCR) dokumentu. Pełny podgląd PDF/A z zoomem, numerem karty i strony dostarczy widżet pdf.js (T-034).</p>
+        </h:panelGroup>
+      </tk:paper>
+      <p class="mut" jsf:rendered="#{akta.zespolSedziego}" xmlns:jsf="jakarta.faces">Zaznaczenia i komentarze widzi tylko zespół sędziego. Nie trafiają do akt jawnych.</p>
+    </div>
+  </h:panelGroup>
+  <h:panelGroup rendered="#{doc.niejawny}" layout="block" styleClass="viewer">
+    <tk:empty icon="lock" title="Dokument z klauzulą — treść dostępna w kancelarii niejawnej" text="System przechowuje wyłącznie metadane. Kopia w kancelarii niejawnej, poz. 14/2026.">
+      <dl class="dl" style="text-align: left;"><dt>Rodzaj</dt><dd>załącznik do skargi</dd><dt>Klauzula</dt><dd>zastrzeżone</dd><dt>Wpływ</dt><dd>14.10.2026 · poczta</dd><dt>Przechowanie</dt><dd>kancelaria niejawna, poz. 14/2026</dd></dl>
+    </tk:empty>
+  </h:panelGroup>
+</ui:composition>

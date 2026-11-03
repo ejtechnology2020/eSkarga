@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:jsf="jakarta.faces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-10 Ekspedycja i rejestr doręczeń (UC-08): zakładki, adresat = pełnomocnik gdy ustanowiony (BR-06),
+       rejestracja zwrotki z podglądem terminu, który ruszy, korekta daty z ostrzeżeniem o przeliczeniu. -->
+  <f:metadata><f:viewParam name="stan" value="#{ekspedycja.stan}" /><f:viewAction action="#{ekspedycja.applyState}" /></f:metadata>
+  <ui:param name="mainClass" value="rel" />
+  <ui:define name="title">Ekspedycja i rejestr doręczeń</ui:define>
+  <ui:define name="eyebrow">S-10</ui:define>
+  <ui:define name="subtitle">Data doręczenia uruchamia terminy. Przy rejestracji zwrotki widać, który termin ruszy.</ui:define>
+  <ui:define name="actions"><button type="button" class="btn">Książka nadawcza (PDF)</button></ui:define>
+
+  <ui:define name="content">
+    <h:form id="ef">
+      <p:tabView id="tabs" activeIndex="#{ekspedycja.tab}" dynamic="false" pt:aria-label="Przesyłki">
+        <p:ajax event="tabChange" update="side" />
+        <p:tab title="Do wysłania">
+          <section class="tw" aria-label="Do wysłania">
+            <div class="tt"><span class="count">#{ekspedycja.doWyslania.size()} przesyłki</span><span class="sp"></span><button type="button" class="btn s">#{msg['common.selectAll']}</button></div>
+            <p:dataTable value="#{ekspedycja.doWyslania}" var="d" rowStyleClass="#{d.rowClass()}" summary="Przesyłki do wysłania">
+              <p:column styleClass="chk"><input type="checkbox" class="chk22" checked="#{d.zaznaczona ? 'checked' : null}" aria-label="#{fmt.msg('common.select', d.sprawa.format())}" /></p:column>
+              <p:column headerText="Sprawa"><tk:sig value="#{d.sprawa}" /></p:column>
+              <p:column headerText="Dokument">#{d.dokument}</p:column>
+              <p:column headerText="Adresat">#{d.adresat} <span class="mut" jsf:rendered="#{not empty d.adresatUwaga}">#{d.adresatUwaga}</span></p:column>
+              <p:column headerText="Kanał">#{d.kanal}</p:column>
+              <p:column headerText="Od">#{fmt.date(d.data)}</p:column>
+            </p:dataTable>
+            <div class="pager"><b>Zaznaczono 1</b><span class="sp"></span><p:commandButton value="Wyślij zaznaczone" action="#{ekspedycja.setDialog(true)}" update="dlg" oncomplete="PF('dlgWys').show()" styleClass="p" process="@this" /></div>
+          </section>
+        </p:tab>
+        <p:tab title="Wysłane bez potwierdzenia">
+          <section class="tw" aria-label="Wysłane bez potwierdzenia">
+            <div class="tt"><span class="count">#{ekspedycja.bezPotwierdzenia.size()} przesyłki</span><span class="sp"></span><div class="saved" role="group" aria-label="#{msg['common.savedFilters']}"><button type="button" class="chip" aria-pressed="false">Brak zwrotki ponad 14 dni · 1</button></div></div>
+            <p:dataTable value="#{ekspedycja.bezPotwierdzenia}" var="d" rowStyleClass="#{d.rowClass()}" summary="Przesyłki wysłane bez potwierdzenia odbioru">
+              <p:column headerText="Sprawa"><tk:sig value="#{d.sprawa}" /></p:column>
+              <p:column headerText="Dokument">#{d.dokument}</p:column>
+              <p:column headerText="Adresat">#{d.adresat}</p:column>
+              <p:column headerText="Wysłano">#{fmt.date(d.data)} · #{d.kanal}</p:column>
+              <p:column headerText="Bez zwrotki"><tk:deadline value="#{d.termin}" /></p:column>
+              <p:column headerText="#{msg['common.actions']}"><button type="button" class="btn s #{d.akcjaGlowna ? 'p' : ''}">#{d.akcja}</button></p:column>
+            </p:dataTable>
+          </section>
+        </p:tab>
+        <p:tab title="Doręczone">
+          <section class="tw" aria-label="Doręczone">
+            <div class="tt"><span class="count">#{ekspedycja.doreczone.size()} przesyłki (ostatnie 7 dni)</span></div>
+            <p:dataTable value="#{ekspedycja.doreczone}" var="d" summary="Przesyłki doręczone">
+              <p:column headerText="Sprawa"><tk:sig value="#{d.sprawa}" /></p:column>
+              <p:column headerText="Dokument">#{d.dokument}</p:column>
+              <p:column headerText="Adresat">#{d.adresat}</p:column>
+              <p:column headerText="Doręczono">#{fmt.date(d.data)}</p:column>
+              <p:column headerText="Sposób">#{d.sposob}</p:column>
+              <p:column headerText="Uruchomiony termin"><tk:deadline value="#{d.termin}" /></p:column>
+            </p:dataTable>
+          </section>
+        </p:tab>
+      </p:tabView>
+
+      <h:panelGroup id="side" layout="block" styleClass="flow" style="margin-top: 16px;">
+        <div class="main"></div>
+        <aside class="side" aria-label="Rejestracja zwrotki">
+          <h:panelGroup rendered="#{ekspedycja.tab eq 1}" layout="block" styleClass="card hl" pt:aria-labelledby="h-zw">
+            <div class="card-h"><h2 id="h-zw">Rejestracja zwrotki</h2><tk:sig value="#{demo.caseBy('Ts 312/26').sygnatura}" /></div>
+            <p class="mut">Zarządzenie o usunięciu braków · adw. Anna Testowa · wysłane 28.10.2026</p>
+            <div class="fld"><p:outputLabel for="z-dat" value="Data doręczenia" indicateRequired="true" />
+              <p:datePicker id="z-dat" value="#{ekspedycja.dataDoreczenia}" pattern="dd.MM.yyyy" showIcon="false"><p:ajax event="dateSelect" listener="#{ekspedycja.dateChanged}" update="side" /><p:ajax listener="#{ekspedycja.dateChanged}" update="side" /></p:datePicker></div>
+            <fieldset class="fieldset"><legend>Sposób doręczenia</legend>
+              <p:selectOneRadio id="sp" value="#{ekspedycja.sposob}" layout="custom"><f:selectItems value="#{ekspedycja.sposoby}" var="s" itemLabel="#{msg['delivery.'.concat(s)]}" itemValue="#{s}" /></p:selectOneRadio>
+              <div class="radios"><ui:repeat value="#{ekspedycja.sposoby}" var="s" varStatus="st"><label class="#{ekspedycja.sposob eq s ? 'on' : ''}"><p:radioButton for="sp" itemIndex="#{st.index}" />#{msg['delivery.'.concat(s)]}</label></ui:repeat></div></fieldset>
+            <div class="fld"><p:outputLabel for="z-pl" value="Dowód doręczenia" /><p:inputText id="z-pl" value="UPD e-Doręczenia · 02.11.2026 10:24" readonly="true" /></div>
+            <div class="card acc">
+              <span class="eyebrow">Po zapisie ruszy termin</span>
+              <span class="term"><tk:icon name="timer" /><span><b>Braki (art. 61 ust. 3):</b> 7 dni · #{fmt.date(ekspedycja.termin.start)} – #{fmt.date(ekspedycja.termin.end)}<h:outputText rendered="#{ekspedycja.termin.movedToWorkingDay()}" value=" (koniec przesunięty na dzień roboczy)" /></span><span class="bar"><span style="width: 2%;"></span></span></span>
+            </div>
+            <h:panelGroup rendered="#{ekspedycja.korekta}" layout="block" styleClass="col gap12">
+              <tk:message tone="warn" icon="alert-triangle" role="alert"><b>Zmieniasz zarejestrowaną datę doręczenia.</b> Termin zostanie przeliczony: koniec <b>#{fmt.date(ekspedycja.termin.end)}</b> zamiast 09.11.2026. Asystent sędziego i pełnomocnik nie dostaną nowego zawiadomienia automatycznie.</tk:message>
+              <div class="fld"><p:outputLabel for="z-uz" value="Uzasadnienie korekty" indicateRequired="true" /><p:inputTextarea id="z-uz" value="#{ekspedycja.uzasadnienie}" rows="3" styleClass="ta80" /></div>
+            </h:panelGroup>
+            <div class="row"><p:commandButton value="#{ekspedycja.korekta ? 'Zapisz korektę i przelicz termin' : 'Zapisz zwrotkę'}" styleClass="p" /><button type="button" class="btn q">#{msg['common.cancel']}</button></div>
+          </h:panelGroup>
+          <h:panelGroup rendered="#{ekspedycja.tab ne 1}" layout="block" styleClass="card"><h2>Wybierz przesyłkę</h2><p class="mut">Zaznacz przesyłkę w tabeli, aby zobaczyć adresata, kanał i termin, który ruszy po doręczeniu.</p></h:panelGroup>
+        </aside>
+      </h:panelGroup>
+
+      <p:dialog id="dlg" widgetVar="dlgWys" header="Wysłać 1 przesyłkę?" modal="true" visible="#{ekspedycja.dialog}" closable="false" width="680" responsive="true">
+        <dl class="dl"><dt>Sprawa</dt><dd>Ts 318/26</dd><dt>Dokument</dt><dd>Zawiadomienie o wpisie do repertorium</dd><dt>Adresat</dt><dd>r.pr. Oleńka Testowa (pełnomocnik ustanowiony 27.10.2026)</dd><dt>Kanał</dt><dd>e-Doręczenia · AE:PL-54321-09876-EDCBA-21</dd></dl>
+        <tk:effects value="#{ekspedycja.skutkiWysylki}" />
+        <f:facet name="footer"><p:commandButton value="#{msg['common.cancel']}" action="#{ekspedycja.setDialog(false)}" update="dlg" oncomplete="PF('dlgWys').hide()" process="@this" /><p:commandButton value="Wyślij" styleClass="p" oncomplete="PF('dlgWys').hide()" /></f:facet>
+      </p:dialog>
+    </h:form>
+  </ui:define>
+</ui:composition>

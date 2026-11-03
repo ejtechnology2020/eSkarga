@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:jsf="jakarta.faces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-17 Wyznaczenie sędziego (UC-05): baner upoważnienia (BR-10), sprawy oczekujące, obciążenie sędziów, podgląd zarządzenia.
+       Parametr upowaznienie=brak pokazuje stan bez ważnego upoważnienia. -->
+  <f:metadata><f:viewParam name="upowaznienie" value="#{wyznaczenie.upowaznienie}" /></f:metadata>
+  <ui:define name="title">Wyznaczenie sędziego do wstępnej kontroli</ui:define>
+  <ui:define name="eyebrow">S-17</ui:define>
+  <ui:define name="subtitle">Wybierz sprawę, potem sędziego. Obciążenie liczone na dziś, 03.11.2026.</ui:define>
+  <ui:define name="banners">
+    <tk:banner rendered="#{wyznaczenie.upowaznienieWazne}" icon="shield" title="Działasz na podstawie upoważnienia z 30.10.2026" text="(ważne do 31.12.2026) — wykonywanie obowiązków Prezesa TK." />
+    <tk:banner rendered="#{not wyznaczenie.upowaznienieWazne}" tone="err" icon="alert-circle" role="alert" title="Brak ważnego upoważnienia."
+               text="Upoważnienie z 30.10.2026 wygasło 31.12.2026. Wyznaczać może Prezes TK albo osoba z ważnym upoważnieniem — wpisuje je administrator w rejestrze upoważnień.">
+      <f:facet name="actions"><h:link outcome="/admin/upowaznienia" value="Rejestr upoważnień" /></f:facet></tk:banner>
+  </ui:define>
+  <ui:define name="actions">
+    <button type="button" class="btn" disabled="#{wyznaczenie.upowaznienieWazne ? null : 'disabled'}">Wyznacz zbiorczo (2)</button>
+    <h:link outcome="/czynnosci/podpis" styleClass="btn p" value="Wyznacz i podpisz zarządzenie" pt:aria-disabled="#{not wyznaczenie.upowaznienieWazne}" pt:aria-describedby="why" rendered="#{wyznaczenie.upowaznienieWazne}" />
+    <span class="btn p" aria-disabled="true" aria-describedby="why" jsf:rendered="#{not wyznaczenie.upowaznienieWazne}">Wyznacz i podpisz zarządzenie</span>
+  </ui:define>
+  <ui:define name="content">
+    <p id="why" class="ferr" jsf:rendered="#{not wyznaczenie.upowaznienieWazne}">Akcja niedostępna: brak ważnego upoważnienia do wykonywania obowiązków Prezesa TK.</p>
+    <h:form id="wf" styleClass="flow">
+      <section class="tw fb520" aria-labelledby="h-sp">
+        <div class="tt"><h2 id="h-sp" class="h2-17">Sprawy oczekujące</h2><span class="count">#{wyznaczenie.oczekujace.size()}</span></div>
+        <p:dataTable value="#{wyznaczenie.oczekujace}" var="c" rowStyleClass="#{c.sygnaturaText() eq 'Ts 318/26' ? 'sel' : ''}" summary="Sprawy oczekujące na wyznaczenie sędziego">
+          <p:column styleClass="chk"><input type="checkbox" class="chk22" checked="checked" aria-label="#{fmt.msg('common.select', c.sygnaturaText())}" /></p:column>
+          <p:column headerText="Sygnatura"><tk:sig value="#{c.sygnatura}" /></p:column>
+          <p:column headerText="Data wpisu">#{fmt.date(c.dataWpisu)}</p:column>
+          <p:column headerText="Przedmiot">#{c.przedmiot}</p:column>
+          <p:column headerText="Oczekuje ▼"><tk:deadline value="#{c.termin}" /></p:column>
+        </p:dataTable>
+      </section>
+      <section class="tw fx2" aria-labelledby="h-sd">
+        <div class="tt"><h2 id="h-sd" class="h2-17">Sędziowie · obciążenie</h2><span class="mut">dla Ts 318/26</span></div>
+        <p:dataTable value="#{wyznaczenie.sedziowie}" var="j" rowStyleClass="#{j.nazwisko eq wyznaczenie.sedzia ? 'sel' : ''}" summary="Obciążenie sędziów">
+          <p:column headerText="Wybór" styleClass="chk"><p:selectOneRadio id="sd" value="#{wyznaczenie.sedzia}" layout="custom" rendered="#{false}" /><input type="radio" name="sd" class="chk22" checked="#{j.nazwisko eq wyznaczenie.sedzia ? 'checked' : null}" aria-label="Wybierz #{j.sedzia}" /></p:column>
+          <p:column headerText="Sędzia"><b jsf:rendered="#{j.nazwisko eq wyznaczenie.sedzia}">#{j.sedzia}</b><h:outputText rendered="#{j.nazwisko ne wyznaczenie.sedzia}" value="#{j.sedzia}" /></p:column>
+          <p:column headerText="We wstępnej kontroli"><div class="hbar two"><span class="tr"><span style="width: #{j.percent}%;"></span></span><span class="v">#{j.sprawy}</span></div></p:column>
+          <p:column headerText="Terminy w tym tygodniu">#{j.terminyTydzien} <span class="mut">#{j.terminyUwaga}</span></p:column>
+          <p:column headerText="Nieobecności"><h:panelGroup rendered="#{not empty j.nieobecnosc and j.nieobecnoscTone eq 'WARN'}"><tk:tag value="#{j.nieobecnosc}" tone="WARN" /></h:panelGroup><h:outputText rendered="#{not empty j.nieobecnosc and j.nieobecnoscTone ne 'WARN'}" styleClass="mut" value="#{j.nieobecnosc}" /><h:outputText rendered="#{empty j.nieobecnosc}" value="—" /></p:column>
+        </p:dataTable>
+      </section>
+      <section class="card np fx1" aria-label="Podgląd zarządzenia">
+        <div class="pane-h"><b>Podgląd zarządzenia</b><span class="mut">Ts 318/26 · 1 strona</span></div>
+        <div class="viewer pad14">
+          <tk:paper label="Podgląd zarządzenia o wyznaczeniu sędziego" styleClass="sm" watermark="PROJEKT">
+            <p class="r">Warszawa, dnia 03.11.2026 r.</p><p>Sygn. akt Ts 318/26</p><h2 class="fs15">ZARZĄDZENIE</h2>
+            <p>Na podstawie art. 61 ust. 1 ustawy o organizacji i trybie postępowania przed Trybunałem Konstytucyjnym wyznaczam <b>sędziego TK #{wyznaczenie.sedzia eq 'Adam Testowy' ? 'Adama Testowego' : wyznaczenie.sedzia}</b> do wstępnego rozpoznania skargi konstytucyjnej Przykładowej Spółki z o.o.</p>
+            <p class="sign">sędzia TK Maria Makietowa<br /><span style="font-size: 11px;">wykonująca obowiązki Prezesa TK</span></p>
+          </tk:paper>
+        </div>
+      </section>
+    </h:form>
+  </ui:define>
+</ui:composition>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-07 Założenie sprawy Ts/Tw (UC-03): 3 kroki (p:steps), podejrzenie duplikatu, termin z art. 77 pomocniczo,
+       okno potwierdzenia z kolejną sygnaturą (p:dialog). -->
+  <f:metadata>
+    <f:viewParam name="stan" value="#{zalozenie.stan}" />
+    <f:viewAction action="#{zalozenie.applyState}" />
+  </f:metadata>
+  <ui:define name="title">Założenie sprawy Ts/Tw</ui:define>
+  <ui:define name="crumbs">
+    <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Sprawy" /></li><li><h:link outcome="/sprawy/kolejka" value="Kolejka pism" /></li><li><span aria-current="page">Założenie sprawy</span></li></ol></nav>
+  </ui:define>
+  <ui:define name="eyebrow">S-07 · z pisma DW 2026/04809</ui:define>
+  <ui:define name="subtitle">Skarga konstytucyjna · Stefan Przykładny (radca prawny we własnej sprawie)</ui:define>
+  <ui:define name="actions"><button type="button" class="btn q">Zapisz szkic</button></ui:define>
+
+  <ui:define name="content">
+    <h:form id="zf">
+      <p:steps activeIndex="#{zalozenie.krok}" readonly="true" pt:aria-label="Kroki">
+        <p:menuitem value="Strony" title="skarżący, pełnomocnik" styleClass="#{zalozenie.stepClass(0)}" />
+        <p:menuitem value="Przedmiot" title="przepisy, wzorce, orzeczenie" styleClass="#{zalozenie.stepClass(1)}" />
+        <p:menuitem value="Podsumowanie" title="termin z art. 77, zatwierdzenie" styleClass="#{zalozenie.stepClass(2)}" />
+      </p:steps>
+      <p:messages globalOnly="true" closable="false" style="margin-top: 16px;" />
+
+      <div class="flow" style="margin-top: 16px;">
+        <div class="main">
+          <h:panelGroup rendered="#{zalozenie.krok eq 0}">
+            <section class="card" aria-labelledby="h-k1">
+              <h2 id="h-k1">Krok 1 · Strony</h2>
+              <tk:message rendered="#{zalozenie.duplikat}" tone="warn" icon="alert-triangle" role="alert">
+                <b>Możliwy duplikat.</b> Ten sam skarżący ma sprawę <tk:sig value="#{demo.caseBy('Ts 276/26').sygnatura}" /> (zażalenie w rozpoznaniu). Sprawdź, czy to nie pismo do tej sprawy.
+                <div class="row" style="margin-top: 8px;"><button type="button" class="btn s">Porównaj pisma</button>
+                  <p:commandButton value="To nowa skarga — kontynuuj" action="#{zalozenie.setDuplikat(false)}" update="zf" styleClass="s q" /></div>
+              </tk:message>
+              <div class="form">
+                <div class="fld"><p:outputLabel for="s-rep" value="Repertorium" />
+                  <p:selectOneMenu id="s-rep" value="#{zalozenie.repertorium}"><f:selectItem itemLabel="Ts — skarga konstytucyjna" itemValue="TS" /><f:selectItem itemLabel="Tw — wniosek" itemValue="TW" /></p:selectOneMenu></div>
+                <div class="fld"><p:outputLabel for="s-sk" value="Skarżący" indicateRequired="true" /><p:inputText id="s-sk" value="#{zalozenie.skarzacy}" required="true" /></div>
+                <div class="fld"><p:outputLabel for="s-adr" value="Adres do doręczeń" /><p:inputText id="s-adr" value="#{zalozenie.adres}" /></div>
+                <div class="fld"><span class="lbl">Pełnomocnik</span><label class="chkl"><p:selectBooleanCheckbox value="#{zalozenie.dzialaSam}" />Skarżący działa sam (radca prawny we własnej sprawie)</label></div>
+              </div>
+            </section>
+          </h:panelGroup>
+
+          <h:panelGroup rendered="#{zalozenie.krok eq 1}">
+            <section class="card" aria-labelledby="h-k2">
+              <h2 id="h-k2">Krok 2 · Przedmiot</h2>
+              <div class="form">
+                <div class="fld full"><p:outputLabel for="p-prz" value="Zaskarżone przepisy" indicateRequired="true" />
+                  <p:inputText id="p-prz" value="#{zalozenie.przepisy}" placeholder="np. art. 394¹ § 1 k.p.c." /><p:message for="p-prz" styleClass="ferr" />
+                  <span class="hint">Autouzupełnianie ze słownika aktów. Można dodać kilka.</span></div>
+                <div class="fld full"><p:outputLabel for="p-wz" value="Wzorce kontroli" /><p:inputText id="p-wz" value="#{zalozenie.wzorce}" /></div>
+                <div class="fld"><p:outputLabel for="p-org" value="Orzeczenie ostateczne" /><p:inputText id="p-org" value="#{zalozenie.organ}" /></div>
+                <div class="fld"><p:outputLabel for="p-syg" value="Sygnatura orzeczenia" /><p:inputText id="p-syg" value="#{zalozenie.sygnOrzeczenia}" /></div>
+                <div class="fld"><p:outputLabel for="p-dor" value="Data doręczenia orzeczenia" indicateRequired="true" />
+                  <p:datePicker id="p-dor" value="#{zalozenie.doreczenie}" pattern="dd.MM.yyyy" showIcon="false" placeholder="DD.MM.RRRR" /><p:message for="p-dor" styleClass="ferr" /></div>
+              </div>
+            </section>
+          </h:panelGroup>
+
+          <h:panelGroup rendered="#{zalozenie.krok eq 2}">
+            <section class="card" aria-labelledby="h-k3">
+              <h2 id="h-k3">Krok 3 · Podsumowanie</h2>
+              <dl class="dl">
+                <dt>Repertorium</dt><dd>#{zalozenie.repertorium eq 'TS' ? 'Ts — skarga konstytucyjna' : 'Tw — wniosek'}</dd>
+                <dt>Skarżący</dt><dd>#{zalozenie.skarzacy} (bez pełnomocnika)</dd>
+                <dt>Zaskarżony przepis</dt><dd>#{zalozenie.przepisy}</dd>
+                <dt>Wzorce kontroli</dt><dd>#{zalozenie.wzorce}</dd>
+                <dt>Orzeczenie ostateczne</dt><dd>postanowienie SA w Przykładowie, #{zalozenie.sygnOrzeczenia}, doręczone #{zalozenie.fmtDoreczenie}</dd>
+                <dt>Pismo</dt><dd>DW 2026/04809 · wpływ 02.11.2026 · wniesienie #{fmt.date(zalozenie.wniesienie)}</dd>
+              </dl>
+              <h:panelGroup rendered="#{not zalozenie.art77Przekroczony}">
+                <span class="term aux"><tk:icon name="info" /><span><b>Art. 77 (pomocniczo):</b> upływa #{fmt.date(zalozenie.art77.end)} · wniesiono #{fmt.date(zalozenie.wniesienie)}, przed upływem</span><span class="bar"><span style="width: #{zalozenie.art77Progress}%;"></span></span></span>
+              </h:panelGroup>
+              <tk:message rendered="#{zalozenie.art77Przekroczony}" tone="warn" icon="alert-triangle" role="alert">
+                <b>Termin z art. 77 prawdopodobnie przekroczony.</b> Upłynąłby #{fmt.date(zalozenie.art77.end)}, a skargę wniesiono #{fmt.date(zalozenie.wniesienie)} (#{zalozenie.art77DniPo} dni później). To wyliczenie pomocnicze — ocenia sędzia. Wpis możesz zatwierdzić.
+              </tk:message>
+            </section>
+          </h:panelGroup>
+
+          <div class="card row-acts jbetween">
+            <p:commandButton value="#{msg['common.back']}" action="#{zalozenie.back}" update="zf" process="@this" disabled="#{zalozenie.krok eq 0}" />
+            <p:commandButton value="#{msg['common.next']}" action="#{zalozenie.next}" update="zf" styleClass="p" rendered="#{zalozenie.krok lt 2}" />
+            <p:commandButton value="Zatwierdź wpis" action="#{zalozenie.openDialog}" update="zf dlg" styleClass="p" rendered="#{zalozenie.krok eq 2}" oncomplete="PF('dlgSig').show()" />
+          </div>
+        </div>
+        <aside class="side" aria-label="Pismo źródłowe">
+          <section class="card np"><div class="pane-h"><b class="mono">DW 2026/04809</b><span class="mut">Stefan Przykładny · 6 str.</span></div>
+            <div class="viewer min420 pad14"><tk:paper label="Podgląd pisma DW 2026/04809" styleClass="sm"><p class="r">Przykładowo, 29.10.2026 r.</p><h2 class="fs15">SKARGA KONSTYTUCYJNA</h2><p>Wnoszę o stwierdzenie niezgodności art. 394¹ § 1 k.p.c. z art. 45 ust. 1 i art. 78 Konstytucji…</p></tk:paper></div>
+          </section>
+        </aside>
+      </div>
+
+      <p:dialog id="dlg" widgetVar="dlgSig" header="#{msg['msg.docket.confirm']}" modal="true" visible="#{zalozenie.dialog}" closable="false" draggable="false" resizable="false" width="680" responsive="true">
+        <p>#{msg['msg.docket.willGet']}</p>
+        <p class="mono fs32">#{zalozenie.nastepnaSygnatura.format()}</p>
+        <tk:effects value="#{zalozenie.skutki}" />
+        <f:facet name="footer">
+          <p:commandButton value="Wróć do podsumowania" action="#{zalozenie.closeDialog}" update="dlg" oncomplete="PF('dlgSig').hide()" process="@this" />
+          <p:commandButton value="Zatwierdź i nadaj #{zalozenie.nastepnaSygnatura.format()}" action="#{zalozenie.confirm}" styleClass="p" process="@this" />
+        </f:facet>
+      </p:dialog>
+    </h:form>
+  </ui:define>
+</ui:composition>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html"
+              xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Etykieta statusu sprawy (p:tag + ikona): tekst + kolor tła, 9 statusów z analizy wymagań. -->
+  <cc:interface>
+    <cc:attribute name="status" required="true" type="pl.ejtechnology.tk.eSkarga.domain.CaseStatus" />
+    <cc:attribute name="icon" default="true" />
+  </cc:interface>
+  <cc:implementation>
+    <span class="tag #{cc.attrs.status.tone().css()}">
+      <h:panelGroup rendered="#{cc.attrs.icon}"><tk:icon name="#{cc.attrs.status.icon()}" /></h:panelGroup>
+      <h:outputText value="#{msg['status.'.concat(cc.attrs.status)]}" />
+    </span>
+  </cc:implementation>
+</ui:component>

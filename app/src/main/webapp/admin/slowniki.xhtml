@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-24 Słowniki, szablony i dni wolne (UC-24, FR-35, D13): zakładki Słowniki / Szablony pism / Kalendarz dni wolnych.
+       Kalendarz wpływa na liczenie terminów (DeadlineCalculator). -->
+  <f:metadata><f:viewParam name="zakladka" value="#{administracja.zakladka}" /><f:viewAction action="#{administracja.applyState}" /></f:metadata>
+  <ui:define name="title">Słowniki, szablony i dni wolne</ui:define>
+  <ui:define name="eyebrow">S-24</ui:define>
+  <ui:define name="subtitle">Kalendarz dni wolnych wpływa na liczenie terminów w całym systemie.</ui:define>
+  <ui:define name="content">
+    <h:form id="sf">
+      <p:tabView activeIndex="#{administracja.tab}" dynamic="false" pt:aria-label="Sekcje">
+        <p:tab title="Słowniki">
+          <div class="flow">
+            <nav class="card fx1" aria-label="Lista słowników">
+              <a class="btn jbetween" href="#">Sądy <span class="badge">312</span></a><a class="btn jbetween" href="#">Organy <span class="badge">48</span></a>
+              <a class="btn jbetween" href="#">Typy pism <span class="badge">27</span></a><a class="btn p jbetween" href="#" aria-current="page">Wzorce kontroli <span class="badge" style="background: #fff; color: #233A6B;">64</span></a>
+            </nav>
+            <section class="tw fx3" aria-labelledby="h-wz">
+              <div class="tt"><h2 id="h-wz" class="h2-17">Wzorce kontroli</h2><span class="count">64</span><span class="sp"></span><button type="button" class="btn s">#{msg['common.exportCsv']}</button><button type="button" class="btn s p">Dodaj pozycję</button></div>
+              <p:dataTable value="#{administracja.wzorce}" var="w" rowStyleClass="#{w.rowClass()}" summary="Słownik wzorców kontroli">
+                <p:column headerText="Kod"><span class="mono">#{w.kod}</span></p:column>
+                <p:column headerText="Przepis" filterBy="#{w.przepis}" filterMatchMode="contains">#{w.przepis}</p:column>
+                <p:column headerText="Opis">#{w.opis}</p:column><p:column headerText="Użycia">#{w.uzycia}</p:column>
+                <p:column headerText="Stan"><tk:tag value="#{w.aktywna ? 'aktywna' : 'wycofana'}" tone="#{w.aktywna ? 'OK' : 'OFF'}" /></p:column>
+              </p:dataTable>
+            </section>
+          </div>
+        </p:tab>
+        <p:tab title="Szablony pism">
+          <div class="flow">
+            <section class="tw fx2" aria-labelledby="h-sz">
+              <div class="tt"><h2 id="h-sz" class="h2-17">Szablony pism</h2><span class="count">#{administracja.szablony.size()}</span><span class="sp"></span><button type="button" class="btn s p">Nowy szablon</button></div>
+              <p:dataTable value="#{administracja.szablony}" var="t" rowStyleClass="#{t.rowClass()}" summary="Szablony pism">
+                <p:column headerText="Nazwa">#{t.nazwa}</p:column><p:column headerText="Rodzaj">#{t.rodzaj}</p:column><p:column headerText="Wersja">#{t.wersja}</p:column>
+                <p:column headerText="Zmieniono">#{t.zmieniono}</p:column><p:column headerText="Stan"><tk:tag value="#{t.stan}" tone="#{t.stanTone}" /></p:column>
+              </p:dataTable>
+            </section>
+            <section class="card np fx1" aria-label="Podgląd szablonu">
+              <div class="pane-h"><b>Podgląd · Zarządzenie o usunięciu braków v4</b></div>
+              <div class="viewer pad14"><tk:paper label="Podgląd szablonu" styleClass="sm"><p>Sygn. akt <span class="anon">{sygnatura}</span></p><h2 class="fs15">ZARZĄDZENIE</h2><p>Sędzia Trybunału Konstytucyjnego <span class="anon">{sędzia}</span>, na podstawie art. 61 ust. 3 ustawy, zarządza wezwać <span class="anon">{adresat}</span> do usunięcia w terminie 7 dni braków: <span class="anon">{braki z listy kontrolnej}</span>.</p></tk:paper></div>
+              <div class="pane-b" style="flex: 0;"><p class="hint">Szablony FreeMarker (XHTML) są w bazie z wersjami: projekt, aktywna, wycofana. Edytor z podświetlaniem składni, walidacją (kompilacja, render, veraPDF) i aktywacją z akceptacją drugiej osoby dostarcza T-026a.</p></div>
+            </section>
+          </div>
+        </p:tab>
+        <p:tab title="Kalendarz dni wolnych">
+          <section class="card" aria-labelledby="h-kal">
+            <div class="card-h"><h2 id="h-kal">Kalendarz dni wolnych · #{administracja.rok}</h2>
+              <div class="row"><p:commandButton value="‹" action="#{administracja.prevYear}" update="@form" pt:aria-label="Poprzedni rok" styleClass="q" /><b>#{administracja.rok}</b><p:commandButton value="›" action="#{administracja.nextYear}" update="@form" pt:aria-label="Następny rok" styleClass="q" /><button type="button" class="btn s p">Dodaj dzień wolny</button></div></div>
+            <div class="legend"><span><i class="sw-i hol"></i>święto ustawowe</span><span><i class="sw-i own"></i>dzień wolny w Trybunale</span><span><i class="sw-i we"></i>sobota, niedziela</span></div>
+            <div class="cal">
+              <ui:repeat value="#{administracja.kalendarz}" var="m">
+                <div class="mon"><h3>#{m.name}</h3>
+                  <div class="dg"><span class="h">Pn</span><span class="h">Wt</span><span class="h">Śr</span><span class="h">Cz</span><span class="h">Pt</span><span class="h">So</span><span class="h">Nd</span>
+                    <ui:repeat value="#{m.cells}" var="c"><span class="#{c.cls}" title="#{empty c.title ? null : c.title}">#{c.day}</span></ui:repeat></div></div>
+              </ui:repeat>
+            </div>
+            <p class="hint">Najbliższe: 10.11.2026 — dzień wolny za 15.08.2026 (sobota) · 11.11.2026 — Narodowe Święto Niepodległości.</p>
+          </section>
+        </p:tab>
+      </p:tabView>
+    </h:form>
+  </ui:define>
+</ui:composition>

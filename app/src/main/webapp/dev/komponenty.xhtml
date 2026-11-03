@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Arkusz komponentów wspólnych (brief §4.2) – strona deweloperska do audytu axe-core i przeglądu stylów. -->
+  <ui:define name="title">Arkusz komponentów wspólnych</ui:define>
+  <ui:define name="crumbCurrent">Arkusz komponentów</ui:define>
+  <ui:define name="eyebrow">Fundament · sekcja 4.2 briefu</ui:define>
+  <ui:define name="subtitle">Każdy element ma odpowiednik w PrimeFaces 15. Tekst ≥ 7:1, obramowania ≥ 3:1, cele ≥ 44 px. Status i termin zawsze z tekstem.</ui:define>
+  <ui:define name="content">
+    <section class="card" aria-labelledby="k-st">
+      <div class="card-h"><h2 id="k-st">Etykieta statusu sprawy · 9 statusów</h2><span class="tag info">p:tag + ikona</span></div>
+      <div class="row gap10"><ui:repeat value="#{komponenty.statusy}" var="s"><tk:statusTag status="#{s}" /></ui:repeat></div>
+    </section>
+    <div class="grid g2">
+      <section class="card" aria-labelledby="k-term">
+        <div class="card-h"><h2 id="k-term">Wskaźnik terminu · 5 wariantów</h2><span class="tag info">p:tag + p:progressBar</span></div>
+        <div class="col gap10"><ui:repeat value="#{komponenty.terminy}" var="t"><tk:deadline value="#{t}" /></ui:repeat></div>
+        <p class="hint">Próg ostrzegawczy: ≤ 2 dni. Liczba dni i słowo „jutro”, „po terminie” są zawsze w tekście.</p>
+      </section>
+      <section class="card" aria-labelledby="k-sig">
+        <div class="card-h"><h2 id="k-sig">Sygnatura i flagi sprawy</h2><span class="tag info">p:commandLink + p:tag</span></div>
+        <div class="col"><tk:sig value="#{demo.caseBy('Ts 312/26').sygnatura}" copy="true" /><tk:sig value="#{demo.caseBy('Tw 14/26').sygnatura}" copy="true" />
+          <tk:sig value="#{demo.caseBy('Ts 287/26').sygnatura}" related="#{demo.caseBy('Ts 287/26').powiazana}" /></div>
+        <div class="row"><ui:repeat value="#{komponenty.flagi}" var="f"><tk:flag value="#{f}" /></ui:repeat></div>
+        <p class="hint">Flaga pokazuje się tylko, gdy jest aktywna. Każda ma ikonę i tekst.</p>
+      </section>
+    </div>
+    <section class="card" aria-labelledby="k-case">
+      <div class="card-h"><h2 id="k-case">Kafelek sprawy</h2><span class="tag info">p:panel</span><span class="mut">pulpit, wyniki wyszukiwania</span></div>
+      <div class="grid g3"><tk:caseTile value="#{demo.caseBy('Ts 312/26')}" /><tk:caseTile value="#{demo.caseBy('Ts 301/26')}" /><tk:caseTile value="#{demo.caseBy('Ts 318/26')}" /></div>
+    </section>
+    <div class="grid g2">
+      <section class="card" aria-labelledby="k-ban">
+        <div class="card-h"><h2 id="k-ban">Baner kontekstowy</h2><span class="tag info">p:messages (closable=false)</span></div>
+        <tk:banner tone="ro" icon="lock" title="#{msg['common.readOnly']}" text="Sprawa zakończona 24.10.2026. Dalsze czynności w SK 41/26." />
+        <tk:banner tone="an" icon="user-off" title="#{msg['common.anonymised']}" text="#{msg['common.anonymised.text']}" />
+        <div class="e-env" style="border-radius: 10px;">#{msg['app.testBanner']}</div>
+        <tk:banner icon="shield" title="Działasz na podstawie upoważnienia z 30.10.2026" text="(ważne do 31.12.2026)" />
+      </section>
+      <section class="card" aria-labelledby="k-dlg">
+        <div class="card-h"><h2 id="k-dlg">Okno potwierdzenia czynności nieodwracalnej</h2><span class="tag info">p:confirmDialog</span></div>
+        <div class="dlg-demo">
+          <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="k-dlg-h">
+            <div class="dh"><tk:icon name="alert-triangle" color="#5C3700" /><h2 id="k-dlg-h">Wysłać zarządzenie do pełnomocnika?</h2></div>
+            <div class="db"><p><b>Zarządzenie o usunięciu braków</b> · Ts 312/26 · 2 strony · podpisane 28.10.2026</p><h3 class="fs15">Skutki</h3><tk:effects value="#{komponenty.skutki}" /></div>
+            <div class="df"><button type="button" class="btn">#{msg['common.cancel']}</button><button type="button" class="btn p">Wyślij</button></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <section class="card" aria-labelledby="k-sta">
+      <div class="card-h"><h2 id="k-sta">Stany: pusty, ładowanie, błąd, potwierdzenie</h2><span class="tag info">p:dataTable emptyMessage · p:skeleton · p:messages · p:growl</span></div>
+      <div class="grid g4">
+        <div class="tw"><tk:empty title="Nie masz zadań na dziś" text="Nowe zadania pojawią się tutaj."><button type="button" class="btn s">Pokaż zadania zespołu</button></tk:empty></div>
+        <div class="tw" aria-busy="true"><div style="padding: 20px; display: flex; flex-direction: column; gap: 12px;"><b>Wczytywanie zadań…</b><span class="skel w8"></span><span class="skel w6"></span><span class="skel w8"></span><span class="skel w4"></span></div></div>
+        <div class="tw"><tk:empty icon="alert-circle" error="true" title="Nie udało się wczytać listy" text="#{fmt.msg('common.adminCode', 'RTS-503-7F2A')}"><button type="button" class="btn s">#{msg['common.retry']}</button></tk:empty></div>
+        <div class="tw" style="position: relative; min-height: 200px;"><div class="growl" role="status" style="position: static; width: auto; margin: 20px;"><tk:icon name="check" /><span><b>Zapisano.</b><br />Pismo DW 2026/04812 zarejestrowano 03.11.2026 08:42.</span></div></div>
+      </div>
+      <p class="hint">Growl tylko dla potwierdzeń. Błędy formularza zawsze w p:messages nad formularzem i pod polem.</p>
+    </section>
+  </ui:define>
+</ui:composition>

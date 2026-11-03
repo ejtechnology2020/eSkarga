@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/system.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core" xmlns:ui="jakarta.faces.facelets" xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Błąd systemu z kodem dla administratora; bez stosu wywołań i szczegółów technicznych. -->
+  <ui:define name="title">Błąd systemu</ui:define>
+  <ui:define name="content">
+    <span class="code" aria-hidden="true">500</span>
+    <h1 id="sys-h" class="h1-26">#{msg['sys.500.title']}</h1>
+    <p>#{msg['sys.500.text']}</p>
+    <dl class="dl"><dt>Kod dla administratora</dt><dd class="mono"><b>#{errorCode.code}</b> <button type="button" class="btn s q">#{msg['common.copyToClipboard']}</button></dd><dt>Kontakt</dt><dd>pomoc techniczna, wewn. 2100</dd></dl>
+    <div class="row"><button type="button" class="btn p" onclick="window.location.reload()">#{msg['common.retry']}</button><h:link outcome="/pulpit" styleClass="btn" value="#{msg['sys.backToDesk']}" /></div>
+  </ui:define>
+</ui:composition>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html"
+              xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Wskaźnik terminu (p:tag + p:progressBar): rodzaj, data, „za N dni”, pasek postępu.
+       Warianty: normalny, ≤ 2 dni (ostrzegawczy), po terminie (krytyczny), wstrzymany, pomocniczy (art. 77), brak. -->
+  <cc:interface>
+    <cc:attribute name="value" required="true" type="pl.ejtechnology.tk.eSkarga.web.model.DeadlineView" />
+  </cc:interface>
+  <cc:implementation>
+    <h:panelGroup rendered="#{not empty cc.attrs.value}">
+      <span class="term #{cc.attrs.value.state.css()}">
+        <tk:icon name="#{cc.attrs.value.icon()}" />
+        <span>
+          <h:outputText rendered="#{cc.attrs.value.prefix}" value="#{msg['deadline.'.concat(cc.attrs.value.type)]}: " styleClass="b" />
+          <h:outputText value="#{cc.attrs.value.text}" />
+        </span>
+        <h:panelGroup rendered="#{cc.attrs.value.hasBar()}" styleClass="bar">
+          <span style="width: #{cc.attrs.value.progress}%;"></span>
+        </h:panelGroup>
+      </span>
+    </h:panelGroup>
+  </cc:implementation>
+</ui:component>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html lang="pl" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="primefaces"
+      xmlns:tk="jakarta.faces.composite/tk">
+<!-- Szkielet aplikacji (brief §4.1): górny pasek, menu boczne zależne od roli, okruszki,
+     tytuł z paskiem akcji, treść, stopka. Kolejność fokusu: pasek → menu → okruszki → tytuł → akcje → treść. -->
+<h:head>
+  <f:facet name="first">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="same-origin" />
+  </f:facet>
+  <title><ui:insert name="title">Ekran</ui:insert> – #{msg['app.name']}</title>
+  <h:outputStylesheet library="css" name="eskarga.css" />
+  <h:outputScript library="js" name="eskarga.js" target="body" />
+  <ui:insert name="head" />
+</h:head>
+<h:body styleClass="e-app">
+  <ui:param name="navMini" value="#{empty navMini ? false : navMini}" />
+  <ui:include src="/WEB-INF/includes/top.xhtml" />
+  <div class="e-body">
+    <div class="e-navwrap #{navMini ? 'mini' : ''}">
+      <ui:include src="/WEB-INF/includes/menu.xhtml">
+        <ui:param name="mini" value="#{navMini}" />
+      </ui:include>
+    </div>
+    <main id="tresc" class="e-main #{empty mainClass ? '' : mainClass}" tabindex="-1">
+      <ui:insert name="crumbs">
+        <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}">
+          <ol>
+            <li><h:link outcome="/pulpit">#{menu.currentGroupLabel}</h:link></li>
+            <li><span aria-current="page"><ui:insert name="crumbCurrent">#{menu.currentLabel}</ui:insert></span></li>
+          </ol>
+        </nav>
+      </ui:insert>
+      <ui:insert name="banners" />
+      <ui:insert name="titlebar">
+        <div class="e-titlebar">
+          <div class="tt">
+            <p class="eyebrow"><ui:insert name="eyebrow">#{menu.current.briefId()}</ui:insert></p>
+            <h1><ui:insert name="heading"><ui:insert name="title" /></ui:insert></h1>
+            <p class="mut"><ui:insert name="subtitle" /></p>
+          </div>
+          <div class="acts"><ui:insert name="actions" /></div>
+        </div>
+      </ui:insert>
+      <p:growl id="growl" showDetail="true" life="8000" />
+      <ui:insert name="content" />
+      <ui:include src="/WEB-INF/includes/footer.xhtml" />
+    </main>
+  </div>
+  <div id="e-live" class="sr" aria-live="polite"></div>
+  <ui:insert name="dialogs" />
+</h:body>
+</html>

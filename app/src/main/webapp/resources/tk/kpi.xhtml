@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html">
+  <!-- Kafelek liczbowy (p:panel z liczbą i opisem). Klik filtruje tabelę. Kolor tylko, gdy znaczy; zawsze z tekstem. -->
+  <cc:interface>
+    <cc:attribute name="value" required="true" type="pl.ejtechnology.tk.eSkarga.web.model.KpiTile" />
+  </cc:interface>
+  <cc:implementation>
+    <a class="#{cc.attrs.value.cssClass()}" href="#{empty cc.attrs.value.href ? '#' : cc.attrs.value.href}">
+      <span class="v">#{cc.attrs.value.value}</span>
+      <span class="l">#{cc.attrs.value.label}</span>
+      <span class="h">#{cc.attrs.value.hint}</span>
+    </a>
+  </cc:implementation>
+</ui:component>

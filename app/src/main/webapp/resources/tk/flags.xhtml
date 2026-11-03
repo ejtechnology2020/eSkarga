@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html"
+              xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Zestaw flag sprawy. -->
+  <cc:interface>
+    <cc:attribute name="value" required="true" />
+  </cc:interface>
+  <cc:implementation>
+    <ui:repeat value="#{cc.attrs.value.toArray()}" var="f">
+      <tk:flag value="#{f}" />
+    </ui:repeat>
+  </cc:implementation>
+</ui:component>

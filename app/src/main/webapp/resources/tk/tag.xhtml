@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html"
+              xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Dowolna etykieta tekstowa z tonem (p:tag). -->
+  <cc:interface>
+    <cc:attribute name="value" required="true" />
+    <cc:attribute name="tone" type="pl.ejtechnology.tk.eSkarga.domain.Tone" />
+    <cc:attribute name="icon" default="" />
+    <cc:attribute name="title" default="" />
+  </cc:interface>
+  <cc:implementation>
+    <span class="tag #{empty cc.attrs.tone ? '' : cc.attrs.tone.css()}" title="#{empty cc.attrs.title ? null : cc.attrs.title}">
+      <h:panelGroup rendered="#{not empty cc.attrs.icon}"><tk:icon name="#{cc.attrs.icon}" /></h:panelGroup>
+      <h:outputText value="#{cc.attrs.value}" />
+    </span>
+  </cc:implementation>
+</ui:component>

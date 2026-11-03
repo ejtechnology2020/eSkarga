@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html"
+              xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Sygnatura (p:commandLink + p:tag): link do akt sprawy, opcjonalny przycisk kopiowania i sprawa powiązana. -->
+  <cc:interface>
+    <cc:attribute name="value" required="true" type="pl.ejtechnology.tk.eSkarga.domain.DocketNumber" />
+    <cc:attribute name="related" type="pl.ejtechnology.tk.eSkarga.domain.DocketNumber" />
+    <cc:attribute name="copy" default="false" />
+    <cc:attribute name="link" default="true" />
+  </cc:interface>
+  <cc:implementation>
+    <span class="sig">
+      <h:link rendered="#{cc.attrs.link and cc.attrs.value.symbol().isManagedHere()}" outcome="/akta/podglad" value="#{cc.attrs.value.format()}">
+        <f:param name="sygnatura" value="#{cc.attrs.value.format()}" xmlns:f="jakarta.faces.core" />
+      </h:link>
+      <h:outputText rendered="#{not (cc.attrs.link and cc.attrs.value.symbol().isManagedHere())}" value="#{cc.attrs.value.format()}" />
+      <h:panelGroup rendered="#{cc.attrs.copy}">
+        <button type="button" class="cp" data-action="copy-sig" data-sig="#{cc.attrs.value.format()}"
+                aria-label="#{fmt.msg('common.copySig', cc.attrs.value.format())}"><tk:icon name="copy" /></button>
+      </h:panelGroup>
+      <h:panelGroup rendered="#{not empty cc.attrs.related}">
+        <span class="rel">→</span><a href="#">#{cc.attrs.related.format()}</a>
+      </h:panelGroup>
+    </span>
+  </cc:implementation>
+</ui:component>

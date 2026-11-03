@@ -1,0 +1,30 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+dependency-reduced-pom.xml
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# Środowisko dev – sekrety nigdy do repozytorium
+infra/docker/.env
+*.env.local
+
+# Logi i pliki tymczasowe
+*.log
+*.swp
+.DS_Store
+
+# Node (testy Playwright)
+node_modules/
+test-results/
+playwright-report/

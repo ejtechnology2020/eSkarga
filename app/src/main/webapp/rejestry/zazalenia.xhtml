@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:jsf="jakarta.faces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-11 Rejestr zażaleń (UC-11): doręczenie odmowy, wniesienie, ocena terminowości (pomocnicza), skład, posiedzenie, wynik. -->
+  <ui:define name="title">Rejestr zażaleń</ui:define>
+  <ui:define name="eyebrow">S-11 · 2026</ui:define>
+  <ui:define name="subtitle">Zażalenia na postanowienia o odmowie nadania dalszego biegu. Ocena terminowości jest pomocnicza — ostatecznie ocenia skład.</ui:define>
+  <ui:define name="actions"><button type="button" class="btn">#{msg['common.exportXlsx']}</button><button type="button" class="btn p">Zarejestruj zażalenie</button></ui:define>
+  <ui:define name="content">
+    <h:form id="zf">
+      <section class="tw" aria-labelledby="h-z">
+        <div class="tt"><h2 id="h-z" class="h2-17">Zażalenia</h2><span class="count">#{rejestry.zazalenia.size()}</span><span class="sp"></span>
+          <div class="saved" role="group" aria-label="#{msg['common.savedFilters']}"><button type="button" class="chip" aria-pressed="false">Czekam na wpływ · 1</button><button type="button" class="chip" aria-pressed="false">Po terminie · 1</button></div>
+          <div class="dens" role="group" aria-label="#{msg['common.density']}">
+            <p:commandButton value="#{msg['common.compact']}" action="#{rejestry.setComfy(false)}" update="zf" styleClass="q" pt:aria-pressed="#{not rejestry.comfy}" />
+            <p:commandButton value="#{msg['common.comfy']}" action="#{rejestry.setComfy(true)}" update="zf" styleClass="q" pt:aria-pressed="#{rejestry.comfy}" /></div></div>
+        <p:dataTable value="#{rejestry.zazalenia}" var="z" rowStyleClass="#{z.rowClass()}" styleClass="#{rejestry.comfy ? 'comfy' : ''}" summary="Rejestr zażaleń 2026">
+          <p:column headerText="Sygnatura" filterBy="#{z.sprawa.format()}" filterMatchMode="contains"><tk:sig value="#{z.sprawa}" /><h:panelGroup rendered="#{z.flagi.size() gt 0}"><br /><tk:flags value="#{z.flagi}" /></h:panelGroup></p:column>
+          <p:column headerText="Doręczenie odmowy">#{fmt.date(z.doreczenieOdmowy)}</p:column>
+          <p:column headerText="Wniesienie zażalenia"><h:outputText value="#{fmt.date(z.wniesienie)}" rendered="#{not empty z.wniesienie}" /> <span class="mut">#{z.wniesienieUwaga}</span></p:column>
+          <p:column headerText="Terminowość (pomocniczo)"><tk:deadline value="#{z.terminowosc}" /><h:panelGroup rendered="#{not empty z.terminowoscTag}"><tk:tag value="#{z.terminowoscTag}" tone="#{z.terminowoscTone}" icon="check" /></h:panelGroup></p:column>
+          <p:column headerText="Skład">#{empty z.sklad ? '—' : z.sklad}</p:column>
+          <p:column headerText="Posiedzenie"><tk:deadline value="#{z.posiedzenieTermin}" /><h:outputText rendered="#{empty z.posiedzenieTermin}" value="#{empty z.posiedzenie ? '—' : z.posiedzenie}" /></p:column>
+          <p:column headerText="Wynik"><h:panelGroup rendered="#{not empty z.wynik}"><tk:tag value="#{z.wynik}" tone="#{z.wynikTone}" /></h:panelGroup><h:outputText rendered="#{empty z.wynik}" value="—" /></p:column>
+          <p:column headerText="#{msg['common.actions']}"><h:outputLink value="#{request.contextPath}#{z.akcjaUrl}" styleClass="btn s" rendered="#{z.akcjaUrl ne '#'}">#{z.akcja}</h:outputLink><button type="button" class="btn s" jsf:rendered="#{z.akcjaUrl eq '#'}">#{z.akcja}</button></p:column>
+        </p:dataTable>
+        <div class="pager"><span class="mut">#{fmt.msg('common.rows', 1, rejestry.zazalenia.size(), rejestry.zazalenia.size())}</span></div>
+      </section>
+    </h:form>
+  </ui:define>
+</ui:composition>

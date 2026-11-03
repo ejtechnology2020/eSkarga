@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-21 Przekazanie do archiwum (UC-21): lista spraw zamkniętych, spis zdawczo-odbiorczy (podgląd PDF), potwierdzenie; stan=blad – brak PDF/A. -->
+  <f:metadata><f:viewParam name="stan" value="#{archiwum.stan}" /></f:metadata>
+  <ui:param name="mainClass" value="rel" />
+  <ui:define name="title">Przekazanie do archiwum</ui:define>
+  <ui:define name="eyebrow">S-21</ui:define>
+  <ui:define name="subtitle">Sprawy zamknięte, których akta można przekazać. Każdy dokument musi być w formacie PDF/A.</ui:define>
+  <ui:define name="actions">
+    <h:form id="af" styleClass="row"><button type="button" class="btn">Generuj spis zdawczo-odbiorczy</button>
+      <p:commandButton value="Potwierdź przekazanie" action="#{archiwum.setDialog(true)}" update="dlg" oncomplete="PF('dlgArch').show()" styleClass="p" disabled="#{archiwum.bladPdfa}" process="@this" /></h:form>
+  </ui:define>
+  <ui:define name="content">
+    <tk:message rendered="#{archiwum.bladPdfa}" tone="err" icon="alert-circle" role="alert"><b>Nie można przekazać Ts 240/26.</b> Brakuje dokumentu PDF/A: k. 31 (zażalenie, skan TIFF). Poproś referenta o konwersję albo odznacz sprawę. <a href="#">Pokaż dokument</a></tk:message>
+    <div class="flow">
+      <section class="main tw fb820" aria-labelledby="h-a">
+        <div class="tt"><h2 id="h-a" class="h2-17">Sprawy zamknięte</h2><span class="count">#{archiwum.rows.size()}</span></div>
+        <p:dataTable value="#{archiwum.rows}" var="r" rowStyleClass="#{r.rowClass()}" summary="Sprawy do przekazania do archiwum">
+          <p:column styleClass="chk"><input type="checkbox" class="chk22" checked="#{r.zaznaczona ? 'checked' : null}" disabled="#{r.dostepna ? null : 'disabled'}" aria-label="#{fmt.msg('common.select', r.sprawa.format())}" /></p:column>
+          <p:column headerText="Sygnatura"><tk:sig value="#{r.sprawa}" /></p:column>
+          <p:column headerText="Zakończenie">#{r.zakonczenie}</p:column>
+          <p:column headerText="Kategoria archiwalna">#{r.kategoria}</p:column>
+          <p:column headerText="Przechowywanie">#{r.przechowywanie}</p:column>
+          <p:column headerText="Kompletność"><tk:tag value="#{r.kompletnosc}" tone="#{r.kompletnoscTone}" /></p:column>
+        </p:dataTable>
+      </section>
+      <section class="side card np fb560" aria-labelledby="h-sp">
+        <div class="pane-h"><b id="h-sp">Spis zdawczo-odbiorczy · podgląd</b><span class="sp"></span><button type="button" class="btn s">Pobierz PDF</button></div>
+        <div class="viewer pad14">
+          <tk:paper label="Podgląd spisu zdawczo-odbiorczego" styleClass="sm">
+            <h2 class="fs15">SPIS ZDAWCZO-ODBIORCZY nr 14/2026</h2>
+            <p>Komórka przekazująca: Wydział Weryfikacyjny · Data: 03.11.2026</p>
+            <table class="ptbl"><thead><tr><th>Lp.</th><th>Znak akt</th><th>Tytuł</th><th>Daty skrajne</th><th>Kat.</th><th>Karty</th></tr></thead>
+              <tbody><tr><td>1</td><td>Ts 240/26</td><td>Skarga konstytucyjna L. Z.</td><td>2026–2026</td><td>B10</td><td>34</td></tr></tbody></table>
+            <p style="margin-top: 20px;">Przekazał: ……………… Przyjął: Jan Archiwalny</p>
+          </tk:paper>
+        </div>
+      </section>
+    </div>
+    <h:form id="df">
+      <p:dialog id="dlg" widgetVar="dlgArch" header="Potwierdzić przekazanie 1 sprawy do archiwum?" modal="true" visible="#{archiwum.dialog}" closable="false" width="680" responsive="true">
+        <tk:effects value="#{archiwum.skutki}" />
+        <f:facet name="footer"><p:commandButton value="#{msg['common.cancel']}" action="#{archiwum.setDialog(false)}" update="dlg" oncomplete="PF('dlgArch').hide()" process="@this" /><p:commandButton value="Przekaż" styleClass="p" oncomplete="PF('dlgArch').hide()" /></f:facet>
+      </p:dialog>
+    </h:form>
+  </ui:define>
+</ui:composition>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html">
+  <!-- Słupki poziome (p:chart · bar) z wartością w tekście obok każdego słupka. -->
+  <cc:interface>
+    <cc:attribute name="value" required="true" />
+    <cc:attribute name="wide" default="false" />
+  </cc:interface>
+  <cc:implementation>
+    <div class="hbars" role="list">
+      <ui:repeat value="#{cc.attrs.value}" var="b">
+        <div class="hbar #{cc.attrs.wide ? 'wide' : ''}" role="listitem">
+          <span>#{b.label}</span>
+          <span class="tr"><span class="#{b.warn ? 'warn' : ''}" style="width: #{b.percent}%;"></span></span>
+          <span class="v">#{b.value}</span>
+        </div>
+      </ui:repeat>
+    </div>
+  </cc:implementation>
+</ui:component>

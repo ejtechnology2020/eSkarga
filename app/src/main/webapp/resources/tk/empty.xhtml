@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html"
+              xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Stan pusty / błąd listy: krótki tekst + akcja (p:dataTable emptyMessage). -->
+  <cc:interface>
+    <cc:attribute name="icon" default="empty" />
+    <cc:attribute name="title" required="true" />
+    <cc:attribute name="text" default="" />
+    <cc:attribute name="error" default="false" />
+  </cc:interface>
+  <cc:implementation>
+    <div class="empty">
+      <tk:icon name="#{cc.attrs.icon}" size="xl" color="#{cc.attrs.error ? '#7E1A1A' : ''}" />
+      <b>#{cc.attrs.title}</b>
+      <h:outputText rendered="#{not empty cc.attrs.text}" styleClass="mut" value="#{cc.attrs.text}" />
+      <cc:insertChildren />
+    </div>
+  </cc:implementation>
+</ui:component>

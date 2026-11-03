@@ -19,7 +19,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
 
 ## Etap 0. Fundament
 
-### [ ] T-001 Szkielet repozytorium i budowania
+### [x] T-001 Szkielet repozytorium i budowania
 - **Cel:** projekt Maven multi-module zgodny ze strukturą z `CLAUDE.md`.
 - **Zakres:**
     - parent `pom.xml` z Java 21, BOM-ami Operaton 2.2, Jakarta EE 11 i PrimeFaces 15 (`jakarta`);
@@ -27,12 +27,12 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - Maven Enforcer (wersja Javy, zakaz duplikatów zależności), formatowanie kodu, `.editorconfig`, `.gitignore`;
     - szkielet `docs/adr/0001-stos-technologiczny.md` z decyzjami D1–D13.
 - **Kryteria akceptacji:**
-    - [ ] `mvn -B verify` przechodzi na pustym projekcie;
-    - [ ] WAR-y budują się bez ostrzeżeń o konfliktach wersji.
+    - [x] `mvn -B verify` przechodzi na pustym projekcie;
+    - [x] WAR-y budują się bez ostrzeżeń o konfliktach wersji.
 - **Zależności:** brak. **Odwołania:** D2, D9.
 - **Ustalone:** pakiet bazowy `pl.ejtechnology.tk.eSkarga`, groupId `pl.ejtechnology.tk`, artifactId `eskarga-*` (3.11.2026).
 
-### [ ] T-002 Środowisko dev w Docker Compose
+### [~] T-002 Środowisko dev w Docker Compose
 - **Cel:** jedno polecenie uruchamia całe środowisko deweloperskie.
 - **Zakres** (`infra/docker/compose.yml`):
     - obraz dystrybucji Operaton dla WildFly 41 z montowanym katalogiem `deployments/`;
@@ -46,7 +46,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - [ ] README opisuje porty i loginy testowe.
 - **Zależności:** T-001. **Odwołania:** D11.
 
-### [ ] T-003 Baza danych i migracje
+### [~] T-003 Baza danych i migracje
 - **Cel:** schematy `repertorium` i `operaton` w jednej bazie, jedno źródło danych w WildFly.
 - **Zakres:**
     - definicja datasource w CLI WildFly (skrypt `.cli` w repozytorium);
@@ -58,7 +58,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - [ ] test integracyjny potwierdza brak uprawnień UPDATE/DELETE dla roli aplikacji.
 - **Zależności:** T-002. **Odwołania:** D1, NFR-01.
 
-### [ ] T-004 Logowanie OIDC przez ID-users
+### [~] T-004 Logowanie OIDC przez ID-users
 - **Cel:** użytkownik loguje się przez ID-users, a aplikacja zna jego tożsamość, role i poziom uwierzytelnienia.
 - **Zakres:**
     - `@OpenIdAuthenticationMechanismDefinition` (albo `elytron-oidc-client`, uzasadnij w ADR), Authorization Code + PKCE, klient poufny;
@@ -75,7 +75,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - [ ] ADR z nazwami claimów do potwierdzenia z zespołem ID-users.
 - **Zależności:** T-002. **Odwołania:** D3, NFR-04. **[zaślepka]** kontrakt ID-users.
 
-### [ ] T-005 Szablon interfejsu JSF
+### [~] T-005 Szablon interfejsu JSF
 - **Cel:** wspólny layout, nawigacja i komunikaty dla wszystkich ekranów.
 - **Zakres:**
     - szablon Facelets (nagłówek z użytkownikiem i rolą, menu zależne od roli, obszar treści);
@@ -83,9 +83,9 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - `messages_pl.properties`, strony błędów 403, 404 i 500 bez szczegółów technicznych;
     - nagłówki bezpieczeństwa (CSP, HSTS, X-Frame-Options, Referrer-Policy) przez filtr.
 - **Kryteria akceptacji:**
-    - [ ] ekran startowy działa po zalogowaniu;
-    - [ ] audyt axe-core bez błędów krytycznych;
-    - [ ] CSP bez `unsafe-eval`.
+    - [~] ekran startowy działa po zalogowaniu (pulpit gotowy; uruchomienie na WildFly do potwierdzenia, brak serwera w sesji);
+    - [ ] audyt axe-core bez błędów krytycznych (wymaga uruchomionej aplikacji);
+    - [x] CSP bez `unsafe-eval` (`primefaces.CSP=true`, polityka w `web.xml`).
 - **Zależności:** T-004. **Odwołania:** NFR-10.
 
 ### [ ] T-006 Potok CI
@@ -127,14 +127,14 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - [ ] zdarzenie w dzienniku audytu.
 - **Zależności:** T-010, T-015. **Odwołania:** FR-01 – FR-03, UC-01.
 
-### [ ] T-012 Generator sygnatur (BR-01)
+### [~] T-012 Generator sygnatur (BR-01)
 - **Cel:** sygnatury Ts n/rr i Tw n/rr bez luk i duplikatów.
 - **Zakres:**
     - `DocketNumberService`: tabela `docket_counter(symbol, year, last_value)` z `SELECT … FOR UPDATE` w transakcji wywołującego;
     - reset numeracji co rok.
 - **Kryteria akceptacji:**
-    - [ ] test współbieżności: 50 równoległych transakcji, w tym 10 wycofanych, daje numery 1…40 bez luk;
-    - [ ] numer nigdy nie jest używany ponownie.
+    - [x] test współbieżności: 50 równoległych transakcji, w tym 10 wycofanych, daje numery 1…40 bez luk (`DocketNumberAllocatorTest`, repozytorium w pamięci; wersja na PostgreSQL/Testcontainers do dodania);
+    - [x] numer nigdy nie jest używany ponownie.
 - **Zależności:** T-010. **Odwołania:** BR-01, FR-06.
 
 ### [ ] T-013 Kwalifikacja pisma i założenie sprawy (UC-02, UC-03, UC-04)
@@ -157,7 +157,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - [ ] historia widoczna w karcie sprawy.
 - **Zależności:** T-013. **Odwołania:** FR-08, NFR-01.
 
-### [ ] T-015 Dziennik zdarzeń z łańcuchem skrótów
+### [~] T-015 Dziennik zdarzeń z łańcuchem skrótów
 - **Cel:** niezaprzeczalny ślad każdej czynności i każdego odczytu dokumentu.
 - **Zakres:**
     - `AuditService` (interceptor CDI i wywołania jawne);
@@ -165,11 +165,11 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - wysyłka do SIEM (syslog JSON);
     - polecenie weryfikacji łańcucha.
 - **Kryteria akceptacji:**
-    - [ ] test: modyfikacja wpisu w bazie jest wykrywana przez weryfikator;
+    - [x] test: modyfikacja wpisu w bazie jest wykrywana przez weryfikator (`AuditChainTest`);
     - [ ] 100% czynności z UC-01 – UC-24 generuje zdarzenia.
 - **Zależności:** T-003. **Odwołania:** NFR-02.
 
-### [ ] T-016 Uprawnienia do spraw i upoważnienia
+### [~] T-016 Uprawnienia do spraw i upoważnienia
 - **Cel:** kontrola dostępu na poziomie sprawy oraz czynności „za Prezesa”.
 - **Zakres:**
     - `CaseAccessPolicy` (przydział sędziego, zespołu, referenta; role ogólne);
@@ -178,15 +178,15 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - ekran administracji upoważnieniami;
     - raport przeglądu uprawnień.
 - **Kryteria akceptacji:**
-    - [ ] testy: asystent nie widzi notatek spraw innego sędziego;
-    - [ ] czynność Prezesa bez ważnego upoważnienia → odmowa i zdarzenie audytu.
+    - [x] testy: asystent nie widzi notatek spraw innego sędziego (`CaseAccessPolicyTest`);
+    - [~] czynność Prezesa bez ważnego upoważnienia → odmowa (reguła i ekran S-17 gotowe) i zdarzenie audytu (po podłączeniu `AuditService`).
 - **Zależności:** T-004, T-010. **Odwołania:** D4, BR-10, FR-36.
 
 ---
 
 ## Etap 2. Proces wstępnej kontroli
 
-### [ ] T-020 Model BPMN w aplikacji
+### [~] T-020 Model BPMN w aplikacji
 - **Cel:** dostosowany model `wstepna-kontrola.bpmn` wdrażany przez process application.
 - **Zakres:**
     - skopiuj `tk_wstepna_kontrola_Ts_Tw.bpmn`;
@@ -198,11 +198,11 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - `processes.xml`, klasa `@ProcessApplication` (EJB);
     - tylko identyfikatory w zmiennych procesu.
 - **Kryteria akceptacji:**
-    - [ ] model wdraża się w dev;
-    - [ ] żadna zmienna procesu nie zawiera danych osobowych (test sprawdzający nazwy i typy zmiennych).
+    - [~] model wdraża się w dev (wdraża się i przechodzi testy na silniku H2; wdrożenie na WildFly do potwierdzenia);
+    - [x] żadna zmienna procesu nie zawiera danych osobowych (`ProcessVariablesTest`, `WstepnaKontrolaProcessTest`).
 - **Zależności:** T-002, T-004. **Odwołania:** D1, D6, D8, D9.
 
-### [ ] T-021 Testy procesowe
+### [x] T-021 Testy procesowe
 - **Cel:** każda ścieżka modelu ma test.
 - **Zakres** (`operaton-bpm-assert`):
     - nadanie biegu od razu;
@@ -214,8 +214,8 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - zażalenie uwzględnione → nadanie biegu;
     - pismo ogólne.
 - **Kryteria akceptacji:**
-    - [ ] 100% przejść (sequence flow) pokrytych;
-    - [ ] testy w CI.
+    - [x] 100% przejść (sequence flow) pokrytych (8 testów: pismo ogólne, nadanie biegu, braki uzupełnione, braki nieuzupełnione → odmowa prawomocna, zażalenie spóźnione, nieuwzględnione, uwzględnione, zmienne bez danych osobowych);
+    - [ ] testy w CI (T-006 [decyzja] platforma CI).
 - **Zależności:** T-020. **Odwołania:** UC-07, UC-10 – UC-12.
 
 ### [ ] T-022 Pulpit zadań (UC-18)
@@ -250,7 +250,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - [ ] testy DMN dla skargi i wniosku.
 - **Zależności:** T-020. **Odwołania:** FR-11, FR-13, BR-05.
 
-### [ ] T-025 Kalkulator terminów (BR-02 – BR-04)
+### [~] T-025 Kalkulator terminów (BR-02 – BR-04)
 - **Cel:** poprawne wyliczanie terminów 7-dniowych i 3-miesięcznych.
 - **Zakres:**
     - `DeadlineCalculator`: początek od doręczenia, dni wolne z konfigurowalnego kalendarza, przesunięcie na dzień roboczy;
@@ -258,12 +258,12 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - data nadania pocztowego lub UPO jako data wniesienia;
     - aktualizacja zmiennej i timera przy korekcie doręczenia.
 - **Kryteria akceptacji:**
-    - [ ] testy parametryczne na ≥ 30 przypadkach (święta ruchome, koniec miesiąca, rok przestępny, wstrzymanie);
-    - [ ] w UI termin opisany jako „wyliczenie pomocnicze”.
+    - [x] testy parametryczne na ≥ 30 przypadkach (`DeadlineCalculatorTest`: 40 przypadków – święta ruchome, koniec miesiąca, rok przestępny, wstrzymanie);
+    - [x] w UI termin opisany jako „wyliczenie pomocnicze” (wskaźnik `aux`, S-07, S-14, S-18).
 - **Zależności:** T-010. **Odwołania:** D6, FR-12, FR-17.
 - **[decyzja]** zasady liczenia (dni wolne, doręczenie zastępcze) – do potwierdzenia przez Biuro Służby Prawnej.
 
-### [ ] T-026 Pisma z szablonów – FreeMarker + OpenHTMLtoPDF (D13)
+### [~] T-026 Pisma z szablonów – FreeMarker + OpenHTMLtoPDF (D13)
 - **Cel:** projekty pism generowane z danych sprawy jako PDF/A-2b.
 - **Zakres:**
     - w `docs-service`: `TemplateRenderer` (Apache FreeMarker 2.3.x, wersja z BOM-u w parent pom) i `PdfRenderer` (OpenHTMLtoPDF, `io.github.openhtmltopdf`, tryb PDF/A-2b) za interfejsami;
@@ -277,7 +277,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
 - **Kryteria akceptacji:**
     - [ ] każdy szablon generuje PDF, który przechodzi veraPDF (PDF/A-2b);
     - [ ] braki zaznaczone na liście kontrolnej trafiają do treści zarządzenia;
-    - [ ] testy piaskownicy i testy na znakach diakrytycznych przechodzą;
+    - [x] testy piaskownicy i testy na znakach diakrytycznych przechodzą (`FreemarkerSandboxTest`);
     - [ ] testy wizualne: porównanie wygenerowanego PDF z wzorcem z dopuszczalną różnicą;
     - [ ] generowanie jednego pisma trwa poniżej 2 s.
 - **Zależności:** T-024, T-031. **Odwołania:** FR-15, FR-16, D13.
@@ -360,7 +360,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - [ ] brak wyników ze spraw bez uprawnień.
 - **Zależności:** T-031, T-016. **Odwołania:** FR-31, NFR-08.
 
-### [ ] T-033 Ekran podglądu akt – układ i dane
+### [~] T-033 Ekran podglądu akt – układ i dane
 - **Cel:** ekran zgodny z briefem (sekcje 3–5).
 - **Zakres:**
     - stały nagłówek sprawy (sygnatura, status, biegnący termin, flagi, akcje);
@@ -370,9 +370,9 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - warianty ról i statusów;
     - dokument niejawny jako plansza bez podglądu.
 - **Kryteria akceptacji:**
-    - [ ] sygnatura, status i termin widoczne bez przewijania w 1366×768;
-    - [ ] warianty z §5 briefu;
-    - [ ] axe-core bez błędów krytycznych.
+    - [~] sygnatura, status i termin widoczne bez przewijania w 1366×768 (układ z makiety R14; do sprawdzenia w przeglądarce);
+    - [x] warianty z §5 briefu (`?widok=asystent|referent|anonim|zakonczona|lista|dzielony`, statusy z `CaseSummary`);
+    - [ ] axe-core bez błędów krytycznych (wymaga uruchomionej aplikacji).
 - **Zależności:** T-022, T-030. **Odwołania:** brief, FR-23.
 
 ### [ ] T-034 Widżet PDF (pdf.js)
@@ -454,7 +454,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - [ ] korekta daty przelicza termin i timer.
 - **Zależności:** T-025, T-020. **Odwołania:** FR-25, FR-26.
 
-### [ ] T-042 Szkielet workerów integracji
+### [~] T-042 Szkielet workerów integracji
 - **Cel:** wspólna baza dla wszystkich integracji.
 - **Zakres:**
     - moduł `workers` z `operaton-external-task-client`;
@@ -555,3 +555,21 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
 ## Notatki z realizacji
 
 Po każdym zadaniu dopisz tu jedną linię w formacie: `T-xxx – data – co zrobiono, co zostało, link do ADR`.
+
+Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
+
+- T-001 – 03.11.2026 – parent `pom.xml` (Java 21, BOM-y Operaton 2.2.0, JUnit 6, Testcontainers, AWS SDK; PrimeFaces 15.0.19 `jakarta`), moduły `app`/`docs-service`/`workers`, Enforcer (Java 21, zakaz duplikatów, zakaz Spring/Quarkus/Lombok w deklaracjach wprost), `.editorconfig`, `.gitignore`; `mvn -B verify` zielone (102 testy). ADR: `docs/adr/0001-stos-technologiczny.md`. Zostało: profil `-Pit` ma konfigurację, ale jeszcze bez testów Testcontainers.
+- Front (paczki 1–4 makiet „eSkarga”) – 03.11.2026 – 27 ekranów S-01…S-27 jako Facelets z szablonem układu (górny pasek, menu zależne od roli, okruszki, tytuł z paskiem akcji, stopka), arkusz CSS z makiet + nakładka PrimeFaces, komponenty kompozytowe `tk:*` (status, termin, sygnatura, flagi, baner, komunikat, kafelek sprawy, KPI, oś czasu, słupki, kartka dokumentu, skutki, stan pusty), strona arkusza komponentów `dev/komponenty.xhtml`, beany `@ViewScoped` zasilane danymi przykładowymi (ADR 0004). Zostało: uruchomienie na WildFly 41 + Operaton (brak serwera i Dockera w sesji), audyt axe-core, testy Playwright, widżet pdf.js (T-034), podmiana `DemoDataset` na usługi domenowe.
+- T-002 – 03.11.2026 – `infra/docker/compose.yml` (obraz dystrybucji Operaton dla WildFly 41 z CLI źródła danych, PostgreSQL 17 z rolami, SeaweedFS, OpenSearch, SoftHSM2, mock OIDC z konfigurowalnymi claimami, WireMock, workery), `.env.example`, README z portami. Zostało: pierwsze uruchomienie (demon Dockera niedostępny w sesji), health check Cockpitu do potwierdzenia.
+- T-003 – 03.11.2026 – skrypt CLI `eskarga-datasource.cli` (XA, schematy `repertorium` + `operaton`), role bazy w `init-roles.sh` (aplikacja bez UPDATE/DELETE, migracje osobno), Flyway V1 (`docket_counter`, `audit_event`, `holiday`, `delegation`) i V2 (model domeny §8.1), `persistence.xml`. Zostało: uruchomienie Flyway przy starcie (bean startowy), test integracyjny braku UPDATE/DELETE, encje JPA poza `DocketCounter`/`AuditEvent` (T-010).
+- T-004 – 03.11.2026 – `OidcSecurityConfig` (Jakarta Security, PKCE, klient poufny), konfigurowalne claimy w `OidcSettings`, `CurrentUser`, tryb `demo` wyłączany rozszerzeniem CDI, ciasteczko `HttpOnly`/`Secure`/`SameSite=Strict` (filtr), wylogowanie. ADR 0002. Zostało: filtr MFA (`acr`/`amr`), interceptor `identityService.setAuthentication`, back-channel logout, test „bez MFA → 403”, test Playwright braku tokenu – wszystko po poznaniu kontraktu ID-users.
+- T-005 – 03.11.2026 – szablon Facelets, motyw (saga + nakładka), `messages_pl.properties`, strony 403/404/500/MFA/sesja (S-26), nagłówki bezpieczeństwa (filtr) i CSP przez PrimeFaces. ADR 0003 (teksty UI). Zostało: audyt axe-core po uruchomieniu.
+- T-012 – 03.11.2026 – `DocketNumberAllocator` + `DocketNumberService` (`SELECT … FOR UPDATE`, `MANDATORY`), test współbieżności 50/10 na repozytorium w pamięci. Zostało: ten sam test na PostgreSQL (Testcontainers).
+- T-015 – 03.11.2026 – `AuditEvent`, `AuditHash` (SHA-256 z poprzednim skrótem), `AuditChainVerifier`, `AuditService` (singleton). Zostało: interceptor CDI na czynnościach, wysyłka syslog JSON do SIEM, polecenie weryfikacji z ekranu S-25, pokrycie 100% czynności.
+- T-016 – 03.11.2026 – `CaseAccessPolicy` (trzy poziomy D4, BR-10) z testami, `ScreenAccessFilter`, ekrany S-22/S-23. Zostało: repozytoria przydziałów i upoważnień (JPA), raport przeglądu uprawnień, zdarzenia audytu przy odmowie.
+- T-020 – 03.11.2026 – `bpmn/wstepna-kontrola.bpmn` (`isExecutable`, `historyTimeToLive=P180D`, grupy `tk-biuro-podawcze`/`tk-referenci`/`tk-prezes`/`tk-sklad`, `assignee=${sedziaId}`, timery `${terminBrakow}`/`${terminZazalenia}`, warunki bramek, `T_Przekaz` jako external task `przekazanie-merytoryczne`), `processes.xml`, `EskargaProcessApplication` (EJB), `ProcessVariables` (lista dozwolonych), `PreliminaryReviewProcess` (start po kluczu = sygnatura, korelacja komunikatów, przestawianie timera). Zostało: `historyTimeToLive` z konfiguracji (Operaton nie przyjmuje wyrażenia – parse listener), external tasks doręczeń w modelu (podproces), wdrożenie na WildFly.
+- T-021 – 03.11.2026 – `WstepnaKontrolaProcessTest` (operaton-bpm-junit5 + assert, H2): 8 ścieżek, wszystkie węzły i przejścia. Zostało: CI (T-006).
+- T-025 – 03.11.2026 – `DeadlineCalculator`, `PolishHolidays` (święta ustawowe + ruchome, dni wolne TK), `Suspension`; 40 przypadków testowych. Zostało: potwierdzenie zasad przez Biuro Służby Prawnej [decyzja], kalendarz z tabeli `holiday`, aktualizacja zmiennej i timera z ekranu S-10.
+- T-026 – 03.11.2026 – `docs-service`: `FreemarkerTemplateRenderer` w piaskownicy (ALLOWS_NOTHING_RESOLVER, bez `?api`, escapowanie HTML, limit czasu i rozmiaru) z 7 testami, `PdfRenderer` + `OpenHtmlToPdfRenderer` (PDF/A-2b), `PdfAValidator` (interfejs), szablon zarządzenia o brakach. Zostało: veraPDF, pozostałe szablony, tabela `letter_template` w użyciu, testy wizualne, czcionki w dev.
+- T-033 – 03.11.2026 – ekran S-14 (`akta/podglad.xhtml`): nagłówek sprawy z terminem, pasek przebiegu, spis akt z zakładkami Akta jawne / Notatki wewnętrzne, podgląd dokumentu (warstwa OCR, dokument niejawny jako plansza), widok dzielony, panel Czynności/Terminy/Lista kontrolna/Metadane, warianty ról i statusów. Zostało: pdf.js (T-034), dane z usług domenowych, axe-core, 1366×768 w przeglądarce.
+- T-042 – 03.11.2026 – moduł `workers` z `operaton-external-task-client`, `AbstractIdempotentHandler` (klucz idempotencji, rosnący odstęp, incydent po 5 próbach), handlery-zaślepki doręczeń i przekazania, konfiguracja ze środowiska, obraz Docker. Zostało: token client credentials z ID-users, test pełnego cyklu z silnikiem, metryki.

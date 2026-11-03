@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:jsf="jakarta.faces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-16 Podpis kwalifikowany (D10): okno dialogowe z krokami (p:steps) otwierane z S-14 lub S-15.
+       Stan przełącza parametr stan=1|2|2-brak-aplikacji|3|3-brak-karty|3-pin|3-cert|3-polaczenie|4|4-weryfikacja|4-sklad. -->
+  <f:metadata><f:viewParam name="stan" value="#{podpis.stan}" /><f:viewAction action="#{podpis.applyState}" /></f:metadata>
+  <ui:param name="navMini" value="#{true}" />
+  <ui:param name="mainClass" value="bare" />
+  <ui:define name="title">Podpis kwalifikowany</ui:define>
+  <ui:define name="crumbs" />
+  <ui:define name="titlebar" />
+  <ui:define name="content">
+    <div class="overlay">
+      <h:form id="pf" styleClass="dialog" style="width: 820px;" pt:role="dialog" pt:aria-modal="true" pt:aria-labelledby="pd-h">
+        <div class="dh"><tk:icon name="pen" color="#233A6B" /><h2 id="pd-h">Podpis kwalifikowany</h2><span class="sp"></span><span class="mut">#{podpis.docShort}</span>
+          <h:link outcome="/pulpit" styleClass="ibtn q" pt:aria-label="Zamknij okno podpisu">×</h:link></div>
+        <div class="db">
+          <p:steps activeIndex="#{podpis.krok}" readonly="true" pt:aria-label="Kroki podpisu">
+            <p:menuitem value="Podsumowanie" styleClass="#{podpis.stepClass(0)}" /><p:menuitem value="Aplikacja do podpisu" styleClass="#{podpis.stepClass(1)}" />
+            <p:menuitem value="Karta i PIN" styleClass="#{podpis.stepClass(2)}" /><p:menuitem value="Wynik" styleClass="#{podpis.stepClass(3)}" />
+          </p:steps>
+
+          <h:panelGroup rendered="#{podpis.krok eq 0}" layout="block" styleClass="col gap12" pt:aria-labelledby="k1h">
+            <h3 id="k1h" class="h2-17">Co podpisujesz</h3>
+            <dl class="dl"><dt>Dokument</dt><dd><b>Zarządzenie o wyznaczeniu sędziego</b> · 1 strona · <a href="#">podgląd PDF</a></dd>
+              <dt>Sprawa</dt><dd><tk:sig value="#{demo.caseBy('Ts 318/26').sygnatura}" /> · Przykładowa Spółka z o.o.</dd>
+              <dt>Podpisujesz jako</dt><dd>sędzia TK Maria Makietowa — wykonująca obowiązki Prezesa TK (upoważnienie z 30.10.2026)</dd>
+              <dt>Certyfikat</dt><dd>kwalifikowany · ważny do 14.03.2028</dd></dl>
+            <div class="card acc"><span class="eyebrow">Skutek po podpisie</span><tk:effects value="#{podpis.skutki}" /></div>
+          </h:panelGroup>
+
+          <tk:message rendered="#{podpis.krok eq 1 and not podpis.hasError}" tone="ok" icon="check"><b>Wykryto aplikację do podpisu</b> (wersja 4.2, połączenie lokalne). Czytnik kart: gotowy.</tk:message>
+
+          <h:panelGroup rendered="#{podpis.waiting}" layout="block" styleClass="card hl astart" pt:aria-live="polite">
+            <h3 class="h2-17">Włóż kartę i wpisz PIN w oknie aplikacji do podpisu</h3>
+            <p>Okno aplikacji otworzyło się obok przeglądarki. <b>#{msg['msg.sign.pinNotice']}</b></p>
+            <div class="row"><span class="skel" style="width: 160px; height: 10px;"></span><span class="mut">Czekam na podpis w aplikacji… (do 2 minut)</span></div>
+          </h:panelGroup>
+
+          <tk:message rendered="#{podpis.hasError}" tone="err" icon="alert-circle" role="alert"><b>#{podpis.error.title}</b><br />#{podpis.error.text}<br /><span class="mut">#{fmt.msg('common.adminCode', podpis.error.code)}</span></tk:message>
+
+          <h:panelGroup rendered="#{podpis.podpisano and not podpis.sklad}" layout="block" styleClass="card ok" pt:aria-live="polite">
+            <div class="row"><tk:icon name="check" size="lg" color="#1F5A2F" /><h3 style="font-size: 19px; color: #1F5A2F;">Podpisano 03.11.2026 09:20</h3></div>
+            <p>Podpis ważny, znacznik czasu dodany. Zarządzenie trafiło do akt Ts 318/26 jako k. 12, zawiadomienie — do ekspedycji.</p>
+          </h:panelGroup>
+
+          <h:panelGroup rendered="#{podpis.podpisano and podpis.sklad}" layout="block" styleClass="card hl" pt:aria-live="polite">
+            <h3 class="h2-17">Podpis 2 z 3 · Postanowienie w sprawie zażalenia · Ts 276/26</h3>
+            <ul class="effects">
+              <li><tk:icon name="check" color="#1F5A2F" /><span><b>sędzia TK Ewa Wzorcowa</b> · <span class="tag ok">podpisano 02.11.2026 16:40</span></span></li>
+              <li><tk:icon name="check" color="#1F5A2F" /><span><b>sędzia TK Maria Makietowa</b> (Ty) · <span class="tag ok">podpisano 03.11.2026 09:24</span></span></li>
+              <li><tk:icon name="timer" color="#3E4553" /><span><b>sędzia TK Adam Testowy</b> · <span class="tag">oczekuje</span></span></li>
+            </ul>
+            <p class="mut">Dokument będzie gotowy po trzecim podpisie. Powiadomimy sędziego Adama Testowego.</p>
+          </h:panelGroup>
+        </div>
+        <div class="df">
+          <h:link outcome="/pulpit" styleClass="btn" value="#{podpis.cancelLabel}" />
+          <p:commandButton rendered="#{podpis.hasError}" value="#{podpis.error.action}" action="#{podpis.retry}" update="pf" styleClass="p" process="@this" />
+          <p:commandButton rendered="#{not podpis.hasError and podpis.krok lt 3}" value="#{podpis.nextLabel}" action="#{podpis.next}" update="pf" styleClass="p" disabled="#{podpis.waiting}" process="@this" />
+          <h:link rendered="#{not podpis.hasError and podpis.krok eq 3}" outcome="/akta/podglad" styleClass="btn p" value="#{podpis.nextLabel}"><f:param name="sygnatura" value="Ts 318/26" /></h:link>
+        </div>
+      </h:form>
+    </div>
+  </ui:define>
+</ui:composition>

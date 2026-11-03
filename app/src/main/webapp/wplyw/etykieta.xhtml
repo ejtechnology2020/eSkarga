@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-05 Etykieta wpływu: wydruk A7 lub naklejka – nr dziennika, data i godzina wpływu, kod kreskowy, załączniki. -->
+  <f:metadata><f:viewParam name="nr" value="#{etykieta.nr}" /></f:metadata>
+  <ui:define name="title">Etykieta wpływu</ui:define>
+  <ui:define name="eyebrow">S-05 · wydruk</ui:define>
+  <ui:define name="heading">Etykieta wpływu · #{etykieta.nr}</ui:define>
+  <ui:define name="subtitle">Podgląd w skali 1:1. Druk czarno-biały, format A7 albo naklejka 70 × 50 mm.</ui:define>
+  <ui:define name="actions"><button type="button" class="btn">Pobierz PDF</button><button type="button" class="btn p">Drukuj</button></ui:define>
+
+  <ui:define name="content">
+    <div class="flow">
+      <section class="main card bg-panel" aria-labelledby="h-pv">
+        <h2 id="h-pv" class="sr">Podgląd etykiety</h2>
+        <figure class="label7" aria-label="Etykieta wpływu, wersja #{etykieta.format}">
+          <div class="row jbetween" style="align-items: baseline;"><b class="fs15">Trybunał · Biuro Podawcze</b><span class="fs13">#{msg['app.name']}</span></div>
+          <div style="border-top: 2px solid #000; margin: 4px 0;"></div>
+          <div class="fs13">Numer dziennika</div>
+          <div class="mono" style="font-size: 30px; font-weight: 700; line-height: 1.1;">#{etykieta.nr}</div>
+          <div style="display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 13px;"><span>Wpływ</span><b>03.11.2026 · 08:42</b><span>Kanał</span><b>poczta</b><span>Załączniki</span><b>1 · odpisy: 0</b></div>
+          <div class="barcode" role="img" aria-label="Kod kreskowy #{etykieta.nr}" style="margin-top: auto;"></div>
+          <div class="mono fs13" style="text-align: center; letter-spacing: .2em;">#{etykieta.barcodeText}</div>
+        </figure>
+      </section>
+      <h:form styleClass="side card" pt:aria-labelledby="h-ust" xmlns:pt="jakarta.faces.passthrough">
+        <h2 id="h-ust">Ustawienia wydruku</h2>
+        <fieldset class="fieldset"><legend>Format</legend>
+          <div class="radios">
+            <label class="#{etykieta.format eq 'A7' ? 'on' : ''}"><p:selectOneRadio id="fmt" value="#{etykieta.format}" layout="custom"><f:selectItem itemLabel="A7" itemValue="A7" /><f:selectItem itemLabel="Naklejka" itemValue="70x50" /></p:selectOneRadio><p:radioButton for="fmt" itemIndex="0" />A7 (74 × 105 mm)</label>
+            <label class="#{etykieta.format eq '70x50' ? 'on' : ''}"><p:radioButton for="fmt" itemIndex="1" />Naklejka 70 × 50 mm</label>
+          </div></fieldset>
+        <div class="fld"><p:outputLabel for="dr" value="Drukarka" /><p:selectOneMenu id="dr" value="#{etykieta.drukarka}"><f:selectItem itemLabel="BP-1 · biuro podawcze, parter" itemValue="BP-1" /><f:selectItem itemLabel="BP-2 · etykiety" itemValue="BP-2" /></p:selectOneMenu></div>
+        <div class="fld"><p:outputLabel for="kop" value="Liczba kopii" /><p:inputText id="kop" value="#{etykieta.kopie}" styleClass="w120" pt:inputmode="numeric" /></div>
+        <p class="hint">Bez kolorów i bez godła. Kod kreskowy Code 128 odczytuje czytnik w kancelarii.</p>
+      </h:form>
+    </div>
+  </ui:define>
+</ui:composition>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-12 Pisma ogólne (UC-17, FR-30): tabela pism niebędących skargami z terminem odpowiedzi i formularz odpowiedzi z szablonu. -->
+  <ui:define name="title">Pisma ogólne</ui:define>
+  <ui:define name="eyebrow">S-12</ui:define>
+  <ui:define name="subtitle">Pisma, które nie są skargą ani wnioskiem. Odpowiedź przygotujesz z szablonu.</ui:define>
+  <ui:define name="content">
+    <div class="flow">
+      <section class="main tw fb760" aria-labelledby="h-p">
+        <div class="tt"><h2 id="h-p" class="h2-17">Pisma</h2><span class="count">#{rejestry.pismaOgolne.size()}</span><span class="sp"></span><div class="saved" role="group" aria-label="#{msg['common.savedFilters']}"><button type="button" class="chip" aria-pressed="true">Bez odpowiedzi · 2</button></div></div>
+        <p:dataTable value="#{rejestry.pismaOgolne}" var="g" rowStyleClass="#{g.rowClass()}" summary="Pisma ogólne">
+          <p:column headerText="Nr dziennika"><span class="mono">#{g.nr}</span></p:column>
+          <p:column headerText="Nadawca">#{g.nadawca}</p:column>
+          <p:column headerText="Sprawa">#{g.sprawa}</p:column>
+          <p:column headerText="Termin odpowiedzi ▲" sortBy="#{g.termin.end}"><tk:deadline value="#{g.termin}" /><h:outputText rendered="#{empty g.termin}" value="—" /></p:column>
+          <p:column headerText="Stan"><tk:tag value="#{g.stan}" tone="#{g.stanTone}" /></p:column>
+        </p:dataTable>
+      </section>
+      <h:form styleClass="side card hl fb640" pt:aria-labelledby="h-odp">
+        <div class="card-h"><h2 id="h-odp">Odpowiedź na DW 2026/04808</h2><span class="tag info">v1 · projekt</span></div>
+        <div class="form">
+          <div class="fld"><p:outputLabel for="o-sz" value="Szablon" />
+            <p:selectOneMenu id="o-sz" value="#{rejestry.szablon}"><f:selectItem itemLabel="Pouczenie o wymogach skargi konstytucyjnej" itemValue="pouczenie" /><f:selectItem itemLabel="Informacja o stanie sprawy" itemValue="stan" /><f:selectItem itemLabel="Przekazanie według właściwości" itemValue="przekazanie" /></p:selectOneMenu></div>
+          <div class="fld"><p:outputLabel for="o-adr" value="Adresat" /><p:inputText id="o-adr" value="Lech Zmyślony · ePUAP" readonly="true" /></div>
+          <div class="fld full"><p:outputLabel for="o-tr" value="Treść" /><p:inputTextarea id="o-tr" value="#{rejestry.tresc}" rows="10" styleClass="textarea-letter" /><span class="hint">Pola szablonu wypełniono danymi nadawcy. Możesz zmienić każdy fragment.</span></div>
+        </div>
+        <div class="row"><button type="button" class="btn">Zapisz projekt</button><button type="button" class="btn">Podgląd PDF</button><span class="sp"></span><button type="button" class="btn p">Wyślij odpowiedź</button></div>
+      </h:form>
+    </div>
+  </ui:define>
+</ui:composition>

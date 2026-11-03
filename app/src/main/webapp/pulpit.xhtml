@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-01 Pulpit zadań (UC-18). Warianty ról: referent, asystent/sędzia, Prezes, biuro podawcze, kierownik.
+       Termin ≤ 2 dni oznaczony tekstem i kolorem; zadanie grupy ma akcję „Przejmij”. -->
+  <ui:define name="title">Pulpit zadań</ui:define>
+  <ui:define name="eyebrow">S-01 · #{msg['app.today']}</ui:define>
+  <ui:define name="heading">#{pulpit.greeting}</ui:define>
+  <ui:define name="subtitle">#{pulpit.subtitle}</ui:define>
+  <ui:define name="actions">
+    <h:panelGroup rendered="#{pulpit.isRole('ref')}">
+      <h:link outcome="/rejestry/ekspedycja" styleClass="btn" value="Zarejestruj zwrotkę" />
+      <h:link outcome="/sprawy/kolejka" styleClass="btn p" value="Otwórz kolejkę pism · 4" />
+    </h:panelGroup>
+    <h:panelGroup rendered="#{pulpit.judgeTeam}">
+      <h:link outcome="/sprawy/repertorium" styleClass="btn" value="Sprawy sędziego · 2" />
+      <h:link outcome="/akta/podglad" styleClass="btn p" value="Otwórz akta Ts 312/26"><f:param name="sygnatura" value="Ts 312/26" /></h:link>
+    </h:panelGroup>
+    <h:panelGroup rendered="#{pulpit.isRole('pre')}">
+      <h:link outcome="/czynnosci/podpis" styleClass="btn" value="Do podpisu · 2" />
+      <h:link outcome="/czynnosci/wyznaczenie" styleClass="btn p" value="Wyznacz sędziego · 1" />
+    </h:panelGroup>
+    <h:panelGroup rendered="#{pulpit.isRole('bp')}">
+      <h:link outcome="/wplyw/dziennik" styleClass="btn" value="Dziennik wpływu" />
+      <h:link outcome="/wplyw/rejestracja" styleClass="btn p" value="Zarejestruj pismo" />
+    </h:panelGroup>
+    <h:panelGroup rendered="#{pulpit.isRole('kie')}">
+      <h:link outcome="/nadzor/raporty" styleClass="btn" value="Raporty" />
+      <h:link outcome="/nadzor/monitor" styleClass="btn p" value="Monitor terminów · 5" />
+    </h:panelGroup>
+  </ui:define>
+  <ui:define name="banners">
+    <tk:banner rendered="#{pulpit.isRole('pre')}" icon="shield" title="Działasz na podstawie upoważnienia z 30.10.2026"
+               text="— wykonywanie obowiązków Prezesa TK, ważne do 31.12.2026 (za 58 dni).">
+      <f:facet name="actions"><h:link outcome="/admin/upowaznienia" value="Szczegóły upoważnienia" /></f:facet>
+    </tk:banner>
+  </ui:define>
+
+  <ui:define name="content">
+    <div class="grid g4" role="group" aria-label="Liczniki zadań">
+      <ui:repeat value="#{pulpit.kpis}" var="k"><tk:kpi value="#{k}" /></ui:repeat>
+    </div>
+
+    <div class="flow">
+      <div class="main">
+        <h:form id="zadForm">
+          <section class="tw" id="zad" aria-labelledby="h-zad">
+            <div class="tt">
+              <h2 id="h-zad" class="h2-17">Moje zadania</h2><span class="count">#{pulpit.tasks.size()}</span><span class="sp"></span>
+              <div class="saved" role="group" aria-label="#{msg['common.savedFilters']}">
+                <button type="button" class="chip" aria-pressed="true">Wszystkie</button>
+                <h:panelGroup rendered="#{pulpit.isRole('ref')}">
+                  <button type="button" class="chip" aria-pressed="false">Moje terminy w tym tygodniu · 3</button>
+                  <button type="button" class="chip" aria-pressed="false">Doręczenia · 2</button>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{pulpit.judgeTeam}">
+                  <button type="button" class="chip" aria-pressed="false">Projekty pism · 2</button>
+                  <button type="button" class="chip" aria-pressed="false">Posiedzenia · 1</button>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{pulpit.isRole('pre')}">
+                  <button type="button" class="chip" aria-pressed="false">Jako Prezes TK · 2</button>
+                  <button type="button" class="chip" aria-pressed="false">Jako sędzia · 1</button>
+                </h:panelGroup>
+              </div>
+              <div class="dens" role="group" aria-label="#{msg['common.density']}">
+                <p:commandButton value="#{msg['common.compact']}" action="#{pulpit.setComfy(false)}" update="zadForm" styleClass="q"
+                                 pt:aria-pressed="#{not pulpit.comfy}" xmlns:pt="jakarta.faces.passthrough" />
+                <p:commandButton value="#{msg['common.comfy']}" action="#{pulpit.setComfy(true)}" update="zadForm" styleClass="q"
+                                 pt:aria-pressed="#{pulpit.comfy}" xmlns:pt="jakarta.faces.passthrough" />
+              </div>
+            </div>
+            <p:dataTable id="tasks" value="#{pulpit.tasks}" var="t" rowKey="#{t.id}" styleClass="#{pulpit.comfy ? 'comfy' : ''}"
+                         rowStyleClass="#{t.rowClass()}" sortMode="single" tableStyleClass="t"
+                         summary="Zadania posortowane według terminu" emptyMessage=" ">
+              <f:facet name="emptyMessage">
+                <tk:empty title="Nie masz zadań na dziś" text="Nowe zadania pojawią się tutaj.">
+                  <button type="button" class="btn s">Pokaż zadania zespołu</button>
+                </tk:empty>
+              </f:facet>
+              <p:column headerText="Sygnatura" sortBy="#{t.sprawa.sygnaturaText()}" filterBy="#{t.sprawa.sygnaturaText()}" filterMatchMode="contains">
+                <h:panelGroup rendered="#{not empty t.sprawa}">
+                  <tk:sig value="#{t.sprawa.sygnatura}" />
+                  <h:panelGroup rendered="#{not t.sprawa.readOnly and t.sprawa.flagi.size() gt 0}"><br /><tk:flags value="#{t.sprawa.flagi}" /></h:panelGroup>
+                </h:panelGroup>
+                <h:outputText rendered="#{empty t.sprawa}" styleClass="mut" value="—" />
+              </p:column>
+              <p:column headerText="Zadanie" filterBy="#{t.tytul}" filterMatchMode="contains">
+                <b>#{t.tytul}</b><br /><span class="mut">#{t.opis}</span>
+              </p:column>
+              <p:column headerText="W roli" rendered="#{pulpit.showRoleColumn}">#{t.wRoli}</p:column>
+              <p:column headerText="Status sprawy">
+                <h:panelGroup rendered="#{not empty t.sprawa}"><tk:statusTag status="#{t.sprawa.status}" icon="false" /></h:panelGroup>
+                <h:panelGroup rendered="#{empty t.sprawa}"><span class="tag">Zarejestrowana</span></h:panelGroup>
+              </p:column>
+              <p:column headerText="Termin ▲" sortBy="#{t.termin.end}">
+                <tk:deadline value="#{t.termin}" />
+              </p:column>
+              <p:column headerText="Czeka od" sortBy="#{t.czekaOd}">
+                <h:outputText value="#{t.czekaOd}"><f:convertDateTime type="localDate" pattern="dd.MM.yyyy" /></h:outputText>
+              </p:column>
+              <p:column headerText="#{msg['common.actions']}" styleClass="acts-col">
+                <h:outputLink value="#{request.contextPath}#{t.akcjaUrl}" rendered="#{t.akcjaUrl ne '#'}" styleClass="btn s #{t.akcjaGlowna ? 'p' : ''}">#{t.akcja}</h:outputLink>
+                <button type="button" class="btn s" jsf:rendered="#{t.akcjaUrl eq '#'}" xmlns:jsf="jakarta.faces">#{t.akcja}</button>
+              </p:column>
+            </p:dataTable>
+            <div class="pager"><span class="mut">#{fmt.msg('common.rows', 1, pulpit.tasks.size(), pulpit.tasks.size())} · sortowanie: termin, rosnąco</span></div>
+          </section>
+        </h:form>
+      </div>
+
+      <aside class="side" aria-label="Powiadomienia i skróty">
+        <h:panelGroup rendered="#{pulpit.isRole('ref') or pulpit.isRole('bp') or pulpit.isRole('kie')}">
+          <section class="card" aria-labelledby="h-pow">
+            <div class="card-h"><h2 id="h-pow">Nowe w moich sprawach</h2><a href="#">Wszystkie (3)</a></div>
+            <tk:timeline value="#{pulpit.notifications}" />
+          </section>
+          <section class="card" aria-labelledby="h-skr">
+            <h2 id="h-skr">Skróty</h2>
+            <div class="col">
+              <h:link outcome="/sprawy/zalozenie" styleClass="btn wfull" value="Załóż sprawę Ts/Tw" rendered="#{pulpit.isRole('ref')}" />
+              <h:link outcome="/sprawy/repertorium" styleClass="btn wfull" value="Repertorium Ts 2026" />
+              <h:link outcome="/wplyw/dziennik" styleClass="btn wfull" value="Dziennik wpływu" />
+            </div>
+          </section>
+        </h:panelGroup>
+        <h:panelGroup rendered="#{pulpit.judgeTeam}">
+          <section class="card hl" aria-labelledby="h-pod">
+            <div class="card-h"><h2 id="h-pod">Czeka na sędziego</h2><span class="tag info">1 dokument</span></div>
+            <p class="mut">Dokumenty przesłane sędziemu, na które nie ma jeszcze decyzji.</p>
+            <ul class="tl">
+              <li><span class="when">31.10.2026</span><span class="rail" aria-hidden="true"><i class="cur"></i></span>
+                <span class="what"><b>Notatka do Ts 312/26</b> — przesłana sędziemu TK Piotrowi Fikcyjnemu, nieprzeczytana</span></li>
+            </ul>
+          </section>
+          <section class="card" aria-labelledby="h-zesp">
+            <h2 id="h-zesp">Zespół sędziego</h2>
+            <dl class="dl"><dt>Sędzia</dt><dd>sędzia TK Piotr Fikcyjny</dd><dt>Sprawy we wstępnej kontroli</dt><dd>2 (Ts 312/26, Ts 276/26)</dd><dt>Nieobecności</dt><dd>brak w tym tygodniu</dd></dl>
+          </section>
+        </h:panelGroup>
+        <h:panelGroup rendered="#{pulpit.isRole('pre')}">
+          <section class="card hl" aria-labelledby="h-pod2">
+            <div class="card-h"><h2 id="h-pod2">Do podpisu</h2><span class="tag info">2 dokumenty</span></div>
+            <ul class="tl">
+              <li><span class="when">03.11.2026</span><span class="rail" aria-hidden="true"><i class="cur"></i><s></s></span>
+                <span class="what"><b>Zarządzenie o wyznaczeniu sędziego</b> · Tw 14/26 · przygotował Marek Przykładowski</span></li>
+              <li><span class="when">02.11.2026</span><span class="rail" aria-hidden="true"><i></i></span>
+                <span class="what"><b>Postanowienie w sprawie zażalenia</b> · Ts 276/26 · podpis 1 z 3 (Wzorcowa podpisała)</span></li>
+            </ul>
+            <h:link outcome="/czynnosci/podpis" styleClass="btn p" value="Przejdź do podpisu" />
+          </section>
+          <section class="card" aria-labelledby="h-ob">
+            <h2 id="h-ob">Obciążenie sędziów · wstępna kontrola</h2>
+            <tk:hbars value="#{pulpit.judgeBars}" />
+            <p class="hint">Liczba spraw we wstępnej kontroli, stan na 03.11.2026.</p>
+          </section>
+        </h:panelGroup>
+      </aside>
+    </div>
+  </ui:define>
+</ui:composition>

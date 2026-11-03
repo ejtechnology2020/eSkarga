@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-02 Wyszukiwarka spraw i dokumentów (UC-20): pole + filtry, wyniki w zakładkach Sprawy (kafelki)
+       i Dokumenty (fragment z podświetlonym trafieniem, karta akt), stan braku wyników z podpowiedzią. -->
+  <f:metadata>
+    <f:viewParam name="q" value="#{wyszukiwarka.q}" />
+  </f:metadata>
+  <ui:define name="title">Wyszukiwarka spraw i dokumentów</ui:define>
+  <ui:define name="subtitle">Szuka w kartach spraw i w tekście akt (OCR). Wyniki obejmują tylko sprawy, do których masz dostęp.</ui:define>
+
+  <ui:define name="content">
+    <h:form id="szukaj" role="search" styleClass="card" pt:aria-label="Wyszukiwanie" xmlns:pt="jakarta.faces.passthrough">
+      <div class="row aend">
+        <div class="fld" style="flex: 1 1 480px;">
+          <p:outputLabel for="q" value="Szukaj" />
+          <p:inputText id="q" value="#{wyszukiwarka.q}" type="search" styleClass="fs16" />
+        </div>
+        <p:commandButton value="Szukaj" action="#{wyszukiwarka.search}" update="@form wyniki" styleClass="p" />
+        <p:commandButton value="Wyczyść filtry" action="#{wyszukiwarka.clear}" update="@form wyniki" styleClass="q" process="@this" />
+      </div>
+      <div class="form" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));">
+        <div class="fld"><p:outputLabel for="f-rep" value="Repertorium" />
+          <p:selectOneMenu id="f-rep" value="#{wyszukiwarka.repertorium}">
+            <f:selectItem itemLabel="Ts i Tw" itemValue="Ts i Tw" /><f:selectItem itemLabel="Ts" itemValue="Ts" /><f:selectItem itemLabel="Tw" itemValue="Tw" />
+          </p:selectOneMenu></div>
+        <div class="fld"><p:outputLabel for="f-rok" value="Rok" />
+          <p:selectOneMenu id="f-rok" value="#{wyszukiwarka.rok}">
+            <f:selectItem itemLabel="2026" itemValue="2026" /><f:selectItem itemLabel="2025" itemValue="2025" />
+          </p:selectOneMenu></div>
+        <div class="fld"><p:outputLabel for="f-st" value="Status" />
+          <p:selectOneMenu id="f-st"><f:selectItem itemLabel="#{msg['common.all']}" itemValue="" /></p:selectOneMenu></div>
+        <div class="fld"><p:outputLabel for="f-sed" value="Sędzia" /><p:inputText id="f-sed" placeholder="Wpisz nazwisko" /></div>
+        <div class="fld"><p:outputLabel for="f-sk" value="Skarżący lub wnioskodawca" /><p:inputText id="f-sk" /></div>
+        <div class="fld"><p:outputLabel for="f-pel" value="Pełnomocnik" /><p:inputText id="f-pel" /></div>
+        <div class="fld"><p:outputLabel for="f-prz" value="Zaskarżony przepis" /><p:inputText id="f-prz" placeholder="np. art. 505¹ § 1 k.p.c." /></div>
+        <div class="fld"><p:outputLabel for="f-wz" value="Wzorzec kontroli" /><p:inputText id="f-wz" placeholder="np. art. 45 ust. 1" /></div>
+        <div class="fld"><p:outputLabel for="f-skad" value="Skąd dokument" />
+          <p:selectOneMenu id="f-skad"><f:selectItem itemLabel="#{msg['common.all']}" itemValue="" /><f:selectItem itemLabel="Wpływ" itemValue="wplyw" /><f:selectItem itemLabel="Czynność Trybunału" itemValue="czynnosc" /></p:selectOneMenu></div>
+      </div>
+    </h:form>
+
+    <h:panelGroup id="wyniki" layout="block" styleClass="col gap12">
+      <h:panelGroup rendered="#{wyszukiwarka.emptyResult}">
+        <section class="tw">
+          <tk:empty icon="search" title="Brak wyników dla „#{wyszukiwarka.q}”"
+                    text="Sprawdź pisownię sygnatury (np. „Ts 312/26”) albo usuń filtr roku i statusu.">
+            <div class="row"><button type="button" class="btn">Usuń filtry</button><button type="button" class="btn q">Szukaj w tekście akt</button></div>
+          </tk:empty>
+        </section>
+      </h:panelGroup>
+      <h:panelGroup rendered="#{not wyszukiwarka.emptyResult}">
+        <p:tabView id="tabs" activeIndex="#{wyszukiwarka.tab}" dynamic="false">
+          <p:tab title="Sprawy #{wyszukiwarka.cases.size()}">
+            <section aria-label="Wyniki: sprawy" class="col gap12">
+              <div class="row"><b>#{wyszukiwarka.cases.size()} sprawy</b><span class="mut">dla „#{wyszukiwarka.q}” · sortowanie: trafność</span><span class="sp"></span><button type="button" class="btn s">#{msg['common.exportCsv']}</button></div>
+              <div class="grid g3">
+                <ui:repeat value="#{wyszukiwarka.cases}" var="c"><tk:caseTile value="#{c}" /></ui:repeat>
+              </div>
+            </section>
+          </p:tab>
+          <p:tab title="Dokumenty #{wyszukiwarka.hits.size()}">
+            <section class="tw" aria-label="Wyniki: dokumenty">
+              <div class="tt"><b>#{wyszukiwarka.hits.size()} trafienia w 3 sprawach</b><span class="mut">dla „#{wyszukiwarka.q}” · pogrupowane według dokumentu</span><span class="sp"></span><button type="button" class="btn s">#{msg['common.exportCsv']}</button></div>
+              <ul class="list-plain">
+                <ui:repeat value="#{wyszukiwarka.hits}" var="hit">
+                  <li class="hit">
+                    <div class="row">
+                      <a href="#{request.contextPath}#{hit.href}" class="b">#{hit.dokument}</a>
+                      <span class="mut">#{hit.sprawa.format()} · #{hit.karta} · #{fmt.date(hit.data)} · #{hit.rodzaj}</span>
+                      <h:outputText rendered="#{not empty hit.uwaga}" styleClass="tag off" value="#{hit.uwaga}" />
+                    </div>
+                    <p>„<h:outputText value="#{hit.fragment}" escape="false" />”</p>
+                  </li>
+                </ui:repeat>
+              </ul>
+            </section>
+          </p:tab>
+        </p:tabView>
+      </h:panelGroup>
+    </h:panelGroup>
+  </ui:define>
+</ui:composition>

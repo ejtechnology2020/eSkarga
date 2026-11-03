@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-09 Korekta wpisu i akceptacja (UC-22): dwie kolumny przed/po, uzasadnienie (wymagane), widok kierownika „Zatwierdź” / „Odrzuć”. -->
+  <f:metadata><f:viewParam name="stan" value="#{korekta.stan}" /><f:viewAction action="#{korekta.applyState}" /></f:metadata>
+  <ui:define name="title">Korekta wpisu Ts 318/26</ui:define>
+  <ui:define name="crumbs">
+    <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Sprawy" /></li><li><h:link outcome="/sprawy/repertorium" value="Repertorium Ts 2026" /></li><li><span aria-current="page">Korekta wpisu Ts 318/26</span></li></ol></nav>
+  </ui:define>
+  <ui:define name="eyebrow">S-09 · #{korekta.eyebrow}</ui:define>
+  <ui:define name="subtitle">Zmiany w repertorium wymagają uzasadnienia i akceptacji kierownika wydziału. Do akceptacji obowiązuje wersja v1.</ui:define>
+  <ui:define name="actions"><h:panelGroup id="st"><tk:tag value="#{korekta.statusText}" tone="#{korekta.statusTone}" /></h:panelGroup></ui:define>
+
+  <ui:define name="content">
+    <h:form id="kf">
+      <p:messages globalOnly="true" closable="false" showDetail="true" />
+      <tk:banner rendered="#{korekta.zatwierdzono}" tone="ok" icon="check" title="Korekta zatwierdzona 03.11.2026 09:15." text="Wpis Ts 318/26 ma teraz wersję v2. Wersja v1 pozostaje w historii." />
+
+      <section class="tw" aria-labelledby="h-por" style="margin-top: 16px;">
+        <div class="tt"><h2 id="h-por" class="h2-17">Porównanie: przed i po</h2><span class="mut">2 pola zmienione z 9</span></div>
+        <p:dataTable value="#{korekta.diff}" var="d" rowStyleClass="#{d.zmienione ? 'warn' : ''}" summary="Porównanie wartości wpisu przed i po korekcie">
+          <p:column headerText="Pole" style="width: 220px;"><b>#{d.pole}</b></p:column>
+          <p:column headerText="Przed (v1)"><h:outputText rendered="#{d.zmienione}" value="#{d.przed}" styleClass="del" style="text-decoration: line-through;" /><h:outputText rendered="#{not d.zmienione}" value="#{d.przed}" /></p:column>
+          <p:column headerText="Po (v2)"><h:panelGroup rendered="#{d.zmienione}"><ins class="chg">#{d.po}</ins> <span class="tag warn">zmienione</span></h:panelGroup><span class="mut" jsf:rendered="#{not d.zmienione}" xmlns:jsf="jakarta.faces">bez zmian</span></p:column>
+        </p:dataTable>
+      </section>
+
+      <div class="flow" style="margin-top: 16px;">
+        <section class="main card" aria-labelledby="h-uz">
+          <h2 id="h-uz">Uzasadnienie</h2>
+          <div class="fld"><p:outputLabel for="uz" value="Uzasadnienie korekty" indicateRequired="true" />
+            <p:inputTextarea id="uz" value="#{korekta.uzasadnienie}" readonly="#{korekta.kierownik or korekta.zatwierdzono}" rows="4" />
+            <p:message for="uz" styleClass="ferr" />
+            <span class="hint">Uzasadnienie trafia do historii wpisu i dziennika zdarzeń.</span></div>
+          <h:panelGroup rendered="#{not korekta.kierownik and not korekta.zatwierdzono}" layout="block" styleClass="row">
+            <p:commandButton value="Wyślij do akceptacji" action="#{korekta.send}" update="kf st" styleClass="p" /><button type="button" class="btn">Anuluj korektę</button></h:panelGroup>
+          <h:panelGroup rendered="#{korekta.kierownik and not korekta.zatwierdzono}" layout="block" styleClass="col gap12">
+            <div class="fld"><p:outputLabel for="uw" value="Uwagi kierownika (wymagane przy odrzuceniu)" /><p:inputTextarea id="uw" value="#{korekta.uwagi}" rows="3" styleClass="ta80" /></div>
+            <div class="row"><p:commandButton value="Zatwierdź korektę" action="#{korekta.approve}" update="kf st" styleClass="p" /><button type="button" class="btn d">Odrzuć</button></div>
+          </h:panelGroup>
+        </section>
+        <aside class="side card" aria-labelledby="h-kto">
+          <h2 id="h-kto">Obieg</h2>
+          <ol class="tl">
+            <li><span class="when">03.11.2026<br />08:55</span><span class="rail" aria-hidden="true"><i></i><s></s></span><span class="what"><b>Marek Przykładowski</b> utworzył wniosek o korektę</span></li>
+            <li><span class="when">#{korekta.zatwierdzono ? '03.11.2026' : '—'}<h:panelGroup rendered="#{korekta.zatwierdzono}"><br />09:15</h:panelGroup></span><span class="rail" aria-hidden="true"><i class="cur"></i></span>
+              <span class="what"><b>Ewa Szablon</b> · kierownik wydziału — #{korekta.zatwierdzono ? 'zatwierdziła korektę' : korekta.kierownik ? 'decyzja w toku' : 'otrzyma wniosek po wysłaniu'}</span></li>
+          </ol>
+        </aside>
+      </div>
+    </h:form>
+  </ui:define>
+</ui:composition>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-18 Skierowanie zażalenia do składu (UC-11): wykluczenie sędziego, który wydał odmowę (BR-07); zażalenie po terminie (stan=po). -->
+  <f:metadata><f:viewParam name="stan" value="#{sklad.stan}" /></f:metadata>
+  <ui:define name="title">Skierowanie zażalenia do składu</ui:define>
+  <ui:define name="crumbs">
+    <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Czynności i decyzje" /></li><li><h:link outcome="/rejestry/zazalenia" value="Zażalenia" /></li><li><span aria-current="page">#{sklad.sygnatura} · skierowanie do składu</span></li></ol></nav>
+  </ui:define>
+  <ui:define name="banners"><tk:banner icon="shield" title="Działasz na podstawie upoważnienia z 30.10.2026" text="(ważne do 31.12.2026)" /></ui:define>
+  <ui:define name="eyebrow">S-18</ui:define>
+  <ui:define name="subtitle"><tk:sig value="#{demo.caseBy(sklad.sygnatura).sygnatura}" /> · #{sklad.skarzacy} · pełn. adw. Jan Makieta</ui:define>
+  <ui:define name="actions">
+    <h:link rendered="#{not sklad.poTerminie}" outcome="/czynnosci/podpis" styleClass="btn p" value="Skieruj i podpisz zarządzenie" />
+    <h:link rendered="#{sklad.poTerminie}" outcome="/czynnosci/edytor" styleClass="btn p" value="Przygotuj postanowienie o pozostawieniu bez rozpoznania" />
+  </ui:define>
+  <ui:define name="content">
+    <div class="flow">
+      <section class="main card fb560" aria-labelledby="h-zaz">
+        <div class="card-h"><h2 id="h-zaz">Zażalenie</h2><tk:flag value="PILNA_ART_79" /></div>
+        <dl class="dl"><dt>Postanowienie o odmowie</dt><dd>#{sklad.odmowa}</dd><dt>Doręczenie odmowy</dt><dd>#{sklad.doreczenieOdmowy}</dd><dt>Wniesienie zażalenia</dt><dd>#{sklad.wniesienie}</dd></dl>
+        <h:panelGroup rendered="#{not sklad.poTerminie}"><span class="term aux"><tk:icon name="check" /><span><b>Terminowość (pomocniczo):</b> w terminie · 6 z 7 dni · ocenia skład</span><span class="bar"><span style="width: 86%;"></span></span></span></h:panelGroup>
+        <tk:message rendered="#{sklad.poTerminie}" tone="warn" icon="alert-triangle" role="alert"><b>Zażalenie po terminie (pomocniczo).</b> Termin upłynął 27.08.2026, zażalenie wniesiono 02.11.2026 — 67 dni później. Odmowa jest prawomocna od 15.09.2026. Zamiast składu przygotuj postanowienie o pozostawieniu zażalenia bez rozpoznania.</tk:message>
+      </section>
+      <h:form rendered="#{not sklad.poTerminie}" styleClass="side card hl fb640" pt:aria-labelledby="h-sk">
+        <h2 id="h-sk">Skład trzech sędziów</h2>
+        <fieldset class="fieldset" style="gap: 8px;">
+          <legend>Wybierz 3 sędziów <span class="mut" style="font-weight: 400;">· wybrano 3 z 3</span></legend>
+          <label class="chkl opt pad on"><input type="checkbox" class="chk22" checked="checked" /><span><b>sędzia TK Ewa Wzorcowa</b> · <span class="mut">urlop 04–06.11.2026, dostępna od 09.11.2026</span></span></label>
+          <label class="chkl opt pad on"><input type="checkbox" class="chk22" checked="checked" /><span><b>sędzia TK Piotr Fikcyjny</b> · <span class="mut">2 sprawy we wstępnej kontroli</span></span></label>
+          <label class="chkl opt pad on"><input type="checkbox" class="chk22" checked="checked" /><span><b>sędzia TK Maria Makietowa</b> · <span class="mut">1 sprawa</span></span></label>
+          <label class="chkl opt pad dis" aria-describedby="ex-why"><input type="checkbox" class="chk22" disabled="disabled" /><span><b>sędzia TK Adam Testowy</b> — niedostępny</span></label>
+          <p id="ex-why" class="hint" style="margin: -2px 0 0 12px;">Wydał zaskarżone postanowienie o odmowie (21.10.2026), więc nie może orzekać o zażaleniu.</p>
+        </fieldset>
+        <div class="form">
+          <div class="fld"><p:outputLabel for="sk-pr" value="Przewodniczący" /><p:selectOneMenu id="sk-pr" value="#{sklad.przewodniczacy}"><f:selectItem itemLabel="sędzia TK Ewa Wzorcowa" itemValue="Ewa Wzorcowa" /><f:selectItem itemLabel="sędzia TK Piotr Fikcyjny" itemValue="Piotr Fikcyjny" /><f:selectItem itemLabel="sędzia TK Maria Makietowa" itemValue="Maria Makietowa" /></p:selectOneMenu></div>
+          <div class="fld"><p:outputLabel for="sk-sp" value="Sprawozdawca" /><p:selectOneMenu id="sk-sp" value="#{sklad.sprawozdawca}"><f:selectItem itemLabel="sędzia TK Piotr Fikcyjny" itemValue="Piotr Fikcyjny" /><f:selectItem itemLabel="sędzia TK Ewa Wzorcowa" itemValue="Ewa Wzorcowa" /></p:selectOneMenu></div>
+          <div class="fld"><p:outputLabel for="sk-ter" value="Termin posiedzenia niejawnego" /><p:datePicker id="sk-ter" value="#{sklad.posiedzenie}" pattern="dd.MM.yyyy" showIcon="false" /><span class="hint">Najbliższy dzień, w którym cały skład jest dostępny.</span></div>
+        </div>
+      </h:form>
+    </div>
+  </ui:define>
+</ui:composition>

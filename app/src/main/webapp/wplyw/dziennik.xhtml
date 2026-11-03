@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-04 Dziennik wpływu: nr dziennika, data wpływu, data wniesienia, kanał, nadawca, kwalifikacja, sygnatura, stan.
+       Pismo niezakwalifikowane dłużej niż 1 dzień jest oznaczone. Kliknięcie wiersza pokazuje pismo obok. -->
+  <ui:define name="title">Dziennik wpływu</ui:define>
+  <ui:define name="eyebrow">S-04 · 2026</ui:define>
+  <ui:define name="subtitle">Wszystkie pisma zarejestrowane w biurze podawczym. Kliknij wiersz, żeby zobaczyć pismo obok.</ui:define>
+  <ui:define name="actions">
+    <button type="button" class="btn">#{msg['common.exportXlsx']}</button>
+    <h:link outcome="/wplyw/rejestracja" styleClass="btn p" value="Zarejestruj pismo" />
+  </ui:define>
+
+  <ui:define name="content">
+    <h:form id="dz">
+      <div class="card filters">
+        <div class="fld"><p:outputLabel for="f-od" value="Wpływ od" /><p:datePicker id="f-od" value="#{dziennik.od}" pattern="dd.MM.yyyy" styleClass="w160" showIcon="false" /></div>
+        <div class="fld"><p:outputLabel for="f-do" value="Wpływ do" /><p:datePicker id="f-do" value="#{dziennik.doDnia}" pattern="dd.MM.yyyy" styleClass="w160" showIcon="false" /></div>
+        <div class="fld"><p:outputLabel for="f-kan" value="Kanał" />
+          <p:selectOneMenu id="f-kan" value="#{dziennik.kanal}" styleClass="w200">
+            <f:selectItem itemLabel="#{msg['common.all']}" itemValue="" />
+            <f:selectItem itemLabel="#{msg['channel.OSOBISCIE']}" itemValue="OSOBISCIE" /><f:selectItem itemLabel="#{msg['channel.POCZTA']}" itemValue="POCZTA" />
+            <f:selectItem itemLabel="#{msg['channel.EPUAP']}" itemValue="EPUAP" /><f:selectItem itemLabel="#{msg['channel.EDORECZENIA']}" itemValue="EDORECZENIA" />
+          </p:selectOneMenu></div>
+        <div class="fld"><p:outputLabel for="f-kw" value="Kwalifikacja" />
+          <p:selectOneMenu id="f-kw" value="#{dziennik.kwalifikacja}" styleClass="w220">
+            <f:selectItem itemLabel="#{msg['common.all']}" itemValue="" /><f:selectItem itemLabel="niezakwalifikowane" itemValue="brak" />
+          </p:selectOneMenu></div>
+        <div class="saved" role="group" aria-label="#{msg['common.savedFilters']}"><button type="button" class="chip" aria-pressed="false">Niezakwalifikowane ponad 1 dzień · 1</button></div>
+      </div>
+
+      <div class="flow" style="margin-top: 16px;">
+        <section class="main tw fb900" aria-labelledby="h-dz">
+          <div class="tt"><h2 id="h-dz" class="h2-17">Pisma</h2><span class="count">#{dziennik.rows.size()}</span><span class="sp"></span>
+            <div class="dens" role="group" aria-label="#{msg['common.density']}">
+              <p:commandButton value="#{msg['common.compact']}" action="#{dziennik.setComfy(false)}" update="dz" styleClass="q" pt:aria-pressed="#{not dziennik.comfy}" xmlns:pt="jakarta.faces.passthrough" />
+              <p:commandButton value="#{msg['common.comfy']}" action="#{dziennik.setComfy(true)}" update="dz" styleClass="q" pt:aria-pressed="#{dziennik.comfy}" xmlns:pt="jakarta.faces.passthrough" />
+            </div>
+            <button type="button" class="btn s">#{msg['common.columns']}</button></div>
+          <p:dataTable id="tbl" value="#{dziennik.rows}" var="r" rowKey="#{r.nr}" selectionMode="single" selection="#{dziennik.selected}"
+                       rowStyleClass="#{dziennik.rowClass(r)}" styleClass="#{dziennik.comfy ? 'comfy' : ''}" summary="Dziennik wpływu 28.10–03.11.2026"
+                       paginator="true" rows="10" paginatorPosition="bottom" paginatorTemplate="{CurrentPageReport} {PageLinks}"
+                       currentPageReportTemplate="#{fmt.msg('common.rows', '{startRecord}', '{endRecord}', '{totalRecords}')}">
+            <p:ajax event="rowSelect" update="pv dz:tbl" />
+            <p:column headerText="Nr dziennika ▼" sortBy="#{r.nr}"><span class="mono"><b jsf:rendered="#{r.wybrany}" xmlns:jsf="jakarta.faces">#{r.nr}</b><h:outputText rendered="#{not r.wybrany}" value="#{r.nr}" /></span></p:column>
+            <p:column headerText="Wpływ" sortBy="#{r.wplyw}">#{fmt.dateTime(r.wplyw)}</p:column>
+            <p:column headerText="Wniesienie">#{fmt.date(r.wniesienie)}</p:column>
+            <p:column headerText="Kanał">#{msg['channel.'.concat(r.kanal)]}</p:column>
+            <p:column headerText="Nadawca" filterBy="#{r.nadawca}" filterMatchMode="contains">#{r.nadawca}</p:column>
+            <p:column headerText="Kwalifikacja"><h:outputText value="#{r.kwalifikacja}" rendered="#{not empty r.kwalifikacja}" /><span class="mut" jsf:rendered="#{empty r.kwalifikacja}" xmlns:jsf="jakarta.faces">oczekuje</span></p:column>
+            <p:column headerText="Sprawa">
+              <h:panelGroup rendered="#{not empty r.sprawa}"><tk:sig value="#{r.sprawa}" /></h:panelGroup>
+              <h:outputText rendered="#{empty r.sprawa}" styleClass="mut" value="#{empty r.podpowiedz ? '—' : r.podpowiedz}" />
+            </p:column>
+            <p:column headerText="Stan"><tk:tag value="#{r.stan}" tone="#{r.stanTone}" icon="#{r.stanTone eq 'ERR' ? 'alert-circle' : ''}" /></p:column>
+          </p:dataTable>
+        </section>
+
+        <aside class="side card np fb440" aria-labelledby="h-pv">
+          <h:panelGroup id="pv" layout="block" styleClass="col gap12" style="gap: 0;">
+            <div class="pane-h"><div class="pane-tt"><b id="h-pv" class="mono">#{dziennik.selected.nr}</b><span class="mut">#{dziennik.selected.nadawca} · #{dziennik.selected.strony} str. + koperta</span></div><span class="sp"></span><button type="button" class="ibtn q" aria-label="Zamknij podgląd">×</button></div>
+            <div class="viewer min520" style="padding: 16px;">
+              <tk:paper label="Podgląd pisma #{dziennik.selected.nr}, strona 1" styleClass="sm">
+                <p class="r">Przykładowo, #{fmt.date(dziennik.selected.wniesienie)} r.</p>
+                <p class="ind40">Trybunał Konstytucyjny<br />w Warszawie</p>
+                <p>Nadawca: <b>#{dziennik.selected.nadawca}</b></p>
+                <p class="c">PISMO</p>
+                <p>Treść warstwy tekstowej (OCR) dokumentu pojawi się tutaj po przetworzeniu skanu przez usługę dokumentów…</p>
+              </tk:paper>
+            </div>
+            <div class="pane-b" style="flex: 0;">
+              <dl class="dl"><dt>Kanał</dt><dd>#{msg['channel.'.concat(dziennik.selected.kanal)]}</dd><dt>Załączniki</dt><dd>#{dziennik.selected.zalaczniki}</dd>
+                <dt>Kwalifikacja</dt><dd>#{empty dziennik.selected.kwalifikacja ? 'oczekuje · referent Wydziału Weryfikacyjnego' : dziennik.selected.kwalifikacja}</dd></dl>
+              <div class="row"><h:link outcome="/wplyw/etykieta" styleClass="btn" value="Etykieta" /><button type="button" class="btn q">Pobierz skan</button></div>
+            </div>
+          </h:panelGroup>
+        </aside>
+      </div>
+    </h:form>
+  </ui:define>
+</ui:composition>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-13 Wnioski o wgląd w akta (UC-15, FR-27): przy osobie trzeciej wymagany status „wersja zanonimizowana gotowa” przed terminem (BR-09). -->
+  <ui:define name="title">Wnioski o wgląd w akta</ui:define>
+  <ui:define name="eyebrow">S-13</ui:define>
+  <ui:define name="subtitle">Uczestnik widzi akta jawne. Osoba trzecia — tylko wersję zanonimizowaną, którą trzeba przygotować przed wyznaczeniem terminu.</ui:define>
+  <ui:define name="actions"><button type="button" class="btn p">Zarejestruj wniosek</button></ui:define>
+  <ui:define name="content">
+    <div class="flow">
+      <section class="main tw fb900" aria-labelledby="h-w">
+        <div class="tt"><h2 id="h-w" class="h2-17">Wnioski</h2><span class="count">#{rejestry.wnioskiOWglad.size()}</span></div>
+        <p:dataTable value="#{rejestry.wnioskiOWglad}" var="w" rowStyleClass="#{w.wybrany ? 'sel' : ''}" summary="Wnioski o wgląd w akta">
+          <p:column headerText="Wnioskodawca">#{w.wnioskodawca}</p:column>
+          <p:column headerText="Kto"><tk:tag value="#{w.kto}" tone="#{w.ktoTone}" /></p:column>
+          <p:column headerText="Sprawa i zakres"><tk:sig value="#{w.sprawa}" /> · #{w.zakres}</p:column>
+          <p:column headerText="Termin w czytelni"><h:outputText value="#{w.termin}" styleClass="#{w.terminWyznaczony ? '' : 'mut'}" /></p:column>
+          <p:column headerText="Opłata za kopie">#{w.oplata}</p:column>
+          <p:column headerText="Wersja zanonimizowana"><h:outputText rendered="#{not w.osobaTrzecia}" styleClass="mut" value="#{w.anonimizacja}" /><h:panelGroup rendered="#{w.osobaTrzecia}"><tk:tag value="#{w.anonimizacja}" tone="#{w.anonTone}" icon="timer" /></h:panelGroup></p:column>
+        </p:dataTable>
+      </section>
+      <aside class="side card fb480" aria-labelledby="h-det">
+        <div class="card-h"><h2 id="h-det">#{rejestry.wybranyWniosek.wnioskodawca} · #{rejestry.wybranyWniosek.sprawa.format()}</h2><tk:tag value="#{rejestry.wybranyWniosek.kto}" tone="NOTE" /></div>
+        <dl class="dl"><dt>Zakres</dt><dd>postanowienie z 24.10.2026 o nadaniu dalszego biegu</dd><dt>Wpływ wniosku</dt><dd>30.10.2026 · ePUAP</dd><dt>Flaga</dt><dd>brak zastrzeżenia art. 80</dd></dl>
+        <ol class="steps col" aria-label="Przygotowanie wglądu">
+          <li class="done"><span class="n">1</span><span><b>Wniosek zarejestrowany</b><br />30.10.2026</span></li>
+          <li aria-current="step"><span class="n">2</span><span><b>Wersja zanonimizowana</b><br />w przygotowaniu · Marek Przykładowski</span></li>
+          <li><span class="n">3</span><span><b>Termin w czytelni</b><br />po zatwierdzeniu anonimizacji</span></li>
+        </ol>
+        <div class="fld"><label for="w-ter">Termin w czytelni</label><input id="w-ter" class="in" placeholder="DD.MM.RRRR GG:MM" disabled="disabled" aria-describedby="w-why" /></div>
+        <button type="button" class="btn" aria-disabled="true" aria-describedby="w-why">Wyznacz termin</button>
+        <p id="w-why" class="msg warn"><tk:icon name="alert-triangle" /><span>Niedostępne: dla osoby trzeciej wersja zanonimizowana musi mieć status „gotowa”.</span></p>
+        <h:link outcome="/rejestry/publikacja" styleClass="btn p" value="Przygotuj wersję zanonimizowaną" />
+      </aside>
+    </div>
+  </ui:define>
+</ui:composition>

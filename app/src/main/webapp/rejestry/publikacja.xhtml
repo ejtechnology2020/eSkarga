@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-27 Postanowienia do publikacji (UC-16, FR-22, FR-29): porównanie oryginału z wersją zanonimizowaną, flaga art. 80 wyraźnie widoczna. -->
+  <ui:param name="navMini" value="#{true}" />
+  <ui:define name="title">Postanowienia do publikacji</ui:define>
+  <ui:define name="eyebrow">S-27</ui:define>
+  <ui:define name="subtitle">Przed publikacją porównaj oryginał z wersją zanonimizowaną. Zamienione dane są podświetlone po obu stronach.</ui:define>
+  <ui:define name="content">
+    <div class="flow astretch">
+      <section class="tw fx1" aria-labelledby="h-l">
+        <div class="tt"><h2 id="h-l" class="h2-17">Czekają</h2><span class="count">#{rejestry.publikacje.size()}</span></div>
+        <ul role="listbox" aria-label="Postanowienia do publikacji" class="list-cards">
+          <ui:repeat value="#{rejestry.publikacje}" var="pi">
+            <li role="option" aria-selected="#{pi.wybrany}" class="case #{pi.wybrany ? 'on' : ''}">
+              <div class="h"><b>#{pi.sprawa.format()}</b><h:panelGroup rendered="#{pi.flagaArt80}"><tk:flag value="ANONIMIZACJA_ART_80" /></h:panelGroup><h:panelGroup rendered="#{not empty pi.tag}"><tk:tag value="#{pi.tag}" tone="#{pi.tagTone}" /></h:panelGroup></div>
+              <span>#{pi.tytul}</span><span class="mut">#{pi.uwagi}</span>
+            </li>
+          </ui:repeat>
+        </ul>
+      </section>
+      <section class="card np fx4" aria-label="Porównanie">
+        <div class="pane-h"><b>#{rejestry.wybranaPublikacja.sprawa.format()} · postanowienie z 30.09.2026</b>
+          <span class="flag an"><tk:icon name="user-off" small="true" />Zastrzeżenie anonimizacji (art. 80) — pełna anonimizacja, także miejscowości</span><span class="sp"></span>
+          <span class="legend"><span><i class="sw-i orig"></i>dane w oryginale</span><span><i class="sw-i anon"></i>zamiennik</span></span></div>
+        <div class="compare">
+          <div class="viewer half"><p class="eyebrow">Oryginał · nie do publikacji</p>
+            <tk:paper label="Oryginał postanowienia" styleClass="md">
+              <h2>POSTANOWIENIE</h2>
+              <p>Trybunał Konstytucyjny w składzie: sędzia TK Piotr Fikcyjny, po wstępnym rozpoznaniu skargi konstytucyjnej <span class="hl">Stefana Przykładnego</span>, zam. <span class="hl">ul. Przykładowa 1, 00-001 Przykładowo</span>, w sprawie zgodności art. 394¹ § 1 k.p.c. z art. 45 ust. 1 Konstytucji,</p>
+              <p class="c">postanawia:</p><p>odmówić nadania dalszego biegu skardze konstytucyjnej.</p>
+              <p>Skarżący, <span class="hl">radca prawny</span> działający we własnej sprawie, wskazał postanowienie Sądu Apelacyjnego w <span class="hl">Przykładowie</span>, sygn. <span class="hl">I ACz 51/26</span>…</p>
+            </tk:paper></div>
+          <div class="viewer half"><p class="eyebrow">Wersja zanonimizowana · do publikacji</p>
+            <tk:paper label="Wersja zanonimizowana postanowienia" styleClass="md">
+              <h2>POSTANOWIENIE</h2>
+              <p>Trybunał Konstytucyjny w składzie: sędzia TK Piotr Fikcyjny, po wstępnym rozpoznaniu skargi konstytucyjnej <span class="anon">S.P.</span>, zam. <span class="anon">[...]</span>, w sprawie zgodności art. 394¹ § 1 k.p.c. z art. 45 ust. 1 Konstytucji,</p>
+              <p class="c">postanawia:</p><p>odmówić nadania dalszego biegu skardze konstytucyjnej.</p>
+              <p>Skarżący, <span class="anon">[...]</span> działający we własnej sprawie, wskazał postanowienie Sądu Apelacyjnego w <span class="anon">[...]</span>, sygn. <span class="anon">[...]</span>…</p>
+            </tk:paper></div>
+        </div>
+        <div class="pane-h pane-ft"><span><b>#{rejestry.wybranaPublikacja.zamiany} zamian</b> · <a href="#">następna zamiana ↓</a></span><span class="sp"></span><button type="button" class="btn">Zgłoś poprawkę</button><button type="button" class="btn p">Zatwierdź anonimizację</button></div>
+      </section>
+    </div>
+  </ui:define>
+</ui:composition>

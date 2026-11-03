@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html"
+              xmlns:f="jakarta.faces.core"
+              xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Kafelek sprawy (p:panel): sygnatura, status, termin, skarżący, sędzia – pulpit i wyniki wyszukiwania. -->
+  <cc:interface>
+    <cc:attribute name="value" required="true" type="pl.ejtechnology.tk.eSkarga.web.model.CaseSummary" />
+    <cc:attribute name="highlight" default="" />
+  </cc:interface>
+  <cc:implementation>
+    <article class="case">
+      <div class="h">
+        <h:link outcome="/akta/podglad" styleClass="sigl" value="#{cc.attrs.value.sygnatura.format()}">
+          <f:param name="sygnatura" value="#{cc.attrs.value.sygnatura.format()}" />
+        </h:link>
+        <tk:statusTag status="#{cc.attrs.value.status}" icon="false" />
+      </div>
+      <h:panelGroup rendered="#{not empty cc.attrs.value.powiazana}">
+        <span class="sig"><span class="rel">→</span><a href="#">#{cc.attrs.value.powiazana.format()}</a></span>
+      </h:panelGroup>
+      <h:panelGroup rendered="#{empty cc.attrs.value.powiazana}">
+        <tk:deadline value="#{cc.attrs.value.termin}" />
+      </h:panelGroup>
+      <dl class="meta">
+        <dt>Skarżący</dt><dd><h:outputText value="#{cc.attrs.value.skarzacy}" escape="false" /></dd>
+        <h:panelGroup rendered="#{not empty cc.attrs.value.pelnomocnik and cc.attrs.value.pelnomocnik ne '—'}">
+          <dt>Pełnomocnik</dt><dd><h:outputText value="#{cc.attrs.value.pelnomocnik}" escape="false" /></dd>
+        </h:panelGroup>
+        <dt>Sędzia</dt><dd>#{empty cc.attrs.value.sedzia ? 'oczekuje na wyznaczenie' : cc.attrs.value.sedzia}</dd>
+      </dl>
+      <h:panelGroup rendered="#{not empty cc.attrs.value.flagi and cc.attrs.value.flagi.size() gt 0 and not cc.attrs.value.readOnly}" layout="block" styleClass="row">
+        <tk:flags value="#{cc.attrs.value.flagi}" />
+      </h:panelGroup>
+    </article>
+  </cc:implementation>
+</ui:component>

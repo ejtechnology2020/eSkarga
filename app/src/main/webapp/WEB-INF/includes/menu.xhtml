@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- Menu boczne (p:panelMenu w briefie): sześć stałych grup w tej samej kolejności dla wszystkich ról,
+       tylko pozycje dozwolone dla roli, aktywna pozycja z tłem i paskiem 4 px, liczniki tekst + liczba.
+       Zwijane do ikon grup skrótem [; poniżej 1500 px zwinięte przez CSS. -->
+  <nav class="e-nav #{mini ? 'mini' : ''}" aria-label="#{msg['app.menu']}">
+    <div class="navwrap-toggle">
+      <button type="button" class="ibtn q" data-action="toggle-nav" aria-label="#{msg['app.menu.collapse']}" title="[">
+        <tk:icon name="list" />
+      </button>
+    </div>
+    <ui:repeat value="#{menu.groups}" var="g">
+      <div class="grp">
+        <a class="gi #{g.active ? 'on' : ''}" href="#{g.firstHref}" aria-label="#{g.label}" title="#{g.label}">
+          <tk:icon name="#{g.icon}" />
+        </a>
+        <div class="grp-h" id="#{g.id()}">
+          <tk:icon name="#{g.icon}" small="true" />
+          <span>#{g.label}</span>
+        </div>
+        <ul aria-labelledby="#{g.id()}">
+          <ui:repeat value="#{g.items}" var="it">
+            <li>
+              <a class="it" href="#{it.href}" aria-current="#{it.active ? 'page' : 'false'}">
+                <span>#{it.label}</span>
+                <h:outputText rendered="#{not empty it.counter}" styleClass="cnt" value="#{it.counter}"
+                              pt:aria-label="#{fmt.msg('menu.counter', it.counter)}" xmlns:pt="jakarta.faces.passthrough" />
+              </a>
+            </li>
+          </ui:repeat>
+        </ul>
+      </div>
+    </ui:repeat>
+    <div class="foot">#{msg['app.menu.foot']}</div>
+  </nav>
+</ui:composition>

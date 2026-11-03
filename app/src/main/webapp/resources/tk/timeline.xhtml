@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:h="jakarta.faces.html">
+  <!-- Oś czasu (p:timeline lub lista z ikonami): kto, co, kiedy. -->
+  <cc:interface>
+    <cc:attribute name="value" required="true" />
+    <cc:attribute name="label" default="" />
+    <cc:attribute name="styleClass" default="" />
+  </cc:interface>
+  <cc:implementation>
+    <ol class="tl #{cc.attrs.styleClass}" aria-label="#{empty cc.attrs.label ? null : cc.attrs.label}">
+      <ui:repeat value="#{cc.attrs.value}" var="e" varStatus="st">
+        <li>
+          <span class="when">#{fmt.date(e.when.toLocalDate())}<h:panelGroup rendered="#{e.showTime}"><br />#{fmt.time(e.when)}</h:panelGroup></span>
+          <span class="rail" aria-hidden="true"><i class="#{e.current ? 'cur' : ''}"></i><h:panelGroup rendered="#{not st.last}"><s></s></h:panelGroup></span>
+          <h:panelGroup rendered="#{empty e.href}" styleClass="what"><b>#{e.who}</b> <h:outputText value="#{e.what}" escape="false" /></h:panelGroup>
+          <a class="what" href="#{e.href}" jsf:rendered="#{not empty e.href}" xmlns:jsf="jakarta.faces"><b>#{e.who}</b> <h:outputText value="#{e.what}" escape="false" /></a>
+        </li>
+      </ui:repeat>
+    </ol>
+  </cc:implementation>
+</ui:component>

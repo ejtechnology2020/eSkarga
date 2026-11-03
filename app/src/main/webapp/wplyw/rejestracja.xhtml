@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-03 Rejestracja wpływu pisma (UC-01). Pola z gwiazdką są wymagane; data i godzina wpływu ustawione na teraz.
+       Akcje: „Zarejestruj i drukuj etykietę” (główna), „Zarejestruj i następne”. Błędy w p:messages nad formularzem i pod polem. -->
+  <f:metadata>
+    <f:viewParam name="stan" value="#{rejestracja.stan}" />
+    <f:viewAction action="#{rejestracja.applyState}" />
+  </f:metadata>
+  <ui:param name="mainClass" value="rel" />
+  <ui:define name="title">Rejestracja wpływu pisma</ui:define>
+  <ui:define name="eyebrow">S-03 · biuro podawcze</ui:define>
+  <ui:define name="subtitle">Jeden formularz. Pola z gwiazdką są wymagane. Data i godzina wpływu są ustawione na teraz.</ui:define>
+  <ui:define name="actions"><h:link outcome="/wplyw/dziennik" styleClass="btn q" value="Dziennik wpływu" /></ui:define>
+
+  <ui:define name="content">
+    <h:form id="rej" styleClass="flow" pt:aria-label="Formularz rejestracji pisma">
+      <div class="main">
+        <p:messages id="msgs" globalOnly="true" showDetail="false" showSummary="true" closable="false" escape="false" />
+        <tk:message rendered="#{rejestracja.electronic and not rejestracja.zarejestrowano}" icon="info">
+          <b>Pismo elektroniczne z e-Doręczeń.</b> Kanał, data wniesienia, nadawca i pliki wypełniono z dowodu otrzymania (UPO). Sprawdź liczbę załączników.
+        </tk:message>
+
+        <section class="card" aria-labelledby="h-kan">
+          <h2 id="h-kan">Wpływ</h2>
+          <fieldset class="fieldset" id="f-kanal-fs">
+            <legend>Kanał wpływu <span class="req" aria-hidden="true">*</span></legend>
+            <p:selectOneRadio id="f-kanal" value="#{rejestracja.kanal}" layout="custom" disabled="#{rejestracja.zarejestrowano}">
+              <f:selectItems value="#{rejestracja.kanaly}" var="k" itemLabel="#{msg['channel.'.concat(k)]}" itemValue="#{k}" />
+            </p:selectOneRadio>
+            <div class="radios">
+              <ui:repeat value="#{rejestracja.kanaly}" var="k" varStatus="st">
+                <label class="#{rejestracja.kanal eq k ? 'on' : ''}"><p:radioButton for="f-kanal" itemIndex="#{st.index}" />#{msg['channel.'.concat(k)]}</label>
+              </ui:repeat>
+            </div>
+            <p:message for="f-kanal" styleClass="ferr" />
+          </fieldset>
+          <div class="form">
+            <div class="fld">
+              <p:outputLabel for="f-wp" value="Data i godzina wpływu" indicateRequired="true" />
+              <p:inputText id="f-wp" value="#{rejestracja.wplyw}" readonly="#{rejestracja.zarejestrowano}">
+                <f:convertDateTime type="localDateTime" pattern="dd.MM.yyyy HH:mm" />
+              </p:inputText>
+              <span class="hint">Domyślnie teraz. Format DD.MM.RRRR GG:MM.</span>
+            </div>
+            <div class="fld">
+              <p:outputLabel for="f-wn" value="#{rejestracja.electronic ? 'Data wniesienia (z UPO)' : 'Data wniesienia (stempel lub UPO)'}" indicateRequired="true" />
+              <p:inputText id="f-wn" value="#{rejestracja.wniesienie}" placeholder="DD.MM.RRRR" readonly="#{rejestracja.electronic or rejestracja.zarejestrowano}" />
+              <p:message for="f-wn" styleClass="ferr" />
+              <label class="chkl"><p:selectBooleanCheckbox value="#{rejestracja.dataNiepewna}" />Data niepewna (nieczytelny stempel)</label>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="h-nad">
+          <h2 id="h-nad">Nadawca i zawartość</h2>
+          <div class="form">
+            <div class="fld full">
+              <p:outputLabel for="f-nad" value="Nadawca" indicateRequired="true" />
+              <p:inputText id="f-nad" value="#{rejestracja.nadawca}" placeholder="Nazwisko, nazwa kancelarii albo urzędu"
+                           readonly="#{rejestracja.electronic or rejestracja.zarejestrowano}" />
+              <p:message for="f-nad" styleClass="ferr" />
+              <span class="hint">Autouzupełnianie z poprzednich wpływów i spraw.</span>
+            </div>
+            <div class="fld"><p:outputLabel for="f-zal" value="Liczba załączników" /><p:inputText id="f-zal" value="#{rejestracja.zalaczniki}" pt:inputmode="numeric" /></div>
+            <div class="fld"><p:outputLabel for="f-odp" value="Liczba odpisów" /><p:inputText id="f-odp" value="#{rejestracja.odpisy}" pt:inputmode="numeric" /></div>
+            <div class="fld full">
+              <span class="lbl">Skany</span>
+              <h:panelGroup rendered="#{not rejestracja.hasFiles}">
+                <p:fileUpload mode="advanced" multiple="true" dragDropSupport="true" allowTypes="/(\.|\/)(pdf|tiff?)$/" sizeLimit="52428800"
+                              label="Wybierz pliki" uploadLabel="Prześlij" cancelLabel="#{msg['common.cancel']}" />
+                <span class="hint">PDF lub TIFF, do 50 MB. Pismo i koperta osobno.</span>
+              </h:panelGroup>
+              <h:panelGroup rendered="#{rejestracja.hasFiles}" layout="block" styleClass="thumbs">
+                <div class="thumb"><span class="pv" aria-hidden="true"><i class="w6" style="align-self: flex-end;"></i><i class="h"></i><i></i><i></i><i class="w8"></i><i></i></span>
+                  <b>#{rejestracja.electronic ? 'wniosek.pdf' : 'Pismo'}</b><span class="mut">#{rejestracja.electronic ? '4 str. · podpis kwalifikowany' : '2 str. · skan 300 dpi'}</span></div>
+                <div class="thumb"><span class="pv" aria-hidden="true" style="justify-content: center;"><i class="w6"></i><i class="w8"></i></span>
+                  <b>#{rejestracja.electronic ? 'UPO.xml' : 'Koperta'}</b><span class="mut">#{rejestracja.electronic ? 'dowód otrzymania' : 'stempel 31.10.2026'}</span></div>
+                <button type="button" class="btn" style="align-self: center;">Dodaj plik</button>
+              </h:panelGroup>
+            </div>
+            <div class="fld full">
+              <label class="switch #{rejestracja.klauzula ? 'on' : ''}"><span class="tr" aria-hidden="true"></span>
+                <p:selectBooleanCheckbox value="#{rejestracja.klauzula}" styleClass="sr" pt:role="switch" />
+                Dokument z klauzulą (rejestrujesz tylko metadane, skanu nie dołączasz)</label>
+            </div>
+          </div>
+        </section>
+
+        <div class="card row-acts">
+          <h:panelGroup rendered="#{not rejestracja.zarejestrowano}">
+            <p:commandButton value="Zarejestruj i drukuj etykietę" action="#{rejestracja.register}" update="rej growl" styleClass="p" />
+            <p:commandButton value="Zarejestruj i następne" action="#{rejestracja.registerAndNext}" update="rej growl" />
+            <span class="sp"></span>
+            <p:commandButton value="Wyczyść formularz" action="#{rejestracja.clear}" update="rej" process="@this" styleClass="q" />
+          </h:panelGroup>
+          <h:panelGroup rendered="#{rejestracja.zarejestrowano}">
+            <h:link outcome="/wplyw/rejestracja" styleClass="btn p" value="Zarejestruj następne pismo"><f:param name="stan" value="pusty" /></h:link>
+            <h:link outcome="/wplyw/etykieta" styleClass="btn" value="Drukuj etykietę ponownie" />
+            <h:link outcome="/wplyw/dziennik" styleClass="btn q" value="Pokaż w dzienniku" />
+          </h:panelGroup>
+        </div>
+      </div>
+
+      <aside class="side" aria-label="Wynik i ostatnie wpływy">
+        <h:panelGroup rendered="#{rejestracja.zarejestrowano}">
+          <section class="card ok" aria-labelledby="h-ok">
+            <div class="card-h"><h2 id="h-ok">Zarejestrowano</h2><span class="tag ok">gotowe</span></div>
+            <p class="mono fs28">#{rejestracja.numerDziennika}</p>
+            <dl class="dl"><dt>Wpływ</dt><dd>#{fmt.dateTime(rejestracja.wplyw)} · #{msg['channel.'.concat(rejestracja.kanal)]}</dd>
+              <dt>Wniesienie</dt><dd>#{rejestracja.wniesienie} (stempel)</dd><dt>Nadawca</dt><dd>#{rejestracja.nadawca}</dd>
+              <dt>Dalej</dt><dd>kolejka kwalifikacji Wydziału Weryfikacyjnego</dd></dl>
+          </section>
+        </h:panelGroup>
+        <section class="card" aria-labelledby="h-ost">
+          <div class="card-h"><h2 id="h-ost">Ostatnio zarejestrowane</h2><h:link outcome="/wplyw/dziennik" value="Dziennik" /></div>
+          <tk:timeline value="#{rejestracja.recent}" />
+        </section>
+        <section class="card" aria-labelledby="h-sk"><h2 id="h-sk">Skróty klawiszowe</h2>
+          <p><span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> zarejestruj i drukuj · <span class="kbd">Alt</span> + <span class="kbd">N</span> zarejestruj i następne</p></section>
+      </aside>
+    </h:form>
+  </ui:define>
+</ui:composition>

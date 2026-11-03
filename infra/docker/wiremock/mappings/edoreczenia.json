@@ -1,0 +1,5 @@
+{
+  "request": {"method": "POST", "urlPath": "/edoreczenia/przesylki"},
+  "response": {"status": 202, "headers": {"Content-Type": "application/json"},
+    "jsonBody": {"identyfikatorPrzesylki": "AE-{{randomValue length=8 type='ALPHANUMERIC'}}", "status": "PRZYJETA"}}
+}

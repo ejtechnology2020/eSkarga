@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:jsf="jakarta.faces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-15 Edytor projektu pisma (UC-07/UC-10/UC-12, D13): dane pisma + podgląd PDF na żywo ze znakiem wodnym „Projekt”,
+       wersja („v2 z 3”), komentarze sędziego; akcje asystenta i sędziego; skład 3 sędziów z listą podpisujących. -->
+  <f:metadata><f:viewParam name="stan" value="#{edytor.stan}" /><f:viewAction action="#{edytor.applyState}" /></f:metadata>
+  <ui:param name="navMini" value="#{true}" />
+  <ui:define name="title">#{edytor.rodzajLabel}</ui:define>
+  <ui:define name="crumbs">
+    <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Czynności i decyzje" /></li><li><a href="#">Projekty pism</a></li><li><span aria-current="page">#{edytor.sygnatura} · #{edytor.rodzajLabel}</span></li></ol></nav>
+  </ui:define>
+  <ui:define name="eyebrow">S-15 · #{edytor.eyebrow}</ui:define>
+  <ui:define name="subtitle"><tk:sig value="#{demo.caseBy(edytor.sygnatura).sygnatura}" /> · #{edytor.opis}</ui:define>
+  <ui:define name="actions">
+    <h:form id="acts" styleClass="row">
+      <h:panelGroup rendered="#{edytor.asystent}"><button type="button" class="btn">Zapisz projekt</button><p:commandButton value="Prześlij sędziemu" action="#{edytor.sendToJudge}" update="@all" styleClass="p" /></h:panelGroup>
+      <h:panelGroup rendered="#{edytor.sedzia}"><button type="button" class="btn">Zwróć z uwagami</button><h:link outcome="/czynnosci/podpis" styleClass="btn p" value="Zaakceptuj i podpisz"><f:param name="stan" value="1" /></h:link></h:panelGroup>
+    </h:form>
+  </ui:define>
+  <ui:define name="banners">
+    <tk:banner rendered="#{edytor.lock}" tone="ro" icon="lock" title="Projekt zablokowany." text="Edytuje go sędzia TK Piotr Fikcyjny od 09:02. Możesz czytać i komentować. Edycja będzie dostępna po zamknięciu jego sesji.">
+      <f:facet name="actions"><button type="button" class="btn s">Powiadom, gdy zwolni</button></f:facet></tk:banner>
+  </ui:define>
+
+  <ui:define name="content">
+    <h:form id="ed">
+      <p:messages globalOnly="true" closable="false" showDetail="true" />
+      <div class="flow astretch" style="margin-top: 16px;">
+        <section class="card fb520" aria-label="Dane pisma">
+          <h2>Dane pisma</h2>
+          <div class="fld"><p:outputLabel for="e-rod" value="Rodzaj" />
+            <p:selectOneMenu id="e-rod" value="#{edytor.rodzaj}" disabled="#{edytor.readOnly}">
+              <f:selectItem itemLabel="#{edytor.rodzajLabel}" itemValue="odmowa" /><f:selectItem itemLabel="Zarządzenie o usunięciu braków" itemValue="braki" /><f:selectItem itemLabel="Postanowienie o nadaniu dalszego biegu" itemValue="nadanie" /></p:selectOneMenu></div>
+          <h:panelGroup rendered="#{not edytor.sklad}">
+            <fieldset class="fieldset" id="pod">
+              <legend>Podstawa prawna <span class="req" aria-hidden="true">*</span></legend>
+              <p:selectOneRadio id="p-pod" value="#{edytor.podstawa}" layout="custom" disabled="#{edytor.readOnly}">
+                <f:selectItem itemLabel="art. 61 ust. 4 pkt 1" itemValue="pkt1" /><f:selectItem itemLabel="art. 61 ust. 4 pkt 2" itemValue="pkt2" /><f:selectItem itemLabel="art. 61 ust. 4 pkt 3" itemValue="pkt3" />
+              </p:selectOneRadio>
+              <label class="chkl opt pad #{edytor.podstawa eq 'pkt1' ? 'on' : ''} #{empty edytor.podstawa ? 'bad' : ''}"><p:radioButton for="p-pod" itemIndex="0" /><span><b>art. 61 ust. 4 pkt 1</b> — skarga nie odpowiada wymogom formalnym</span></label>
+              <label class="chkl opt pad #{edytor.podstawa eq 'pkt2' ? 'on' : ''} #{empty edytor.podstawa ? 'bad' : ''}"><p:radioButton for="p-pod" itemIndex="1" /><span><b>art. 61 ust. 4 pkt 2</b> — skarga jest oczywiście bezzasadna</span></label>
+              <label class="chkl opt pad #{edytor.podstawa eq 'pkt3' ? 'on' : ''} #{empty edytor.podstawa ? 'bad' : ''}"><p:radioButton for="p-pod" itemIndex="2" /><span><b>art. 61 ust. 4 pkt 3</b> — braki nie zostały usunięte w terminie</span></label>
+              <span class="ferr" jsf:rendered="#{empty edytor.podstawa}">Wybierz podstawę prawną.</span>
+            </fieldset>
+            <div class="fld"><span class="lbl">Braki wstawione z listy kontrolnej</span>
+              <ul class="effects boxed">
+                <li><p:selectBooleanCheckbox value="#{edytor.brakPelnomocnictwo}" disabled="#{edytor.readOnly}" pt:aria-label="Wstaw brak: pełnomocnictwo szczególne" /><span><b>Pełnomocnictwo szczególne</b> — pełnomocnictwo z 30.10.2026 udzielono po wniesieniu skargi (13.10.2026); nie obejmuje jej sporządzenia</span></li>
+                <li><p:selectBooleanCheckbox value="#{edytor.brakUzasadnienie}" disabled="#{edytor.readOnly}" pt:aria-label="Wstaw brak: uzasadnienie zarzutu" /><span>Uzasadnienie zarzutu — <span class="mut">do sprawdzenia, nie wstawiono</span></span></li>
+              </ul></div>
+          </h:panelGroup>
+          <h:panelGroup rendered="#{edytor.sklad}">
+            <div class="fld"><span class="lbl">Skład orzekający i podpisy</span>
+              <ul class="effects boxed" style="padding: 12px;">
+                <li><tk:icon name="check" color="#1F5A2F" /><span><b>sędzia TK Ewa Wzorcowa</b> (przewodnicząca) · <span class="tag ok">podpisano 02.11.2026 16:40</span></span></li>
+                <li><tk:icon name="timer" color="#3E4553" /><span><b>sędzia TK Adam Testowy</b> (sprawozdawca) · <span class="tag">oczekuje</span></span></li>
+                <li><tk:icon name="timer" color="#3E4553" /><span><b>sędzia TK Maria Makietowa</b> · <span class="tag">oczekuje</span></span></li>
+              </ul><span class="hint">Dokument będzie gotowy po trzecim podpisie. Kolejność podpisów jest dowolna.</span></div>
+          </h:panelGroup>
+          <div class="fld"><p:outputLabel for="e-ter" value="Termin w piśmie" /><p:inputText id="e-ter" value="#{edytor.termin}" readonly="true" /></div>
+          <section class="card soft" aria-labelledby="h-uw">
+            <div class="card-h"><h3 id="h-uw">Uwagi sędziego</h3><span class="tag info">#{edytor.uwagiCnt}</span></div>
+            <tk:timeline value="#{edytor.uwagi}" />
+            <div class="fld"><p:outputLabel for="e-km" value="Dodaj uwagę" /><p:inputTextarea id="e-km" value="#{edytor.uwaga}" rows="2" styleClass="ta70" /></div>
+          </section>
+        </section>
+
+        <section class="card np fb700" aria-label="Podgląd PDF na żywo">
+          <div class="pane-h"><div class="pane-tt"><b>Podgląd na żywo</b><span class="mut">#{edytor.wersja} · autor: Tomasz Próbny · zapisano 03.11.2026 08:58</span></div><span class="sp"></span>
+            <p:selectOneMenu pt:aria-label="Wersja projektu"><f:selectItem itemLabel="#{edytor.wersja}" itemValue="cur" /><f:selectItem itemLabel="v1 z 3 · 30.10.2026" itemValue="v1" /></p:selectOneMenu>
+            <button type="button" class="btn s">Porównaj wersje</button></div>
+          <div class="viewer">
+            <tk:paper label="Podgląd projektu pisma, strona 1" watermark="PROJEKT">
+              <p class="r">Warszawa, dnia ………… 2026 r.</p>
+              <p>Sygn. akt #{edytor.sygnatura}</p>
+              <h2>POSTANOWIENIE</h2>
+              <p>Trybunał Konstytucyjny w składzie: #{edytor.skladText}, po wstępnym rozpoznaniu na posiedzeniu niejawnym #{edytor.przedmiot},</p>
+              <p class="c">postanawia:</p>
+              <p>#{edytor.sentencja}</p>
+              <p class="c">UZASADNIENIE</p>
+              <p><span class="ins">#{edytor.uzasadnienie}</span></p>
+            </tk:paper>
+          </div>
+        </section>
+      </div>
+    </h:form>
+  </ui:define>
+  <ui:define name="footerNote">Zapis automatyczny co 30 s</ui:define>
+</ui:composition>

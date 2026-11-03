@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-06 Kolejka pism i kwalifikacja (UC-02): p:splitter – kolejka, podgląd skanu, panel decyzji z podpowiedziami powiązań.
+       Stan: pismo w sprawie, w której biegnie termin braków („Uzupełnienie braków? termin do 09.11.2026”). -->
+  <ui:define name="title">Kolejka pism i kwalifikacja</ui:define>
+  <ui:define name="eyebrow">S-06</ui:define>
+  <ui:define name="subtitle">#{kolejka.items.size()} pisma czekają na decyzję. Przeciągnij separator, żeby zmienić szerokość paneli.</ui:define>
+  <ui:define name="actions"><button type="button" class="btn">Przekaż innemu referentowi</button></ui:define>
+
+  <ui:define name="content">
+    <h:form id="kw">
+      <p:splitter styleClass="split" pt:aria-label="Kolejka, skan i decyzja" gutterSize="10">
+        <p:splitterPanel size="25" minSize="20">
+          <section class="pane" aria-labelledby="h-kol" style="flex: 1;">
+            <div class="pane-h"><b id="h-kol">Kolejka</b><span class="badge">#{kolejka.items.size()}</span><span class="sp"></span>
+              <p:selectOneMenu value="#{kolejka.sort}" pt:aria-label="Sortowanie kolejki"><f:selectItem itemLabel="Najstarsze" itemValue="najstarsze" /><f:selectItem itemLabel="Najnowsze" itemValue="najnowsze" /></p:selectOneMenu></div>
+            <ul role="listbox" aria-label="Pisma do kwalifikacji" class="list-cards">
+              <ui:repeat value="#{kolejka.items}" var="it">
+                <li role="option" aria-selected="#{it eq kolejka.selected}" class="#{it eq kolejka.selected ? 'case on' : it.cssClass()}">
+                  <p:commandLink action="#{kolejka.select(it)}" update="kw" styleClass="col gap4" style="text-decoration: none; color: inherit;">
+                    <span class="h"><b class="mono">#{it.nr}</b><tk:tag value="#{it.etykieta}" tone="#{it.etykietaTone}" /></span>
+                    <span>#{it.nadawca} · #{msg['channel.'.concat(it.kanal)]}</span>
+                    <span class="#{it.mocnaPodpowiedz ? '' : 'mut'}"><b jsf:rendered="#{it.mocnaPodpowiedz}" xmlns:jsf="jakarta.faces">#{it.podpowiedz}</b><h:outputText rendered="#{not it.mocnaPodpowiedz}" value="#{it.podpowiedz}" /></span>
+                  </p:commandLink>
+                </li>
+              </ui:repeat>
+            </ul>
+          </section>
+        </p:splitterPanel>
+        <p:splitterPanel size="45" minSize="30">
+          <section class="pane" aria-labelledby="h-skan" style="flex: 1;">
+            <div class="pane-h"><b id="h-skan">#{kolejka.selected.nr} · skan</b><span class="mut">strona 1 z 2 + koperta</span><span class="sp"></span>
+              <button type="button" class="ibtn" aria-label="Pomniejsz">−</button><b>100 %</b><button type="button" class="ibtn" aria-label="Powiększ">+</button><button type="button" class="btn s">Koperta</button></div>
+            <div class="viewer">
+              <tk:paper label="Skan pisma #{kolejka.selected.nr}, strona 1">
+                <p class="r">Przykładowo, dnia 31.10.2026 r.</p>
+                <p class="ind">Trybunał Konstytucyjny<br />w Warszawie</p>
+                <p>Sygn. akt <span class="hl">Ts 312/26</span></p>
+                <p>Skarżący: Jan Przykładowy<br />Pełnomocnik: adw. Anna Testowa</p>
+                <h2>PISMO PROCESOWE</h2>
+                <p>W wykonaniu <span class="hl">zarządzenia z dnia 28.10.2026 r.</span> o usunięciu braków formalnych skargi konstytucyjnej, doręczonego w dniu 02.11.2026 r., w załączeniu przedkładam <span class="hl">pełnomocnictwo szczególne</span> do sporządzenia i wniesienia skargi konstytucyjnej.</p>
+                <p>Załącznik: pełnomocnictwo z dnia 30.10.2026 r.</p>
+                <p class="sign">adw. Anna Testowa</p>
+              </tk:paper>
+            </div>
+          </section>
+        </p:splitterPanel>
+        <p:splitterPanel size="30" minSize="25">
+          <section class="pane" aria-labelledby="h-dec" style="flex: 1;">
+            <div class="pane-h"><b id="h-dec">Decyzja</b></div>
+            <div class="pane-b">
+              <h:panelGroup rendered="#{kolejka.selected.mocnaPodpowiedz}" layout="block" styleClass="card hl" style="padding: 12px 14px;">
+                <div class="row"><tk:icon name="info" color="#233A6B" /><b>Uzupełnienie braków?</b></div>
+                <p>Pismo wskazuje <tk:sig value="#{kolejka.sprawa.sygnatura}" />. W tej sprawie biegnie termin na usunięcie braków.</p>
+                <tk:deadline value="#{kolejka.sprawa.termin}" />
+              </h:panelGroup>
+              <fieldset class="fieldset" style="gap: 8px;">
+                <legend>Czym jest pismo?</legend>
+                <p:selectOneRadio id="dec" value="#{kolejka.decyzja}" layout="custom">
+                  <f:selectItems value="#{kolejka.decyzje}" var="d" itemLabel="#{msg['qualification.'.concat(d)]}" itemValue="#{d}" />
+                  <p:ajax update="kw" />
+                </p:selectOneRadio>
+                <ui:repeat value="#{kolejka.decyzje}" var="d" varStatus="st">
+                  <label class="chkl opt #{kolejka.decyzja eq d ? 'on' : ''}"><p:radioButton for="dec" itemIndex="#{st.index}" />#{msg['qualification.'.concat(d)]}</label>
+                </ui:repeat>
+              </fieldset>
+              <h:panelGroup rendered="#{kolejka.doSprawy}" layout="block" styleClass="col gap12">
+                <div class="fld"><p:outputLabel for="d-sig" value="Sygnatura sprawy" /><p:inputText id="d-sig" value="#{kolejka.sygnatura}" /></div>
+                <div class="fld"><p:outputLabel for="d-rod" value="Rodzaj pisma w sprawie" />
+                  <p:selectOneMenu id="d-rod" value="#{kolejka.rodzaj}"><f:selectItem itemLabel="uzupełnienie braków formalnych" itemValue="uzupelnienie" /><f:selectItem itemLabel="pismo procesowe — inne" itemValue="inne" /><f:selectItem itemLabel="zażalenie" itemValue="zazalenie" /></p:selectOneMenu></div>
+              </h:panelGroup>
+              <div class="fld"><span class="lbl">Podpowiedzi powiązań</span>
+                <ul style="margin: 0; padding-left: 20px;"><li>Ten sam pełnomocnik: <tk:sig value="#{demo.caseBy('Ts 287/26').sygnatura}" /> (zakończona)</li><li>Ten sam przepis: art. 505¹ § 1 k.p.c. — 1 sprawa</li></ul></div>
+              <div class="row"><p:commandButton value="Zakwalifikuj i dołącz do akt" action="#{kolejka.qualify}" styleClass="p" /><button type="button" class="btn">Odłóż</button></div>
+              <p class="hint">Po dołączeniu pismo dostanie kolejny numer karty (k. 28–29), a asystent sędziego — zadanie.</p>
+            </div>
+          </section>
+        </p:splitterPanel>
+      </p:splitter>
+    </h:form>
+  </ui:define>
+</ui:composition>

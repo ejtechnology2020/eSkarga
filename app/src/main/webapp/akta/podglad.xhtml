@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<ui:composition template="/WEB-INF/templates/layout.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:jsf="jakarta.faces"
+                xmlns:tk="jakarta.faces.composite/tk">
+  <!-- S-14 Podgląd akt sprawy (brief). Sygnatura, status i biegnący termin widoczne bez przewijania (1366 × 768: menu zwinięte).
+       Trzy kolumny: spis akt (~20 %), podgląd dokumentu (~55 %), panel boczny (~25 %) z zakładkami Czynności / Terminy / Lista kontrolna / Metadane. -->
+  <f:metadata>
+    <f:viewParam name="sygnatura" value="#{akta.sygnatura}" />
+    <f:viewParam name="widok" value="#{akta.widok}" />
+    <f:viewAction action="#{akta.load}" />
+  </f:metadata>
+  <ui:param name="navMini" value="#{true}" />
+  <ui:define name="title">#{akta.sprawa.sygnatura.format()} · akta</ui:define>
+  <ui:define name="crumbs">
+    <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Sprawy" /></li><li><h:link outcome="/sprawy/repertorium" value="Repertorium Ts 2026" /></li><li><span aria-current="page">#{akta.sprawa.sygnatura.format()} · akta</span></li></ol></nav>
+  </ui:define>
+  <ui:define name="banners">
+    <tk:banner rendered="#{akta.sprawa.status.readOnly}" tone="ro" icon="lock" title="#{msg['common.readOnly']}"
+               text="Sprawa zakończona #{fmt.date(akta.sprawa.dataZakonczenia)}. #{not empty akta.sprawa.powiazana ? 'Dalsze czynności w '.concat(akta.sprawa.powiazana.format()).concat('.') : 'Akta do przekazania do archiwum.'}">
+      <f:facet name="actions"><h:outputLink value="#" rendered="#{not empty akta.sprawa.powiazana}">Przejdź do #{akta.sprawa.powiazana.format()}</h:outputLink></f:facet>
+    </tk:banner>
+    <tk:banner rendered="#{akta.anonim}" tone="an" icon="user-off" title="#{msg['common.anonymised']}" text="#{msg['common.anonymised.text']} Osoba trzecia widzi tylko akta jawne po anonimizacji (art. 74)." />
+  </ui:define>
+  <ui:define name="titlebar">
+    <header class="card nopb" style="gap: 14px;">
+      <div class="row astart" style="gap: 16px 24px;">
+        <div class="col gap4">
+          <div class="row"><h1 class="h1-32">#{akta.sprawa.sygnatura.format()}</h1>
+            <button type="button" class="ibtn" data-action="copy-sig" data-sig="#{akta.sprawa.sygnatura.format()}" aria-label="#{fmt.msg('common.copySig', akta.sprawa.sygnatura.format())}"><tk:icon name="copy" /></button>
+            <tk:statusTag status="#{akta.sprawa.status}" />
+            <tk:flags value="#{akta.sprawa.flagi}" /></div>
+          <span class="mut">#{akta.sprawa.typ}</span>
+        </div>
+        <dl class="dl sidecard" style="grid-template-columns: auto auto;">
+          <dt>Skarżący</dt><dd><b>#{akta.anon(akta.sprawa.skarzacy)}</b></dd>
+          <dt>Pełnomocnik</dt><dd><b>#{akta.anon(akta.sprawa.pelnomocnik)}</b></dd>
+          <dt>Sędzia</dt><dd><b>#{empty akta.sprawa.sedzia ? 'oczekuje na wyznaczenie' : akta.sprawa.sedzia}</b></dd>
+        </dl>
+        <div class="col gap4 sidecard" style="max-width: 460px;"><span class="mut">Przedmiot kontroli</span><b>#{akta.sprawa.przedmiot} ↔ art. 45 ust. 1, art. 78 Konstytucji</b>
+          <span class="mut" jsf:rendered="#{akta.sprawa.sygnatura.format() eq 'Ts 312/26'}">Orzeczenie ostateczne: wyrok SO w Przykładowie, II Ca 123/26, doręczony 14.07.2026</span></div>
+        <span class="sp"></span>
+        <h:panelGroup rendered="#{akta.biegnacyTermin}">
+          <a class="termbox #{akta.sprawa.termin.state.css()}" href="#k27" aria-live="polite" aria-label="Biegnący termin na usunięcie braków: 6 dni, upływa #{fmt.date(akta.sprawa.termin.end)}">
+            <span class="n" aria-hidden="true">6<small>dni</small></span><span class="l">Biegnący termin · braki</span><span class="t">upływa #{fmt.date(akta.sprawa.termin.end)} · art. 61 ust. 3</span><span class="bar" aria-hidden="true"><span style="width: #{akta.sprawa.termin.progress}%;"></span></span>
+          </a>
+        </h:panelGroup>
+        <h:panelGroup rendered="#{not akta.biegnacyTermin}"><tk:deadline value="#{akta.sprawa.termin}" /></h:panelGroup>
+        <div class="row">
+          <h:panelGroup rendered="#{not akta.readOnly}">
+            <button type="button" class="btn p">#{akta.akcjaGlowna}</button><button type="button" class="btn">Nowa czynność</button>
+          </h:panelGroup>
+          <h:panelGroup rendered="#{akta.readOnly and not akta.anonim}"><h:outputLink value="#" styleClass="btn p">#{akta.akcjaGlowna}</h:outputLink></h:panelGroup>
+          <h:panelGroup rendered="#{akta.anonim}"><button type="button" class="btn p">Zamów kopię</button></h:panelGroup>
+          <button type="button" class="btn" aria-label="#{msg['common.more']}" aria-haspopup="menu">⋯</button>
+        </div>
+      </div>
+      <ol class="proc pb" aria-label="Przebieg sprawy">
+        <ui:repeat value="#{akta.przebieg}" var="s" varStatus="st">
+          <li class="#{s.current ? 'cur' : ''}" aria-current="#{s.current ? 'step' : null}">
+            <h:panelGroup rendered="#{s.done}"><span class="dot" aria-hidden="true"><tk:icon name="check" small="true" /></span><span><b>#{s.label}</b> · #{empty s.dateNote ? '' : s.dateNote.concat(' ')}#{fmt.date(s.date)}</span></h:panelGroup>
+            <h:panelGroup rendered="#{s.current}"><span class="num" aria-hidden="true">#{s.number}</span><b>#{s.label}</b><span class="next">#{s.next}</span></h:panelGroup>
+            <h:panelGroup rendered="#{not s.done and not s.current}"><span class="dot todo" aria-hidden="true"></span><span>#{s.label}</span></h:panelGroup>
+          </li>
+          <li class="ln #{s.current ? 'dash' : ''}" aria-hidden="true" jsf:rendered="#{not st.last}"></li>
+        </ui:repeat>
+      </ol>
+    </header>
+  </ui:define>
+
+  <ui:define name="content">
+    <h:form id="af">
+      <h:panelGroup id="akta-body" layout="block" styleClass="flow astretch" style="gap: 12px;">
+        <section class="card np fx1" aria-label="Spis akt">
+          <div class="tabs" role="tablist" aria-label="Rodzaj akt" style="padding: 0 10px;">
+            <p:commandButton value="Akta jawne · #{akta.jawne}" action="#{akta.setNotatki(false)}" update="akta-body" styleClass="q" pt:role="tab" pt:aria-selected="#{not akta.notatki}" process="@this" />
+            <p:commandButton value="Notatki wewnętrzne · 2" action="#{akta.setNotatki(true)}" update="akta-body" styleClass="q tab-note" pt:role="tab" pt:aria-selected="#{akta.notatki}" process="@this"
+                             disabled="#{not akta.zespolSedziego}" title="#{akta.zespolSedziego ? '' : 'Dostępne dla zespołu sędziego'}" rendered="#{not akta.anonim}" />
+          </div>
+          <h:panelGroup rendered="#{not akta.notatki}">
+            <div class="row mut jbetween" style="padding: 8px 14px;"><span>Tom I · k. 1–29</span><span><span class="kbd">J</span>/<span class="kbd">K</span> dokument</span></div>
+            <ol class="tl doc" aria-label="Dokumenty" style="padding: 0 12px 12px;">
+              <ui:repeat value="#{akta.spis}" var="pg" varStatus="st">
+                <li id="#{pg.id}">
+                  <span class="when">#{empty pg.data ? '—' : fmt.date(pg.data)}</span>
+                  <span class="rail" aria-hidden="true"><h:panelGroup rendered="#{not pg.niejawny}"><i class="#{pg.nowy ? 'cur' : ''}"></i><s jsf:rendered="#{not st.last}"></s></h:panelGroup><h:panelGroup rendered="#{pg.niejawny}"><tk:icon name="lock" small="true" color="#3E4553" /></h:panelGroup></span>
+                  <span class="what">
+                    <p:commandLink action="#{akta.open(pg)}" update="akta-body" styleClass="case link #{pg eq akta.dokument ? 'on' : ''} #{pg.niejawny ? 'secret' : ''}" pt:aria-current="#{pg eq akta.dokument}" process="@this">
+                      <span class="h"><b>#{pg.tytul} <h:outputText rendered="#{pg.nowy}" styleClass="tag new" value="nowy" /></b><b>#{pg.karty}</b></span>
+                      <span class="mut">#{pg.opis}</span>
+                    </p:commandLink>
+                  </span>
+                </li>
+              </ui:repeat>
+            </ol>
+          </h:panelGroup>
+          <h:panelGroup rendered="#{akta.notatki}" layout="block" style="padding: 12px;">
+            <ol class="tl doc" aria-label="Notatki wewnętrzne">
+              <li><span class="when">31.10.2026</span><span class="rail" aria-hidden="true"><span class="dot-note"></span></span><span class="what"><a class="case link" href="#"><span class="h"><b>Notatka asystenta do sędziego</b><b>N-1</b></span><span class="mut">notatka wewnętrzna · Tomasz Próbny · nieprzeczytana</span></a></span></li>
+              <li><span class="when">27.10.2026</span><span class="rail" aria-hidden="true"><span class="dot-note"></span></span><span class="what"><a class="case link" href="#"><span class="h"><b>Zaznaczenia w skardze</b><b>3</b></span><span class="mut">k. 1, k. 3, k. 9 · widoczne tylko dla zespołu sędziego</span></a></span></li>
+            </ol>
+            <p class="hint">Notatki wewnętrzne nie trafiają do akt jawnych ani do eksportu (FR-24).</p>
+          </h:panelGroup>
+        </section>
+
+        <section class="card np #{akta.split ? 'fx2' : 'fx3'}" aria-label="Podgląd dokumentu">
+          <ui:include src="/WEB-INF/includes/dokument-pane.xhtml"><ui:param name="doc" value="#{akta.dokument}" /><ui:param name="showSplit" value="#{true}" /></ui:include>
+        </section>
+        <section class="card np fx2" aria-label="Drugi dokument" jsf:rendered="#{akta.split}">
+          <ui:include src="/WEB-INF/includes/dokument-pane.xhtml"><ui:param name="doc" value="#{akta.drugiDokument}" /><ui:param name="showSplit" value="#{false}" /></ui:include>
+        </section>
+
+        <aside class="col fx1" aria-label="Panel sprawy" style="gap: 12px;" jsf:rendered="#{not akta.anonim}">
+          <section class="card hl" jsf:rendered="#{akta.zespolSedziego and not akta.readOnly}">
+            <span class="eyebrow">Następna czynność</span>
+            <h2>Oceń pismo uzupełniające</h2>
+            <p>Wpłynęło 03.11.2026 (k. 28–29), w terminie. Sprawdź, czy usuwa brak: <b>pełnomocnictwo szczególne</b>.</p>
+            <div class="row"><p:commandButton value="Lista kontrolna · #{akta.braki} brak" action="#{akta.setPanelTab(2)}" update="akta-body" process="@this" /><h:link outcome="/czynnosci/edytor" styleClass="btn p" value="Utwórz projekt postanowienia" /></div>
+          </section>
+          <section class="card hl" jsf:rendered="#{akta.referent and not akta.readOnly}">
+            <span class="eyebrow">Czynności rejestracyjne</span>
+            <h2>Pismo DW 2026/04812 dołączono (k. 28–29)</h2>
+            <p>Zarejestruj potwierdzenie odbioru albo dodaj kolejne pismo. Notatki wewnętrzne są dostępne dla zespołu sędziego.</p>
+            <div class="row"><h:link outcome="/rejestry/ekspedycja" styleClass="btn" value="Rejestracja zwrotki" /><button type="button" class="btn p">Dodaj pismo</button></div>
+          </section>
+          <section class="card np" style="flex: 1;">
+            <p:tabView id="panel" activeIndex="#{akta.panelTab}" styleClass="np" dynamic="false" pt:aria-label="Panel sprawy">
+              <p:tab title="Czynności">
+                <tk:timeline value="#{akta.czynnosci}" label="Oś czynności" styleClass="pad" />
+              </p:tab>
+              <p:tab title="Terminy">
+                <div class="col gap10" style="padding: 14px;">
+                  <ui:repeat value="#{akta.terminy}" var="t"><tk:deadline value="#{t}" /></ui:repeat>
+                  <p class="hint">Początek: doręczenie 02.11.2026 (k. 27) · koniec: 09.11.2026 · podstawa art. 61 ust. 3. Termin z art. 77 jest wyliczeniem pomocniczym — ocenia sędzia.</p>
+                </div>
+              </p:tab>
+              <p:tab title="Lista kontrolna">
+                <div class="col gap10" style="padding: 14px;">
+                  <ul class="list-plain col gap6">
+                    <ui:repeat value="#{akta.lista}" var="li">
+                      <li class="row jbetween" style="gap: 8px; padding: 6px 0; border-bottom: 1px solid #D3D8E0;">
+                        <span><b>#{li.wymog}</b><br /><span class="mut">#{li.podstawa}#{empty li.uwaga ? '' : ' · '.concat(li.uwaga)}</span></span>
+                        <tk:tag value="#{li.stan eq 'SPELNIONY' ? 'spełniony' : li.stan eq 'BRAK' ? 'brak' : 'do sprawdzenia'}" tone="#{li.stan eq 'SPELNIONY' ? 'OK' : li.stan eq 'BRAK' ? 'ERR' : 'WARN'}" />
+                      </li>
+                    </ui:repeat>
+                  </ul>
+                  <h:link outcome="/czynnosci/edytor" styleClass="btn p" value="Utwórz projekt zarządzenia o brakach" rendered="#{akta.zespolSedziego}" />
+                </div>
+              </p:tab>
+              <p:tab title="Metadane">
+                <dl class="dl" style="padding: 14px;">
+                  <dt>Dokument</dt><dd>#{akta.dokument.tytul}</dd><dt>Karty</dt><dd>#{akta.dokument.karty}</dd>
+                  <dt>Data wpływu</dt><dd>#{fmt.date(akta.dokument.data)}</dd><dt>Data wniesienia</dt><dd>13.10.2026 (stempel)</dd>
+                  <dt>Kanał</dt><dd>poczta</dd><dt>Nadawca</dt><dd>#{akta.anon('adw. Anna Testowa')}</dd>
+                  <dt>Klauzula</dt><dd>#{akta.dokument.niejawny ? 'zastrzeżone' : 'brak'}</dd><dt>Wersja zanonimizowana</dt><dd>nie</dd>
+                  <dt>Skrót SHA-256</dt><dd class="mono">9f3c…1a7e</dd>
+                </dl>
+              </p:tab>
+            </p:tabView>
+          </section>
+        </aside>
+      </h:panelGroup>
+    </h:form>
+  </ui:define>
+  <ui:define name="footerNote">Skróty: <span class="kbd">J</span>/<span class="kbd">K</span> dokument · <span class="kbd">\</span> widok dzielony · <span class="kbd">?</span> lista skrótów</ui:define>
+</ui:composition>
