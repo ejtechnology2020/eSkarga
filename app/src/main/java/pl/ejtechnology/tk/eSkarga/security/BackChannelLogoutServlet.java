@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import pl.ejtechnology.tk.eSkarga.api.JwtRs256Verifier;
+import pl.ejtechnology.tk.eSkarga.common.security.JwtRs256Verifier;
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
 
 /**

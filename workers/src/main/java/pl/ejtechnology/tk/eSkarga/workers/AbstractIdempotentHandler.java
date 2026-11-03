@@ -37,7 +37,9 @@ public abstract class AbstractIdempotentHandler implements ExternalTaskHandler {
         try {
             Map<String, Object> result = handle(task, key);
             service.complete(task, result);
+            WorkerMetrics.completed(topic());
         } catch (Exception e) {
+            WorkerMetrics.failed(topic());
             Integer retries = task.getRetries();
             int left = retries == null ? MAX_RETRIES : retries - 1;
             long backoff = backoffMs(MAX_RETRIES - left);

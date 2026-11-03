@@ -1,4 +1,4 @@
-package pl.ejtechnology.tk.eSkarga.api;
+package pl.ejtechnology.tk.eSkarga.common.security;
 
 import java.time.Instant;
 import java.util.Optional;

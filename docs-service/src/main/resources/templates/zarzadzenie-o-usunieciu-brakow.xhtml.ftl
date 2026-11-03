@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <title>Zarządzenie o usunięciu braków – ${sygnatura}</title>
   <style>
-    @page { size: A4; margin: 25mm 20mm 25mm 25mm; @bottom-center { content: "Strona " counter(page) " z " counter(pages); font-size: 9pt; } }
+    @page { size: A4; margin: 25mm 20mm 25mm 25mm; @bottom-center { content: "Strona " counter(page) " z " counter(pages); font-family: "Liberation Serif", serif; font-size: 9pt; } }
     body { font-family: "Liberation Serif", serif; font-size: 12pt; line-height: 1.4; }
     h1 { text-align: center; font-size: 14pt; letter-spacing: .08em; margin: 24pt 0 12pt; }
     .r { text-align: right; } .c { text-align: center; font-weight: bold; } .sign { margin-top: 36pt; text-align: right; }

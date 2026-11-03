@@ -1,13 +1,13 @@
 package pl.ejtechnology.tk.eSkarga.workers;
 
-/** Tematy external tasks z modelu BPMN i architektury (§8). */
+/** Tematy external tasks z modelu BPMN ({@code wstepna-kontrola.bpmn}) i zadania cykliczne workerów (§8 architektury). */
 public final class Topics {
-    public static final String DORECZENIE_ELEKTRONICZNE = "doreczenie-elektroniczne";
-    public static final String DORECZENIE_POCZTOWE = "doreczenie-pocztowe";
+
+    /** Doręczenie pisma sędziego (zarządzenie o brakach, postanowienie o odmowie) – T_DoreczBraki / T_DoreczOdmowa. */
+    public static final String DORECZENIE_PISMA = "doreczenie-pisma";
     public static final String PRZEKAZANIE_MERYTORYCZNE = "przekazanie-merytoryczne";
+    /** Zadanie cykliczne (nie external task): OCR, PDF/A i walidacja podpisów nowych dokumentów przez usługę dokumentów. */
     public static final String DOKUMENT_PRZETWORZ = "dokument-przetworz";
-    public static final String PUBLIKACJA = "publikacja";
-    public static final String ARCHIWIZACJA = "archiwizacja";
 
     private Topics() {
     }

@@ -9,14 +9,14 @@ class IdempotencyAndBackoffTest {
 
     @Test
     void keyIsStableForSameDelivery() {
-        assertThat(new IdempotencyKey(Topics.DORECZENIE_POCZTOWE, "DOR-17").value())
-                .isEqualTo(new IdempotencyKey(Topics.DORECZENIE_POCZTOWE, "DOR-17").value())
-                .isEqualTo("doreczenie-pocztowe:DOR-17");
+        assertThat(new IdempotencyKey(Topics.DORECZENIE_PISMA, "DOR-17").value())
+                .isEqualTo(new IdempotencyKey(Topics.DORECZENIE_PISMA, "DOR-17").value())
+                .isEqualTo("doreczenie-pisma:DOR-17");
     }
 
     @Test
     void keyRejectsBlankDeliveryId() {
-        assertThatThrownBy(() -> new IdempotencyKey(Topics.DORECZENIE_POCZTOWE, " ")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new IdempotencyKey(Topics.DORECZENIE_PISMA, " ")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

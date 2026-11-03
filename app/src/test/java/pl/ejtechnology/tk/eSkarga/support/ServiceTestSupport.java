@@ -33,7 +33,10 @@ import pl.ejtechnology.tk.eSkarga.domain.service.AccessRequestService;
 import pl.ejtechnology.tk.eSkarga.domain.service.AppealService;
 import pl.ejtechnology.tk.eSkarga.domain.service.ArchiveService;
 import pl.ejtechnology.tk.eSkarga.domain.service.CaseAccessService;
+import pl.ejtechnology.tk.eSkarga.domain.service.CaseDocumentService;
 import pl.ejtechnology.tk.eSkarga.domain.service.CaseFileService;
+import pl.ejtechnology.tk.eSkarga.domain.service.LetterService;
+import pl.ejtechnology.tk.eSkarga.domain.service.SigningService;
 import pl.ejtechnology.tk.eSkarga.domain.service.CorrectionService;
 import pl.ejtechnology.tk.eSkarga.domain.service.DelegationService;
 import pl.ejtechnology.tk.eSkarga.domain.service.DeliveryService;
@@ -67,6 +70,7 @@ public abstract class ServiceTestSupport {
     protected static JpaTestSupport db;
     protected static AppClock clock;
     protected static InMemoryDocumentStore store;
+    protected static StubDocsGateway docs;
     /** Walidator szablonów do testów: odrzuca źródło zawierające „<script” albo puste. */
     protected static TemplateService.TemplateValidator validator;
 
@@ -92,6 +96,9 @@ public abstract class ServiceTestSupport {
         public final TemplateService templates;
         public final NoteService notes;
         public final CaseAccessService caseAccess;
+        public final LetterService letters;
+        public final SigningService signing;
+        public final CaseDocumentService documents;
 
         public Services(EntityManager em, PreliminaryReviewProcess process) {
             this.em = em;
@@ -120,6 +127,9 @@ public abstract class ServiceTestSupport {
             this.reports = Wiring.inject(new ReportService(), em, clock);
             this.templates = Wiring.inject(new TemplateService(), em, audit, validator, clock);
             this.notes = Wiring.inject(new NoteService(), em, caseAccess, audit, clock);
+            this.letters = Wiring.inject(new LetterService(), em, cases, templates, docs, store, engine.getTaskService(), audit, clock);
+            this.signing = Wiring.inject(new SigningService(), em, cases, deliveries, docs, store, engine.getTaskService(), audit, clock);
+            this.documents = Wiring.inject(new CaseDocumentService(), em, cases, store, audit, clock);
         }
     }
 
@@ -129,6 +139,7 @@ public abstract class ServiceTestSupport {
         clock = new AppClock(Clock.fixed(TODAY.atTime(9, 0).atZone(AppClock.WARSAW).toInstant(), AppClock.WARSAW));
         ClockUtil.setCurrentTime(Date.from(clock.instant()));
         store = new InMemoryDocumentStore();
+        docs = new StubDocsGateway();
         validator = (code, xhtml) -> xhtml == null || xhtml.isBlank() || xhtml.contains("<script")
                 ? new TemplateService.Validation(false, List.of("niedozwolona treść szablonu"))
                 : new TemplateService.Validation(true, List.of());

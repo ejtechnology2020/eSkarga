@@ -1,5 +1,8 @@
 package pl.ejtechnology.tk.eSkarga.api;
 
+import pl.ejtechnology.tk.eSkarga.common.security.JwtRs256Verifier;
+import pl.ejtechnology.tk.eSkarga.common.security.TokenVerifier;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 

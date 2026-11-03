@@ -3,27 +3,32 @@ package pl.ejtechnology.tk.eSkarga.workers;
 import org.operaton.bpm.client.interceptor.ClientRequestContext;
 import org.operaton.bpm.client.interceptor.ClientRequestInterceptor;
 
+import pl.ejtechnology.tk.eSkarga.common.security.ClientCredentialsTokenClient;
+
 /**
- * Nagłówek {@code Authorization: Bearer} z tokenem ID-users (client credentials) do REST silnika (architektura §5.4).
- * Pobieranie i odświeżanie tokenu dostarcza T-042 po poznaniu kontraktu ID-users [zaślepka]; do tego czasu
- * bez tokenu, gdy adres tokenu jest pusty (dev z mock OIDC).
+ * Nagłówek {@code Authorization: Bearer} z tokenem ID-users (client credentials) do REST silnika i API aplikacji
+ * (architektura §5.4, T-042). Gdy adres tokenu jest pusty (dev bez ID-users), żądania idą bez nagłówka.
  */
 public final class OidcTokenInterceptor implements ClientRequestInterceptor {
 
-    private final WorkerConfig cfg;
+    private final ClientCredentialsTokenClient tokens;
 
     public OidcTokenInterceptor(WorkerConfig cfg) {
-        this.cfg = cfg;
+        this(new ClientCredentialsTokenClient(cfg.oidcTokenUrl(), cfg.oidcClientId(), cfg.oidcClientSecret(), cfg.oidcScope()));
+    }
+
+    public OidcTokenInterceptor(ClientCredentialsTokenClient tokens) {
+        this.tokens = tokens;
     }
 
     @Override
     public void intercept(ClientRequestContext requestContext) {
-        if (cfg.oidcTokenUrl() != null && !cfg.oidcTokenUrl().isBlank()) {
-            requestContext.addHeader("Authorization", "Bearer " + fetchToken());
+        if (tokens.configured()) {
+            requestContext.addHeader("Authorization", "Bearer " + tokens.token());
         }
     }
 
-    String fetchToken() {
-        throw new UnsupportedOperationException("Kontrakt ID-users nieznany – implementacja w T-042");
+    public ClientCredentialsTokenClient tokens() {
+        return tokens;
     }
 }

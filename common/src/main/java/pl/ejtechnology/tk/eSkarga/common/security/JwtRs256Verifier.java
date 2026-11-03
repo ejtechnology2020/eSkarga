@@ -1,4 +1,4 @@
-package pl.ejtechnology.tk.eSkarga.api;
+package pl.ejtechnology.tk.eSkarga.common.security;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -28,7 +28,6 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 
-import pl.ejtechnology.tk.eSkarga.security.OidcSettings;
 
 /**
  * Weryfikator JWT (RS256) bez zewnętrznych bibliotek: podpis kluczem z JWKS wydawcy (ID-users), {@code iss}, {@code aud},
@@ -50,9 +49,9 @@ public class JwtRs256Verifier implements TokenVerifier {
 
     /** Konfiguracja z właściwości; klucze pobierane z JWKS wydawcy. */
     public static JwtRs256Verifier fromSettings() {
-        String issuer = OidcSettings.value("eskarga.oidc.issuer", "");
-        String jwks = OidcSettings.value(JWKS_PROPERTY, issuer.endsWith("/") ? issuer + "protocol/openid-connect/certs" : issuer + "/.well-known/jwks.json");
-        return new JwtRs256Verifier(issuer, OidcSettings.value(AUDIENCE_PROPERTY, "eskarga-api"), OidcSettings.value("eskarga.oidc.rolesClaim", "roles"),
+        String issuer = Settings.value("eskarga.oidc.issuer", "");
+        String jwks = Settings.value(JWKS_PROPERTY, issuer.endsWith("/") ? issuer + "protocol/openid-connect/certs" : issuer + "/.well-known/jwks.json");
+        return new JwtRs256Verifier(issuer, Settings.value(AUDIENCE_PROPERTY, "eskarga-api"), Settings.value("eskarga.oidc.rolesClaim", "roles"),
                 () -> fetchJwks(jwks));
     }
 
@@ -65,9 +64,9 @@ public class JwtRs256Verifier implements TokenVerifier {
 
     /** Weryfikator tokenów kierowanych do aplikacji jako klienta OIDC (np. {@code logout_token} back-channel). */
     public static JwtRs256Verifier forClient() {
-        String issuer = OidcSettings.value("eskarga.oidc.issuer", "");
-        String jwks = OidcSettings.value(JWKS_PROPERTY, issuer.endsWith("/") ? issuer + "protocol/openid-connect/certs" : issuer + "/.well-known/jwks.json");
-        return new JwtRs256Verifier(issuer, OidcSettings.value("eskarga.oidc.clientId", "eskarga"), OidcSettings.value("eskarga.oidc.rolesClaim", "roles"),
+        String issuer = Settings.value("eskarga.oidc.issuer", "");
+        String jwks = Settings.value(JWKS_PROPERTY, issuer.endsWith("/") ? issuer + "protocol/openid-connect/certs" : issuer + "/.well-known/jwks.json");
+        return new JwtRs256Verifier(issuer, Settings.value("eskarga.oidc.clientId", "eskarga"), Settings.value("eskarga.oidc.rolesClaim", "roles"),
                 () -> fetchJwks(jwks));
     }
 

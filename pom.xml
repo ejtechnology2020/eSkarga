@@ -13,6 +13,7 @@
   <description>System repertoryjno-biurowy Trybunału Konstytucyjnego do obsługi skarg (Ts) i wniosków (Tw) na etapie wstępnej kontroli.</description>
 
   <modules>
+    <module>common</module>
     <module>app</module>
     <module>docs-service</module>
     <module>workers</module>
@@ -167,6 +168,11 @@
       </dependency>
 
       <!-- Dostęp do danych w testach (ADR 0011) i integracje -->
+      <dependency>
+        <groupId>pl.ejtechnology.tk</groupId>
+        <artifactId>eskarga-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-core</artifactId>

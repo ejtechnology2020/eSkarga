@@ -62,6 +62,25 @@ public class TemplateService {
         return v;
     }
 
+    /** Zasiewa tabelę szablonami domyślnymi z usługi dokumentów (wersja 1, aktywna) tylko dla kodów bez żadnej wersji. */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public int seedDefaults(java.util.Map<String, String> defaults, String actorId) {
+        int added = 0;
+        for (var e : defaults.entrySet()) {
+            Long count = em.createQuery("select count(t) from LetterTemplate t where t.code = :c", Long.class).setParameter("c", e.getKey()).getSingleResult();
+            if (count == 0) {
+                LetterTemplate t = new LetterTemplate(e.getKey(), e.getKey(), 1, e.getValue(), "system");
+                t.activate(actorId);
+                em.persist(t);
+                added++;
+            }
+        }
+        if (added > 0) {
+            audit.record(actorId, "TK_ADMIN", "zasianie szablonów domyślnych: " + added, null, null, null);
+        }
+        return added;
+    }
+
     public Optional<LetterTemplate> active(String code) {
         return em.createQuery("select t from LetterTemplate t where t.code = :c and t.status = :s", LetterTemplate.class)
                 .setParameter("c", code).setParameter("s", TemplateStatus.AKTYWNA).getResultStream().findFirst();

@@ -4,12 +4,13 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Konfiguracja ze zmiennych środowiskowych; sekrety nigdy w repozytorium. */
+/** Konfiguracja ze zmiennych środowiskowych (ADR 0010); sekrety nigdy w repozytorium. */
 public record WorkerConfig(String engineRestUrl, String workerId, int maxTasks, long lockDurationMs, Set<String> topics,
-                           String oidcTokenUrl, String oidcClientId, String oidcClientSecret, String wiremockBaseUrl) {
+                           String oidcTokenUrl, String oidcClientId, String oidcClientSecret, String oidcScope,
+                           String appApiUrl, String docsApiUrl, String externalBaseUrl, long documentPollSeconds) {
 
     public static WorkerConfig fromEnvironment() {
-        String topics = env("ESKARGA_WORKER_TOPICS", String.join(",", Topics.DORECZENIE_ELEKTRONICZNE, Topics.DORECZENIE_POCZTOWE, Topics.PRZEKAZANIE_MERYTORYCZNE));
+        String topics = env("ESKARGA_WORKER_TOPICS", String.join(",", Topics.DORECZENIE_PISMA, Topics.PRZEKAZANIE_MERYTORYCZNE, Topics.DOKUMENT_PRZETWORZ));
         return new WorkerConfig(
                 env("ESKARGA_ENGINE_REST", "http://localhost:8080/engine-rest"),
                 env("ESKARGA_WORKER_ID", "eskarga-worker-1"),
@@ -19,7 +20,11 @@ public record WorkerConfig(String engineRestUrl, String workerId, int maxTasks, 
                 env("ESKARGA_OIDC_TOKEN_URL", ""),
                 env("ESKARGA_OIDC_CLIENT_ID", "eskarga-workers"),
                 env("ESKARGA_OIDC_CLIENT_SECRET", ""),
-                env("ESKARGA_EXTERNAL_BASE_URL", "http://localhost:8089"));
+                env("ESKARGA_OIDC_SCOPE", ""),
+                env("ESKARGA_APP_API", "http://localhost:8080/eskarga/api"),
+                env("ESKARGA_DOCS_API", "http://localhost:8080/eskarga-docs/api"),
+                env("ESKARGA_EXTERNAL_BASE_URL", "http://localhost:8089"),
+                Long.parseLong(env("ESKARGA_DOCUMENT_POLL_SECONDS", "30")));
     }
 
     public boolean topicEnabled(String topic) {

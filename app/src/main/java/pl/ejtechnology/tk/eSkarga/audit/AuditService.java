@@ -26,7 +26,7 @@ public class AuditService {
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public AuditEvent record(String userId, String userRole, String action, String objectRef, String caseRef, String remoteAddr) {
         String prev = lastHash();
-        AuditEvent event = AuditHash.chain(new AuditEvent(Instant.now(), userId, userRole, action, objectRef, caseRef, remoteAddr), prev);
+        AuditEvent event = AuditHash.chain(new AuditEvent(Instant.now(), userId, userRole, cut(action, 80), cut(objectRef, 200), caseRef, remoteAddr), prev);
         em.persist(event);
         // wysyłka do SIEM (syslog JSON) – adapter w T-015, poza tą transakcją (outbox)
         return event;
@@ -46,6 +46,11 @@ public class AuditService {
     public AuditChainVerifier.Result verifyChain() {
         List<AuditEvent> all = em.createQuery("select e from AuditEvent e order by e.id", AuditEvent.class).getResultList();
         return AuditChainVerifier.verify(all);
+    }
+
+    /** Kolumny mają stałą długość; dłuższy opis jest skracany zamiast przerywać czynność. */
+    static String cut(String s, int max) {
+        return s == null || s.length() <= max ? s : s.substring(0, max - 1) + "…";
     }
 
     private String lastHash() {
