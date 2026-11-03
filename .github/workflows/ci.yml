@@ -1,0 +1,56 @@
+# Potok CI (T-006, ADR 0005): build + testy jednostkowe i procesowe na każdy push/PR, testy integracyjne (Testcontainers)
+# i skan zależności (OWASP Dependency-Check, CVSS ≥ 7 przerywa build) oraz artefakty z sumami kontrolnymi.
+name: ci
+on:
+  push:
+    branches: ["main", "claude/**"]
+  pull_request:
+  schedule:
+    - cron: "17 3 * * 1"   # cotygodniowy skan zależności
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Czcionki do testów PDF/A (Liberation)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-liberation
+      - name: Build i testy
+        run: mvn -B -ntp verify
+      - name: Artefakty z sumami kontrolnymi
+        run: |
+          mkdir -p dist
+          cp app/target/eskarga.war docs-service/target/eskarga-docs-service.war workers/target/eskarga-workers.jar dist/
+          cp -r workers/target/lib dist/workers-lib
+          (cd dist && sha256sum eskarga.war eskarga-docs-service.war eskarga-workers.jar > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with: { name: eskarga-${{ github.sha }}, path: dist, retention-days: 14 }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: raporty-testow, path: "**/target/surefire-reports/*.xml", retention-days: 7 }
+  it:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Testy integracyjne (PostgreSQL w Testcontainers)
+        run: mvn -B -ntp verify -Pit -DskipTests=false
+  security:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: OWASP Dependency-Check (CVSS ≥ 7 przerywa build)
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: mvn -B -ntp verify -Psecurity -DskipTests -Dnvd.api.key="$NVD_API_KEY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: dependency-check, path: "**/target/dependency-check-report.html", retention-days: 30 }

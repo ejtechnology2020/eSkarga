@@ -1,0 +1,17 @@
+- name: Pakiety PostgreSQL 17, Patroni, etcd
+  ansible.builtin.apt:
+    name: ["postgresql-{{ postgresql_version }}", patroni, etcd-server, python3-psycopg2]
+    state: present
+    update_cache: true
+- name: etcd (klaster 3 węzły)
+  ansible.builtin.template: { src: etcd.conf.j2, dest: /etc/default/etcd }
+  notify: restart etcd
+- name: Patroni
+  ansible.builtin.template: { src: patroni.yml.j2, dest: /etc/patroni/config.yml, owner: postgres, mode: "0600" }
+  notify: restart patroni
+- name: Role bazy (aplikacja bez UPDATE/DELETE, migracje osobno) – tylko na primary, po bootstrapie
+  ansible.builtin.template: { src: init-roles.sql.j2, dest: /var/lib/postgresql/init-roles.sql, owner: postgres, mode: "0600" }
+  when: patroni_role is defined and patroni_role == 'primary'
+- name: Włącz usługi
+  ansible.builtin.systemd: { name: "{{ item }}", enabled: true, state: started }
+  loop: [etcd, patroni]

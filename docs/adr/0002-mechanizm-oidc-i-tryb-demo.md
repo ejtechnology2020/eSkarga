@@ -22,3 +22,16 @@
 
 - Test integracyjny „bez MFA → 403, z MFA → dostęp” wymaga mock OIDC z konfigurowalnym `acr` (compose: `mock-oauth2-server`).
 - Filtr MFA i interceptor `identityService.setAuthentication(userId, groups)` dla Operatona powstają w T-004 po poznaniu kontraktu.
+
+## Uzupełnienie (03.11.2026, T-004)
+
+- **MFA:** `MfaFilter` sprawdza claim tokenu ID (`eskarga.oidc.mfaClaim`, domyślnie `acr`) względem listy wartości
+  (`eskarga.oidc.mfaRequiredValue`, np. `urn:tk:acr:mfa,mfa`); dla `amr` wystarczy obecność metody na liście. Brak MFA → 403
+  i ekran S-26 oraz zdarzenie odmowy w dzienniku. Pusta wymagana wartość = MFA wymusza sam ID-users.
+- **Operaton:** `OperatonAuthenticationFilter` ustawia na czas żądania `identityService.setAuthentication(login, grupy)` – grupy
+  to grupy kandydatów z ról (`TaskBoardService.CANDIDATE_GROUPS`).
+- **Back-channel logout:** `POST /oidc/backchannel-logout` z `logout_token` (JWT podpisany kluczem wydawcy, `aud` = client id,
+  zdarzenie `backchannel-logout`, `sid`/`sub`); `SessionRegistry` unieważnia sesje. Adres do zarejestrowania w ID-users.
+- **Usługi techniczne:** tokeny client credentials (`ClientCredentialsTokenClient`) dla aplikacji → usługa dokumentów
+  (rola `eskarga-docs`) i workerów → API aplikacji (rola `eskarga-worker`); weryfikacja RS256 kluczami JWKS wydawcy.
+- Nazwy claimów, ról technicznych i adresy pozostają konfiguracją – do potwierdzenia z zespołem ID-users.

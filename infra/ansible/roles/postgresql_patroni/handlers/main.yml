@@ -1,0 +1,4 @@
+- name: restart etcd
+  ansible.builtin.systemd: { name: etcd, state: restarted }
+- name: restart patroni
+  ansible.builtin.systemd: { name: patroni, state: restarted }

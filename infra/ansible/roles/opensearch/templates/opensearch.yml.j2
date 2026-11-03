@@ -1,0 +1,9 @@
+cluster.name: eskarga
+node.name: {{ inventory_hostname }}
+network.host: {{ ansible_host }}
+discovery.seed_hosts: [{% for h in groups['search'] %}"{{ hostvars[h].ansible_host }}"{{ "," if not loop.last }}{% endfor %}]
+cluster.initial_cluster_manager_nodes: [{% for h in groups['search'] %}"{{ h }}"{{ "," if not loop.last }}{% endfor %}]
+path.data: /var/lib/opensearch
+path.logs: /var/log/opensearch
+plugins.security.ssl.transport.enabled: true
+plugins.security.ssl.http.enabled: true

@@ -1,0 +1,10 @@
+# Logi JSON do centralnego systemu (T-054): formatter JSON na konsoli i w pliku, bez danych osobowych w komunikatach.
+embed-server --server-config=standalone.xml --std-out=echo
+if (outcome != success) of /subsystem=logging/json-formatter=json:read-resource
+  /subsystem=logging/json-formatter=json:add(exception-output-type=formatted, pretty-print=false, key-overrides={timestamp=czas,level=poziom,message=komunikat,logger-name=logger}, meta-data={aplikacja=eskarga,srodowisko=${env.ESKARGA_ENVIRONMENT:DEV}})
+end-if
+/subsystem=logging/console-handler=CONSOLE:write-attribute(name=named-formatter, value=json)
+/subsystem=logging/periodic-rotating-file-handler=FILE:write-attribute(name=named-formatter, value=json)
+/subsystem=logging/logger=pl.ejtechnology.tk.eSkarga:add(level=INFO)
+/subsystem=logging/logger=org.operaton:add(level=INFO)
+stop-embedded-server

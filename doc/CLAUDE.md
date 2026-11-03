@@ -77,11 +77,14 @@ Pakiet bazowy: `pl.ejtechnology.tk.eSkarga` (zatwierdzony 3.11.2026). Maven: gro
 
 ```bash
 mvn -B verify                                   # build + testy jednostkowe i procesowe (JUnit 5, operaton-bpm-assert na H2)
-mvn -B verify -Pit                              # testy integracyjne (Testcontainers) – profil gotowy, testy w T-003/T-012
+mvn -B verify -Pit                              # testy integracyjne na PostgreSQL 17 (Testcontainers): uprawnienia roli, sygnatury
 mvn -B verify -Psecurity                        # skan zależności OWASP Dependency-Check (CVSS ≥ 7 przerywa build)
 cp infra/docker/.env.example infra/docker/.env  # uzupełnij hasła przed pierwszym startem
 docker compose -f infra/docker/compose.yml up -d --build   # środowisko dev
 docker compose -f infra/docker/compose.yml logs -f app
+docker compose -f infra/docker/compose.yml --profile monitoring up -d   # Prometheus :9090, Grafana :3000
+python3 infra/scripts/er-diagram.py             # diagram ER z encji → docs/model-er.md
+cd ui-tests && npm ci && npm test               # Playwright + axe na działającej aplikacji (ESKARGA_URL)
 ```
 
 Tryb pracy nad interfejsem bez ID-users (tylko stacja deweloperska): `-Deskarga.security.mode=demo -Deskarga.demo.today=2026-11-03`;

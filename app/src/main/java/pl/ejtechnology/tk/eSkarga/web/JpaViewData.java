@@ -119,6 +119,7 @@ public class JpaViewData implements ViewData {
     @Inject AuditService audit;
     @Inject FormalRequirementsService requirements;
     @Inject CurrentUser user;
+    @Inject pl.ejtechnology.tk.eSkarga.search.SearchService search;
     @Inject AppClock clock;
     @Inject Fmt fmt;
 
@@ -321,18 +322,32 @@ public class JpaViewData implements ViewData {
 
     @Override
     public List<CaseSummary> searchCases(String query) {
-        return cases.search(query, 50).stream().filter(this::canRead).map(this::summary).toList();
+        List<CaseSummary> out = new ArrayList<>();
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        for (pl.ejtechnology.tk.eSkarga.search.SearchIndex.Hit h : search.search(query, user.getLogin(), user.getRoles(), 50)) {
+            if (seen.add(h.caseId())) {
+                try {
+                    out.add(summary(cases.require(h.caseId())));
+                } catch (IllegalArgumentException gone) {
+                    // sprawa usunięta z bazy, wpis w indeksie do odbudowy
+                }
+            }
+        }
+        if (out.isEmpty()) {
+            cases.search(query, 50).stream().filter(this::canRead).map(this::summary).forEach(out::add);
+        }
+        return out;
     }
 
     @Override
     public List<SearchHit> searchHits(String query) {
         List<SearchHit> out = new ArrayList<>();
-        for (CaseDocument d : documents.searchByTitle(query, 50)) {
-            if (!canRead(d.getCaseFile()) || d.isClassified()) {
+        for (pl.ejtechnology.tk.eSkarga.search.SearchIndex.Hit h : search.search(query, user.getLogin(), user.getRoles(), 50)) {
+            if (h.documentId() == null) {
                 continue;
             }
-            out.add(new SearchHit(d.getTitle(), Screen.S14.path() + "?sygnatura=" + d.getCaseFile().getDocket().format().replace(" ", "%20") + "&dok=" + d.getId(),
-                    d.getCaseFile().getDocket(), d.pagesLabel(), d.getDocumentDate(), d.getKind().name().toLowerCase().replace('_', ' '), "", d.isOcrDone() ? "" : "bez warstwy OCR"));
+            DocketNumber dn = DocketNumber.parse(h.docket());
+            out.add(new SearchHit(h.title(), Screen.S14.path() + "?sygnatura=" + h.docket().replace(" ", "%20") + "&dok=" + h.documentId(), dn, h.pages(), h.date(), "dokument", h.fragment(), ""));
         }
         return out;
     }

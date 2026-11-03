@@ -30,7 +30,10 @@ public class CaseDocumentService {
 
     /** Wynik przetworzenia z usługi dokumentów (przez workera). */
     public record ProcessingResult(byte[] pdf, String sha256, boolean pdfaCompliant, boolean ocrDone, String signatureReportJson, boolean anySignature,
-                                   boolean allSignaturesValid) {
+                                   boolean allSignaturesValid, String text) {
+        public ProcessingResult(byte[] pdf, String sha256, boolean pdfaCompliant, boolean ocrDone, String signatureReportJson, boolean anySignature, boolean allSignaturesValid) {
+            this(pdf, sha256, pdfaCompliant, ocrDone, signatureReportJson, anySignature, allSignaturesValid, null);
+        }
     }
 
     @PersistenceContext(unitName = "repertorium")
@@ -43,6 +46,8 @@ public class CaseDocumentService {
     AuditService audit;
     @Inject
     AppClock clock;
+    @Inject
+    pl.ejtechnology.tk.eSkarga.search.SearchService search;
 
     /** Skan pisma do akt: plik do S3 (SSE), SHA-256 w bazie, karty po ostatniej. Dokument niejawny: tylko metadane. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
@@ -63,6 +68,9 @@ public class CaseDocumentService {
             doc.attachFile(stored.key(), stored.sha256());
         }
         em.persist(doc);
+        if (search != null) {
+            search.indexDocument(doc, null);
+        }
         audit.record(userId, "TK_BIURO_PODAWCZE", kind == DocumentKind.NIEJAWNY ? "dokument niejawny: tylko metadane" : "dołączenie skanu do akt", doc.pagesLabel(), cf.getDocket().format(), null);
         return doc;
     }
@@ -111,6 +119,9 @@ public class CaseDocumentService {
         doc.setOcrDone(result.ocrDone());
         doc.setSignatureReport(SigningService.truncate(result.signatureReportJson() == null ? "{}" : result.signatureReportJson()));
         doc.setSignatureStatus(!result.anySignature() ? SignatureStatus.BRAK : result.allSignaturesValid() ? SignatureStatus.KWALIFIKOWANY_WAZNY : SignatureStatus.NIEZWERYFIKOWANY);
+        if (search != null) {
+            search.indexDocument(doc, result.text());
+        }
         audit.record(actor, "WORKER", "przetworzenie dokumentu (PDF/A: " + result.pdfaCompliant() + ", OCR: " + result.ocrDone() + ", podpis: " + doc.getSignatureStatus() + ")",
                 doc.pagesLabel(), doc.getCaseFile().getDocket().format(), null);
         return doc;

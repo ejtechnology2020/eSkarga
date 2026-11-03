@@ -594,3 +594,16 @@ mark{background:#FFE9A8;color:var(--ink);padding:0 2px}
 
 .b{font-weight:700}
 .term .b{font-weight:700}
+
+/* Widżet PDF (T-034) */
+.pdfv { display: flex; flex-direction: column; min-height: 420px; border: 1px solid var(--line, #d9dde3); border-radius: 6px; background: #f3f4f6; }
+.pdfv-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 10px; background: #fff; border-bottom: 1px solid var(--line, #d9dde3); }
+.pdfv-num { width: 3.5em; }
+.pdfv-scroll { flex: 1; overflow: auto; padding: 12px; outline-offset: -2px; }
+.pdfv-pg { position: relative; margin: 0 auto 12px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); width: fit-content; }
+.pdfv-pg canvas { display: block; }
+.pdfv-text { position: absolute; left: 0; top: 0; overflow: hidden; line-height: 1; opacity: .2; }
+.pdfv-text span { position: absolute; white-space: pre; color: transparent; transform-origin: 0 0; }
+.pdfv-text ::selection { background: rgba(0, 90, 200, .35); }
+.pdfv-hl { position: absolute; background: rgba(255, 214, 0, .35); border: 1px solid rgba(200, 160, 0, .7); pointer-events: auto; }
+.pdfv-status:empty { display: none; }

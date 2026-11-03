@@ -1,0 +1,19 @@
+{
+  "title": "eSkarga – Repertorium Ts/Tw",
+  "uid": "eskarga-main",
+  "schemaVersion": 39,
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    { "type": "stat", "title": "Instancje procesów aktywne", "gridPos": {"x":0,"y":0,"w":6,"h":4}, "targets": [{"expr": "operaton_process_instances_active"}] },
+    { "type": "stat", "title": "Zadania użytkowników otwarte", "gridPos": {"x":6,"y":0,"w":6,"h":4}, "targets": [{"expr": "operaton_user_tasks_open"}] },
+    { "type": "stat", "title": "Incydenty", "gridPos": {"x":12,"y":0,"w":6,"h":4}, "targets": [{"expr": "operaton_incidents"}], "fieldConfig": {"defaults": {"thresholds": {"steps": [{"color":"green","value":null},{"color":"red","value":1}]}}} },
+    { "type": "stat", "title": "Terminy po upływie", "gridPos": {"x":18,"y":0,"w":6,"h":4}, "targets": [{"expr": "eskarga_deadlines_overdue"}], "fieldConfig": {"defaults": {"thresholds": {"steps": [{"color":"green","value":null},{"color":"orange","value":1}]}}} },
+    { "type": "timeseries", "title": "External tasks (otwarte / bez prób)", "gridPos": {"x":0,"y":4,"w":12,"h":8}, "targets": [{"expr": "operaton_external_tasks_open", "legendFormat": "otwarte"}, {"expr": "operaton_external_tasks_no_retries", "legendFormat": "bez prób"}] },
+    { "type": "timeseries", "title": "Kolejka OCR / PDF-A", "gridPos": {"x":12,"y":4,"w":12,"h":8}, "targets": [{"expr": "eskarga_documents_pending_processing"}] },
+    { "type": "timeseries", "title": "Zadania workerów / 5 min", "gridPos": {"x":0,"y":12,"w":12,"h":8}, "targets": [{"expr": "increase(eskarga_worker_tasks_completed_total[5m])", "legendFormat": "{{topic}} ok"}, {"expr": "increase(eskarga_worker_tasks_failed_total[5m])", "legendFormat": "{{topic}} błąd"}] },
+    { "type": "timeseries", "title": "JVM heap", "gridPos": {"x":12,"y":12,"w":12,"h":8}, "targets": [{"expr": "jvm_memory_heap_used_bytes", "legendFormat": "używane"}, {"expr": "jvm_memory_heap_max_bytes", "legendFormat": "maks."}] },
+    { "type": "stat", "title": "Pisma do kwalifikacji", "gridPos": {"x":0,"y":20,"w":8,"h":4}, "targets": [{"expr": "eskarga_incoming_unqualified"}] },
+    { "type": "stat", "title": "Doręczenia bez zwrotki", "gridPos": {"x":8,"y":20,"w":8,"h":4}, "targets": [{"expr": "eskarga_deliveries_unconfirmed"}] },
+    { "type": "stat", "title": "Wpisy dziennika zdarzeń", "gridPos": {"x":16,"y":20,"w":8,"h":4}, "targets": [{"expr": "eskarga_audit_events_total"}] }
+  ]
+}

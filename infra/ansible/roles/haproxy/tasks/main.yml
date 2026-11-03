@@ -1,0 +1,7 @@
+- name: HAProxy
+  ansible.builtin.apt: { name: haproxy, state: present, update_cache: true }
+- name: Konfiguracja (TLS od brzegu, sticky sessions na JSESSIONID, PostgreSQL przez Patroni REST health)
+  ansible.builtin.template: { src: haproxy.cfg.j2, dest: /etc/haproxy/haproxy.cfg, validate: "haproxy -c -f %s" }
+  notify: reload haproxy
+- name: Włącz
+  ansible.builtin.systemd: { name: haproxy, enabled: true, state: started }

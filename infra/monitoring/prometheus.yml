@@ -1,0 +1,13 @@
+# Prometheus (T-054): metryki aplikacji (/eskarga/metrics), workerów (:9404) i WildFly.
+global:
+  scrape_interval: 30s
+rule_files:
+  - alert-rules.yml
+scrape_configs:
+  - job_name: eskarga-app
+    metrics_path: /eskarga/metrics
+    static_configs:
+      - targets: ["app:8080"]
+  - job_name: eskarga-workers
+    static_configs:
+      - targets: ["workers:9404"]

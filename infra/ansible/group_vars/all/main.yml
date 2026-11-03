@@ -1,0 +1,15 @@
+# Wersje zgodne z obrazami Docker (infra/docker) – jedna prawda o wersjach (T-053).
+java_version: "21"
+wildfly_version: "41.0.0.Final"
+operaton_version: "2.2.0"
+postgresql_version: "17"
+patroni_version: "4.0.4"
+etcd_version: "3.5.17"
+opensearch_version: "2.19.1"
+haproxy_version: "2.8"
+nexus_base_url: "https://nexus.tk.internal/repository"
+eskarga_version: "1.0.0-SNAPSHOT"
+eskarga_user: eskarga
+eskarga_home: /opt/eskarga
+wildfly_home: /opt/operaton
+# Sekrety – w vault.yml (zaszyfrowane ansible-vault); nazwy zmiennych w vault.yml.example

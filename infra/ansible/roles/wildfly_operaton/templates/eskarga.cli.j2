@@ -1,0 +1,10 @@
+# generowane przez Ansible – źródło danych XA, logi JSON, znacznik zastosowania
+embed-server --server-config={{ wildfly_config }} --std-out=echo
+if (outcome != success) of /subsystem=datasources/jdbc-driver=postgresql:read-resource
+  /subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql, driver-module-name=org.postgresql, driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)
+end-if
+if (outcome != success) of /subsystem=datasources/xa-data-source=EskargaDS:read-resource
+  xa-data-source add --name=EskargaDS --jndi-name=java:jboss/datasources/EskargaDS --driver-name=postgresql --user-name=eskarga_app --password=${env.DB_PASSWORD_APP} --min-pool-size=5 --max-pool-size=40 --xa-datasource-properties={"ServerName"=>"{{ groups['lb'][0] }}","PortNumber"=>"5000","DatabaseName"=>"eskarga","CurrentSchema"=>"repertorium,operaton"}
+end-if
+/subsystem=operaton-bpm-platform/process-engines=default:write-attribute(name=datasource, value=java:jboss/datasources/EskargaDS)
+stop-embedded-server

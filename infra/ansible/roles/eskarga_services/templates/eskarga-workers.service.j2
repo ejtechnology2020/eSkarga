@@ -1,0 +1,22 @@
+[Unit]
+Description=eSkarga – workery integracji (external tasks)
+After=network-online.target wildfly.service
+[Service]
+User={{ eskarga_user }}
+EnvironmentFile=/etc/eskarga/app.env
+Environment=ESKARGA_ENGINE_REST=http://127.0.0.1:8080/engine-rest
+Environment=ESKARGA_APP_API=http://127.0.0.1:8080/eskarga/api
+Environment=ESKARGA_DOCS_API=http://127.0.0.1:8080/eskarga-docs/api
+Environment=ESKARGA_OIDC_TOKEN_URL={{ oidc_token_url | default('https://id-users.tk.internal/realms/tk/protocol/openid-connect/token') }}
+Environment=ESKARGA_OIDC_CLIENT_ID=eskarga-workers
+Environment=ESKARGA_OIDC_CLIENT_SECRET={{ vault_oidc_workers_secret }}
+Environment=ESKARGA_EXTERNAL_BASE_URL={{ external_base_url | default('https://integracje.tk.internal') }}
+Environment=ESKARGA_WORKER_ID={{ inventory_hostname }}
+ExecStart=/usr/bin/java -jar {{ eskarga_home }}/eskarga-workers.jar
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/log/eskarga /tmp
+[Install]
+WantedBy=multi-user.target

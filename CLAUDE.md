@@ -7,11 +7,13 @@ Lista zadań z notatkami z realizacji: [`doc/TASKS.md`](doc/TASKS.md). Decyzje: 
 
 ```bash
 mvn -B verify                                        # build + testy jednostkowe i procesowe (JUnit 5, operaton-bpm-assert, H2)
-mvn -B verify -Pit                                   # testy integracyjne (Testcontainers) – profil przygotowany, testów jeszcze brak
+mvn -B verify -Pit                                   # testy integracyjne na PostgreSQL 17 (Testcontainers)
 mvn -B verify -Psecurity                             # skan zależności OWASP Dependency-Check (CVSS ≥ 7 przerywa build)
 cp infra/docker/.env.example infra/docker/.env       # uzupełnij hasła
 docker compose -f infra/docker/compose.yml up -d --build
 docker compose -f infra/docker/compose.yml logs -f app
+docker compose -f infra/docker/compose.yml --profile monitoring up -d   # Prometheus/Grafana
+cd ui-tests && npm ci && npm test                    # Playwright + axe (ESKARGA_URL)
 ```
 
 Tryb pracy nad interfejsem bez ID-users: `-Deskarga.security.mode=demo -Deskarga.demo.today=2026-11-03`,
@@ -19,8 +21,11 @@ warianty ról i stanów ekranów parametrami `?rola=`, `?stan=`, `?widok=` (ADR 
 
 ## Struktura
 
+- `common/` – JAR: weryfikacja tokenów ID-users (RS256/JWKS), klient client credentials, odczyt konfiguracji.
 - `app/` – WAR: Facelets (`src/main/webapp`), beany (`web`), domena (`domain`), proces (`process`, `resources/bpmn`),
   bezpieczeństwo (`security`), audyt (`audit`), dokumenty (`documents`), migracje Flyway (`resources/db/migration`).
 - `docs-service/` – WAR: szablony pism (FreeMarker w piaskownicy), PDF/A (OpenHTMLtoPDF), walidacja.
 - `workers/` – JAR: external tasks (doręczenia, przekazanie do SK/K/U).
-- `infra/docker/` – środowisko dev; `infra/ansible/` – role dla VM (T-053).
+- `infra/docker/` – środowisko dev (Compose: WildFly+Operaton, PostgreSQL, Flyway, SeaweedFS, OpenSearch, SoftHSM, mock OIDC, WireMock, monitoring);
+  `infra/ansible/` – role dla VM; `infra/monitoring/` – Prometheus/Grafana/alerty; `infra/scripts/` – aktualizacja Operaton, diagram ER.
+- `ui-tests/` – Playwright + axe-core (poza `mvn verify`).

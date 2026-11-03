@@ -1,0 +1,28 @@
+- name: Pakiety systemowe
+  ansible.builtin.apt:
+    name: [openjdk-21-jre-headless, fonts-liberation, ocrmypdf, tesseract-ocr-pol, softhsm2, unzip]
+    state: present
+    update_cache: true
+- name: Użytkownik usługi
+  ansible.builtin.user: { name: "{{ eskarga_user }}", system: true, home: "{{ eskarga_home }}", shell: /usr/sbin/nologin }
+- name: Dystrybucja Operaton dla WildFly z Nexusa
+  ansible.builtin.unarchive:
+    src: "{{ nexus_base_url }}/operaton/operaton-bpm-wildfly-{{ operaton_version }}.tar.gz"
+    dest: /opt
+    remote_src: true
+    creates: "{{ wildfly_home }}/bin/standalone.sh"
+    owner: "{{ eskarga_user }}"
+- name: Sterownik PostgreSQL jako moduł
+  ansible.builtin.template: { src: module-postgresql.xml.j2, dest: "{{ wildfly_home }}/modules/org/postgresql/main/module.xml", owner: "{{ eskarga_user }}" }
+- name: Konfiguracja WildFly (źródło danych XA, logi JSON, HA)
+  ansible.builtin.template: { src: eskarga.cli.j2, dest: "{{ wildfly_home }}/eskarga.cli", mode: "0640", owner: "{{ eskarga_user }}" }
+- name: Zastosuj CLI (idempotentnie)
+  ansible.builtin.command:
+    cmd: "{{ wildfly_home }}/bin/jboss-cli.sh --file={{ wildfly_home }}/eskarga.cli"
+    creates: "{{ wildfly_home }}/standalone/configuration/.eskarga-cli-applied"
+  notify: restart wildfly
+- name: Usługa systemd
+  ansible.builtin.template: { src: wildfly.service.j2, dest: /etc/systemd/system/wildfly.service }
+  notify: restart wildfly
+- name: Włącz usługę
+  ansible.builtin.systemd: { name: wildfly, enabled: true, state: started, daemon_reload: true }

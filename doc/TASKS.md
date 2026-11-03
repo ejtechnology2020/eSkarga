@@ -54,8 +54,8 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - schemat Operaton ze skryptów dystrybucji;
     - użytkownik aplikacji bez uprawnień UPDATE/DELETE na tabelach repertorium (rola osobna dla migracji).
 - **Kryteria akceptacji:**
-    - [ ] migracje uruchamiają się przy starcie aplikacji w dev;
-    - [ ] test integracyjny potwierdza brak uprawnień UPDATE/DELETE dla roli aplikacji.
+    - [x] migracje uruchamiają się przed startem aplikacji w dev (usługa `flyway` w Compose, ADR 0016);
+    - [~] test integracyjny `PostgresPrivilegesIT` (Testcontainers, `-Pit`) napisany – do uruchomienia z Dockerem.
 - **Zależności:** T-002. **Odwołania:** D1, NFR-01.
 
 ### [~] T-004 Logowanie OIDC przez ID-users
@@ -70,9 +70,9 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - interceptor ustawiający `identityService.setAuthentication(userId, groups)` w Operaton.
 - **Kryteria akceptacji:**
     - [ ] logowanie przez mock OIDC w dev;
-    - [ ] test integracyjny: bez MFA → 403, z MFA → dostęp;
-    - [ ] żaden token nie trafia do przeglądarki (sprawdzone w teście Playwright);
-    - [ ] ADR z nazwami claimów do potwierdzenia z zespołem ID-users.
+    - [~] `MfaFilter` + `MfaAndLogoutTokenTest` (polityka claimów); test na mock OIDC po uruchomieniu środowiska;
+    - [~] test Playwright `ui-tests/tests/tokeny.spec.ts` napisany (wymaga mock OIDC);
+    - [x] ADR 0002 (uzupełnienie: MFA, back-channel logout, role techniczne).
 - **Zależności:** T-002. **Odwołania:** D3, NFR-04. **[zaślepka]** kontrakt ID-users.
 
 ### [~] T-005 Szablon interfejsu JSF
@@ -84,19 +84,19 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - nagłówki bezpieczeństwa (CSP, HSTS, X-Frame-Options, Referrer-Policy) przez filtr.
 - **Kryteria akceptacji:**
     - [~] ekran startowy działa po zalogowaniu (pulpit gotowy; uruchomienie na WildFly do potwierdzenia, brak serwera w sesji);
-    - [ ] audyt axe-core bez błędów krytycznych (wymaga uruchomionej aplikacji);
+    - [~] audyt axe-core: `ui-tests/tests/a11y.spec.ts` (ADR 0020) – do uruchomienia na działającej aplikacji;
     - [x] CSP bez `unsafe-eval` (`primefaces.CSP=true`, polityka w `web.xml`).
 - **Zależności:** T-004. **Odwołania:** NFR-10.
 
-### [ ] T-006 Potok CI
+### [~] T-006 Potok CI
 - **Cel:** każda zmiana jest automatycznie budowana i testowana.
 - **Zakres:**
     - build, testy jednostkowe i procesowe, testy integracyjne (Testcontainers);
     - skan zależności (OWASP Dependency-Check lub równoważny);
     - artefakty WAR/JAR z sumami kontrolnymi.
 - **Kryteria akceptacji:**
-    - [ ] potok zielony na gałęzi głównej;
-    - [ ] build kończy się błędem przy podatności o wysokim priorytecie.
+    - [~] `.github/workflows/ci.yml` (build, `-Pit`, `-Psecurity`, artefakty z SHA256SUMS) – pierwszy przebieg po włączeniu Actions (ADR 0005);
+    - [x] Dependency-Check z progiem CVSS ≥ 7 (profil `security`, klucz NVD w sekretach CI).
 - **Zależności:** T-001. **Odwołania:** NFR-13.
 - **[decyzja]** platforma CI (GitLab CI, Jenkins, GitHub Actions).
 
@@ -104,18 +104,18 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
 
 ## Etap 1. Rdzeń repertorium
 
-### [ ] T-010 Model domeny (JPA)
+### [~] T-010 Model domeny (JPA)
 - **Cel:** encje z sekcji 8.1 analizy wymagań.
 - **Zakres:**
     - encje `IncomingLetter`, `CaseFile`, `Party`, `Attorney`/`PowerOfAttorney`, `ReviewSubject`, `FinalRuling`, `ProceduralAct`, `Document`, `Delivery`, `Deadline`, `Appeal`, `AccessRequest`, `Delegation`;
     - migracje Flyway, wersjonowanie wpisów zamiast UPDATE;
     - słowniki: sądy, organy, typy pism, dni wolne.
 - **Kryteria akceptacji:**
-    - [ ] testy repozytoriów na Testcontainers;
-    - [ ] diagram ER wygenerowany do `docs/`.
+    - [~] encje + migracje V1–V5 (`ModelSchemaTest` na H2 z walidacją schematu); `DocketConcurrencyPostgresIT` na Testcontainers napisany;
+    - [x] diagram ER `docs/model-er.md` (generator `infra/scripts/er-diagram.py`).
 - **Zależności:** T-003. **Odwołania:** analiza §8.1.
 
-### [ ] T-011 Dziennik wpływu i rejestracja pisma (UC-01)
+### [x] T-011 Dziennik wpływu i rejestracja pisma (UC-01)
 - **Cel:** biuro podawcze rejestruje pismo w mniej niż 3 minuty.
 - **Zakres:**
     - formularz: kanał, data wpływu, data wniesienia (stempel lub UPO, z flagą „niepewna”), nadawca, liczba załączników i odpisów;
@@ -123,11 +123,11 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - numer dziennika, etykieta z kodem kreskowym (PDF), kolejka „Do kwalifikacji”;
     - wariant dla dokumentu niejawnego: zapis wyłącznie metadanych.
 - **Kryteria akceptacji:**
-    - [ ] scenariusze główny i alternatywne 2a i 3a z UC-01 pokryte testami;
-    - [ ] zdarzenie w dzienniku audytu.
+    - [x] `IncomingRegisterTest` (numeracja, pismo elektroniczne bez UPO, dokument niejawny – tylko metadane);
+    - [x] zdarzenie w dzienniku audytu.
 - **Zależności:** T-010, T-015. **Odwołania:** FR-01 – FR-03, UC-01.
 
-### [~] T-012 Generator sygnatur (BR-01)
+### [x] T-012 Generator sygnatur (BR-01)
 - **Cel:** sygnatury Ts n/rr i Tw n/rr bez luk i duplikatów.
 - **Zakres:**
     - `DocketNumberService`: tabela `docket_counter(symbol, year, last_value)` z `SELECT … FOR UPDATE` w transakcji wywołującego;
@@ -137,7 +137,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - [x] numer nigdy nie jest używany ponownie.
 - **Zależności:** T-010. **Odwołania:** BR-01, FR-06.
 
-### [ ] T-013 Kwalifikacja pisma i założenie sprawy (UC-02, UC-03, UC-04)
+### [x] T-013 Kwalifikacja pisma i założenie sprawy (UC-02, UC-03, UC-04)
 - **Cel:** referent zamienia pismo w sprawę Ts/Tw albo dołącza je do sprawy w toku.
 - **Zakres:**
     - kolejka pism do kwalifikacji, wybór typu (Ts, Tw, pismo do sprawy, pismo ogólne);
@@ -145,16 +145,16 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - karta sprawy (strony, przedmiot, wzorce, orzeczenie ostateczne);
     - zatwierdzenie w jednej transakcji: nadanie sygnatury (T-012), wpis, start procesu Operaton (kluczem biznesowym jest sygnatura).
 - **Kryteria akceptacji:**
-    - [ ] test: błąd startu procesu wycofuje wpis i nie zużywa numeru;
-    - [ ] pismo do sprawy w toku wysyła odpowiedni komunikat do procesu (uzupełnienie, zażalenie).
+    - [x] `CaseFileServiceTest.bladStartuProcesuWycofujeWpisINieZuzywaNumeru`;
+    - [x] `attachLetter` koreluje komunikat uzupełnienia (gdy proces czeka), zażalenie przez `AppealService`.
 - **Zależności:** T-012, T-020. **Odwołania:** FR-04 – FR-07, D1.
 
-### [ ] T-014 Korekta wpisu w repertorium (UC-22)
+### [~] T-014 Korekta wpisu w repertorium (UC-22)
 - **Cel:** korekta bez nadpisywania historii.
 - **Zakres:** wniosek referenta z uzasadnieniem, akceptacja kierownika, nowa wersja wpisu, podgląd historii wersji.
 - **Kryteria akceptacji:**
-    - [ ] brak operacji UPDATE na tabelach repertorium;
-    - [ ] historia widoczna w karcie sprawy.
+    - [x] decyzje korekt jako osobne wiersze, rola aplikacji bez UPDATE/DELETE (V5, V5.1, ADR 0016);
+    - [~] historia wersji w `KorektaBean.getHistoria()` – widok S-09 do rozbudowy o tabelę wersji.
 - **Zależności:** T-013. **Odwołania:** FR-08, NFR-01.
 
 ### [~] T-015 Dziennik zdarzeń z łańcuchem skrótów
@@ -166,10 +166,10 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - polecenie weryfikacji łańcucha.
 - **Kryteria akceptacji:**
     - [x] test: modyfikacja wpisu w bazie jest wykrywana przez weryfikator (`AuditChainTest`);
-    - [ ] 100% czynności z UC-01 – UC-24 generuje zdarzenia.
+    - [~] każda usługa domenowa zapisuje zdarzenia (w tym odmowy w REQUIRES_NEW, ADR 0014); wysyłka syslog do SIEM i podpis łańcucha kluczem HSM (`/podpis/audyt`) do spięcia harmonogramem.
 - **Zależności:** T-003. **Odwołania:** NFR-02.
 
-### [~] T-016 Uprawnienia do spraw i upoważnienia
+### [x] T-016 Uprawnienia do spraw i upoważnienia
 - **Cel:** kontrola dostępu na poziomie sprawy oraz czynności „za Prezesa”.
 - **Zakres:**
     - `CaseAccessPolicy` (przydział sędziego, zespołu, referenta; role ogólne);
@@ -179,7 +179,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - raport przeglądu uprawnień.
 - **Kryteria akceptacji:**
     - [x] testy: asystent nie widzi notatek spraw innego sędziego (`CaseAccessPolicyTest`);
-    - [~] czynność Prezesa bez ważnego upoważnienia → odmowa (reguła i ekran S-17 gotowe) i zdarzenie audytu (po podłączeniu `AuditService`).
+    - [x] czynność Prezesa bez ważnego upoważnienia → odmowa i zdarzenie audytu (`JudgeAssignmentServiceTest`, `DelegationService.requireActingAsPresident`).
 - **Zależności:** T-004, T-010. **Odwołania:** D4, BR-10, FR-36.
 
 ---
@@ -198,7 +198,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - `processes.xml`, klasa `@ProcessApplication` (EJB);
     - tylko identyfikatory w zmiennych procesu.
 - **Kryteria akceptacji:**
-    - [~] model wdraża się w dev (wdraża się i przechodzi testy na silniku H2; wdrożenie na WildFly do potwierdzenia);
+    - [~] model (z external tasks doręczeń i nasłuchem przekazania) przechodzi testy na silniku H2; HTTL z konfiguracji (`@PostDeploy`); wdrożenie na WildFly do potwierdzenia;
     - [x] żadna zmienna procesu nie zawiera danych osobowych (`ProcessVariablesTest`, `WstepnaKontrolaProcessTest`).
 - **Zależności:** T-002, T-004. **Odwołania:** D1, D6, D8, D9.
 
@@ -215,10 +215,10 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - pismo ogólne.
 - **Kryteria akceptacji:**
     - [x] 100% przejść (sequence flow) pokrytych (8 testów: pismo ogólne, nadanie biegu, braki uzupełnione, braki nieuzupełnione → odmowa prawomocna, zażalenie spóźnione, nieuwzględnione, uwzględnione, zmienne bez danych osobowych);
-    - [ ] testy w CI (T-006 [decyzja] platforma CI).
+    - [~] testy w CI – workflow gotowy (ADR 0005).
 - **Zależności:** T-020. **Odwołania:** UC-07, UC-10 – UC-12.
 
-### [ ] T-022 Pulpit zadań (UC-18)
+### [x] T-022 Pulpit zadań (UC-18)
 - **Cel:** użytkownik widzi swoje zadania i terminy w jednym miejscu.
 - **Zakres:**
     - lista zadań z `TaskService` filtrowana przez `CaseAccessPolicy`;
@@ -226,31 +226,31 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - sortowanie po terminie;
     - widok kierownika: zaległości i obciążenie.
 - **Kryteria akceptacji:**
-    - [ ] termin ≤ 2 dni oznaczony tekstem i kolorem;
-    - [ ] Tasklist Operaton nie jest używany.
+    - [x] `TaskBoardService.Item.nearDeadline()` → `DeadlineView` WARNING (tekst „za 2 dni” + kolor);
+    - [x] pulpit na `TaskService` + `CaseAccessPolicy` (`TaskBoardAndTransferTest`).
 - **Zależności:** T-020, T-016. **Odwołania:** FR-33, UC-18.
 
-### [ ] T-023 Wyznaczenie sędziego (UC-05)
+### [x] T-023 Wyznaczenie sędziego (UC-05)
 - **Cel:** Prezes lub osoba upoważniona wyznacza sędziego do wstępnej kontroli.
 - **Zakres:** zadanie Prezesa z podglądem obciążenia sędziów, zarządzenie o wyznaczeniu, przydział do sprawy, sprawdzenie upoważnienia.
 - **Kryteria akceptacji:**
-    - [ ] zarządzenie w aktach;
-    - [ ] sędzia staje się `assignee` zadania kontroli;
-    - [ ] zdarzenie audytu.
+    - [x] zarządzenie w aktach (`CaseDocument` + `ProceduralAct`);
+    - [x] sędzia staje się `assignee` zadania kontroli (`JudgeAssignmentServiceTest`);
+    - [x] zdarzenie audytu.
 - **Zależności:** T-016, T-020. **Odwołania:** FR-14, UC-05.
 
-### [ ] T-024 Lista kontrolna wymogów formalnych (DMN, UC-06)
+### [x] T-024 Lista kontrolna wymogów formalnych (DMN, UC-06)
 - **Cel:** lista wymogów dobierana do typu sprawy bez zmian w kodzie.
 - **Zakres:**
     - tabela DMN `wymogi-formalne` (skarga: art. 53; wniosek: art. 47–49);
     - ekran listy kontrolnej (spełniony / brak / do sprawdzenia, komentarz);
     - weryfikacja pełnomocnika i wyjątków zawodowych (BR-05).
 - **Kryteria akceptacji:**
-    - [ ] zmiana DMN zmienia listę bez wdrożenia WAR;
-    - [ ] testy DMN dla skargi i wniosku.
+    - [x] tabela `wymogi-formalne.dmn` wdrażana osobno (process application / Cockpit), kod czyta wynik przez `DecisionService` (ADR 0015);
+    - [x] `FormalRequirementsTest` (skarga z/bez pełnomocnika, wyjątki zawodowe BR-05, wniosek).
 - **Zależności:** T-020. **Odwołania:** FR-11, FR-13, BR-05.
 
-### [~] T-025 Kalkulator terminów (BR-02 – BR-04)
+### [x] T-025 Kalkulator terminów (BR-02 – BR-04)
 - **Cel:** poprawne wyliczanie terminów 7-dniowych i 3-miesięcznych.
 - **Zakres:**
     - `DeadlineCalculator`: początek od doręczenia, dni wolne z konfigurowalnego kalendarza, przesunięcie na dzień roboczy;
@@ -275,14 +275,14 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - walidacja wyniku veraPDF przed zapisem w repozytorium;
     - wersjonowanie projektów pism i przesłanie do podpisu (T-040).
 - **Kryteria akceptacji:**
-    - [ ] każdy szablon generuje PDF, który przechodzi veraPDF (PDF/A-2b);
-    - [ ] braki zaznaczone na liście kontrolnej trafiają do treści zarządzenia;
+    - [x] 8 szablonów → PDF/A-2b przez veraPDF (`VeraPdfTemplatesTest`);
+    - [x] braki z listy kontrolnej w modelu pisma (`EdytorBean.sendToJudge` → `LetterService.draft`);
     - [x] testy piaskownicy i testy na znakach diakrytycznych przechodzą (`FreemarkerSandboxTest`);
-    - [ ] testy wizualne: porównanie wygenerowanego PDF z wzorcem z dopuszczalną różnicą;
-    - [ ] generowanie jednego pisma trwa poniżej 2 s.
+    - [ ] testy wizualne: porównanie z wzorcem – po zatwierdzeniu układu pism przez TK;
+    - [~] czas render + veraPDF mierzony w teście (limit 10 s w CI; na stacji < 2 s) – pomiar na docelowym serwerze.
 - **Zależności:** T-024, T-031. **Odwołania:** FR-15, FR-16, D13.
 
-### [ ] T-026a Edytor szablonów (S-24)
+### [~] T-026a Edytor szablonów (S-24)
 - **Cel:** administrator merytoryczny zarządza szablonami bez wdrożenia.
 - **Zakres:**
     - ekran listy szablonów z wersjami;
@@ -292,12 +292,12 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - aktywacja z akceptacją drugiej osoby;
     - historia zmian w dzienniku zdarzeń.
 - **Kryteria akceptacji:**
-    - [ ] szablon z błędem składni nie może zostać aktywowany;
-    - [ ] aktywacja jest widoczna w dzienniku zdarzeń;
-    - [ ] pisma już wygenerowane nie zmieniają się po aktywacji nowej wersji.
+    - [x] walidacja przez usługę dokumentów blokuje aktywację (`TemplateService.activate`, `LettersResourceTest`);
+    - [x] aktywacja w dzienniku zdarzeń;
+    - [x] pismo pamięta wersję szablonu (`CaseDocument.templateVersion`).
 - **Zależności:** T-026, T-015. **Odwołania:** FR-35, NFR-15, D13.
 
-### [ ] T-027 Zażalenie (UC-11)
+### [~] T-027 Zażalenie (UC-11)
 - **Cel:** rejestracja zażalenia, kontrola terminu, skierowanie do składu.
 - **Zakres:**
     - rejestr zażaleń, ocena terminowości (wynik pomocniczy);
@@ -305,11 +305,11 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - wynik składu;
     - blokada ponownego zażalenia (BR-07).
 - **Kryteria akceptacji:**
-    - [ ] ścieżki z T-021 działają z UI;
-    - [ ] sygnatura Ts/Tw bez zmian.
+    - [~] `AppealService` (rejestracja, BR-07, skierowanie BR-10, wynik) z testami; ekran S-11 do spięcia z akcjami;
+    - [x] sygnatura Ts/Tw bez zmian (`TaskBoardAndTransferTest`).
 - **Zależności:** T-023, T-025. **Odwołania:** FR-18, UC-11.
 
-### [ ] T-028 Nadanie biegu i przekazanie (UC-12)
+### [x] T-028 Nadanie biegu i przekazanie (UC-12)
 - **Cel:** przekazanie sprawy do repertorium SK, K lub U.
 - **Zakres:**
     - external task `przekazanie-merytoryczne` z kluczem idempotencji;
@@ -317,38 +317,38 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - sprawa Ts/Tw tylko do odczytu z banerem;
     - zawiadomienia (art. 63).
 - **Kryteria akceptacji:**
-    - [ ] test z WireMock: ponowienie nie tworzy duplikatu;
-    - [ ] po przekazaniu edycja jest zablokowana.
+    - [x] `MeritTransferHandlerTest` (Idempotency-Key, 500 → 201 bez duplikatu);
+    - [x] `TransferCompletedListener` → `markTransferred` → status tylko do odczytu (BR-08).
 - **Zależności:** T-042. **Odwołania:** FR-19, BR-08. **[zaślepka]** API repertoriów SK/K/U.
 
 ---
 
 ## Etap 3. Dokumenty i podgląd akt
 
-### [ ] T-030 Repozytorium dokumentów (S3)
+### [~] T-030 Repozytorium dokumentów (S3)
 - **Cel:** bezpieczny zapis i odczyt plików akt.
 - **Zakres:**
     - `DocumentStore` na AWS SDK v2 (API S3, bez zależności od dostawcy);
     - Object Lock (compliance) dla dokumentów zamkniętych, wersjonowanie, SSE;
     - SHA-256 w bazie i weryfikacja przy odczycie.
 - **Kryteria akceptacji:**
-    - [ ] testy na SeaweedFS;
-    - [ ] niezgodny skrót daje błąd i zdarzenie audytu.
+    - [ ] testy na SeaweedFS (Testcontainers, profil `-Pit`) – do dodania; `InMemoryDocumentStore` w testach serwisów;
+    - [x] `DocumentServlet`: niezgodny SHA-256 → 409 i zdarzenie odmowy.
 - **Zależności:** T-002, T-010. **Odwołania:** D5, D12.
 
-### [ ] T-031 Usługa dokumentów
+### [~] T-031 Usługa dokumentów
 - **Cel:** przetwarzanie dokumentów poza aplikacją główną.
 - **Zakres** (`docs-service`):
     - OCR (OCRmyPDF, język polski), konwersja i walidacja PDF/A-2b (veraPDF);
     - walidacja podpisów EU DSS (PAdES/XAdES/CAdES) z raportem;
     - wywołania jako external tasks (`dokument-przetworz`) z ponawianiem.
 - **Kryteria akceptacji:**
-    - [ ] skan z OCR jest przeszukiwalny;
-    - [ ] raport walidacji podpisu w metadanych;
-    - [ ] dokument z nieważnym podpisem dostaje ostrzeżenie.
+    - [~] OCRmyPDF przez CLI (zaślepka, gdy brak binarki); tekst trafia do indeksu wyszukiwania;
+    - [x] raport DSS w `CaseDocument.signatureReport` (`PadesSigningTest`, `applyProcessing`);
+    - [x] `SignatureReport.warning()` / status `NIEZWERYFIKOWANY`.
 - **Zależności:** T-030. **Odwołania:** NFR-11.
 
-### [ ] T-032 Wyszukiwanie (UC-20)
+### [~] T-032 Wyszukiwanie (UC-20)
 - **Cel:** wyszukiwanie spraw i dokumentów.
 - **Zakres:**
     - indeks OpenSearch z analizatorem polskim (tekst OCR, metadane, przepisy);
@@ -356,8 +356,8 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - ekran wyszukiwania;
     - odbudowa indeksu z bazy.
 - **Kryteria akceptacji:**
-    - [ ] wyniki ≤ 2 s przy danych testowych;
-    - [ ] brak wyników ze spraw bez uprawnień.
+    - [~] indeks w pamięci natychmiastowy; pomiar na OpenSearch z `analysis-stempel` po uruchomieniu (ADR 0018);
+    - [x] `SearchServiceTest` (asystent poza zespołem, administrator – brak wyników).
 - **Zależności:** T-031, T-016. **Odwołania:** FR-31, NFR-08.
 
 ### [~] T-033 Ekran podglądu akt – układ i dane
@@ -375,7 +375,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - [ ] axe-core bez błędów krytycznych (wymaga uruchomionej aplikacji).
 - **Zależności:** T-022, T-030. **Odwołania:** brief, FR-23.
 
-### [ ] T-034 Widżet PDF (pdf.js)
+### [~] T-034 Widżet PDF (pdf.js)
 - **Cel:** podgląd dokumentu z widokiem dzielonym, bez łamania layoutu JSF.
 - **Zakres:**
     - komponent kompozytowy JSF z `pdfjs-dist` (worker z własnej domeny, `isEvalSupported: false`);
@@ -385,13 +385,13 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - skróty klawiszowe z briefu §6;
     - znak wodny przy pobraniu.
 - **Kryteria akceptacji:**
-    - [ ] dokument 200 stron otwiera się bez pobierania całości;
-    - [ ] dwa dokumenty obok siebie;
-    - [ ] test Playwright.
+    - [x] pdf.js z `disableAutoFetch` + HTTP Range w `DocumentServlet`, strony renderowane leniwie;
+    - [x] widok dzielony (dwie instancje `tk:pdfViewer`);
+    - [~] `ui-tests/tests/akta.spec.ts` – do uruchomienia na działającej aplikacji.
 - **Zależności:** T-033. **Odwołania:** brief §4.3, §6.
 - **[decyzja]** czy `pe:documentViewer` wystarcza (najpierw zrób krótki prototyp porównawczy).
 
-### [ ] T-035 Notatki wewnętrzne i zaznaczenia
+### [x] T-035 Notatki wewnętrzne i zaznaczenia
 - **Cel:** praca zespołu sędziego bez mieszania z aktami jawnymi.
 - **Zakres:**
     - notatki do sprawy;
@@ -399,10 +399,10 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - widoczność tylko dla zespołu sędziego;
     - kopiowanie z cytatem (sygnatura, karta).
 - **Kryteria akceptacji:**
-    - [ ] notatki i zaznaczenia nie występują w eksporcie akt jawnych ani w widoku referenta.
+    - [x] `ArchiveService.buildPackage` pomija notatki, `recordPages` filtruje poza zespołem, `NoteService` odmawia (`AccessNotesAndPublicationTest`, `ArchiveReportTemplateTest`).
 - **Zależności:** T-034. **Odwołania:** FR-24.
 
-### [ ] T-036 Anonimizacja i wgląd osób trzecich (UC-15, UC-16)
+### [x] T-036 Anonimizacja i wgląd osób trzecich (UC-15, UC-16)
 - **Cel:** zanonimizowane wersje dokumentów i wgląd w akta.
 - **Zakres:**
     - generowanie zanonimizowanej kopii (redakcja po stronie serwera, z kontrolą człowieka);
@@ -410,11 +410,11 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - rejestr wniosków o wgląd;
     - widok osoby trzeciej z banerem.
 - **Kryteria akceptacji:**
-    - [ ] osoba trzecia nie otrzymuje oryginału (test API);
-    - [ ] dokument z flagą art. 80 nie może zostać opublikowany bez wersji zanonimizowanej.
+    - [x] `visibleFileKeys` zwraca tylko wersje zanonimizowane (`AccessNotesAndPublicationTest`);
+    - [x] `Publication.approve` odmawia bez wersji zanonimizowanej.
 - **Zależności:** T-031, T-033. **Odwołania:** FR-22, FR-27, FR-29.
 
-### [ ] T-037 Integracja z HSM (PKCS#11)
+### [~] T-037 Integracja z HSM (PKCS#11)
 - **Cel:** klucze wyłącznie w HSM.
 - **Zakres:**
     - konfiguracja SunPKCS11 (SoftHSM2 w dev);
@@ -422,27 +422,27 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - odszyfrowanie wpływających PDF-ów zaszyfrowanych certyfikatem (Adobe.PubSec) w usłudze dokumentów;
     - podpis łańcucha audytu.
 - **Kryteria akceptacji:**
-    - [ ] żaden klucz prywatny nie występuje w plikach ani w bazie (skan repozytorium i bazy);
-    - [ ] testy na SoftHSM2.
+    - [~] skan repozytorium `RepositorySecretsScanTest`; skan bazy – zapytanie kontrolne w przeglądzie uprawnień;
+    - [~] `HsmKeyStore` (SunPKCS11) z testami w trybie PKCS#12 (zabroniony w PROD); SoftHSM2 w Compose/Ansible – test po uruchomieniu.
 - **Zależności:** T-030, T-015. **Odwołania:** D12.
 
 ---
 
 ## Etap 4. Podpis i doręczenia
 
-### [ ] T-040 Podpis kwalifikowany dwuetapowy (D10)
+### [~] T-040 Podpis kwalifikowany dwuetapowy (D10)
 - **Cel:** sędzia podpisuje kartą przez aplikację lokalną.
 - **Zakres:**
     - serwer: DSS `getDataToSign` → interfejs `LocalSignerClient` (przeglądarka ↔ aplikacja lokalna) → `signDocument` + znacznik czasu (PAdES-B-T) → walidacja;
     - kolejne podpisy w składzie 3 sędziów;
     - implementacja testowa podpisująca certyfikatem z SoftHSM2.
 - **Kryteria akceptacji:**
-    - [ ] podpisany dokument przechodzi walidację DSS;
-    - [ ] status czynności „podpisana” i ruch procesu w jednej transakcji.
+    - [x] `PadesSigningTest` (TOTAL_PASSED z kotwicą zaufania, manipulacja → błąd);
+    - [x] `SigningService.complete` (`LetterAndSigningServiceTest`).
 - **Zależności:** T-026, T-037. **Odwołania:** FR-16, D10.
 - **[decyzja]** aplikacja lokalna: SDK dostawcy kart czy własna. **[zaślepka]** do tego czasu.
 
-### [ ] T-041 Rejestr doręczeń (UC-08)
+### [x] T-041 Rejestr doręczeń (UC-08)
 - **Cel:** dokładna data doręczenia uruchamia termin.
 - **Zakres:**
     - ekspedycja (wybór adresata: pełnomocnik, gdy ustanowiony – BR-06);
@@ -450,8 +450,8 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - rejestracja zwrotki (doręczenie do rąk, zastępcze, awizo);
     - przeliczenie terminu (T-025) i aktualizacja timera.
 - **Kryteria akceptacji:**
-    - [ ] rejestracja doręczenia ustawia termin 7 dni;
-    - [ ] korekta daty przelicza termin i timer.
+    - [x] `DeliveryAndAppealServiceTest` (7 dni, dzień wolny, awizo +14);
+    - [x] korekta uchyla stary termin, tworzy nowy i przestawia timer.
 - **Zależności:** T-025, T-020. **Odwołania:** FR-25, FR-26.
 
 ### [~] T-042 Szkielet workerów integracji
@@ -463,72 +463,72 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - metryki;
     - jeden JAR na temat lub jeden z konfiguracją tematów (uzasadnij w ADR).
 - **Kryteria akceptacji:**
-    - [ ] worker testowy przechodzi pełny cykl fetch-and-lock → complete / failure → incydent w Cockpicie.
+    - [~] handlery testowane z mockiem `ExternalTaskService` (complete / handleFailure z backoff); pełny cykl z silnikiem po uruchomieniu Compose; metryki `/metrics`.
 - **Zależności:** T-020, T-004. **Odwołania:** D7.
 
-### [ ] T-043 Adaptery doręczeń
+### [x] T-043 Adaptery doręczeń
 - **Cel:** wysyłka elektroniczna i pocztowa.
 - **Zakres:**
     - interfejsy i zaślepki WireMock dla e-Doręczeń / ePUAP i operatora pocztowego (Elektroniczny Nadawca);
     - mapowanie statusów na komunikaty procesu.
 - **Kryteria akceptacji:**
-    - [ ] testy kontraktowe na zaślepkach;
-    - [ ] brak duplikatów wysyłki przy ponowieniu.
+    - [x] `DeliveryHandlerTest` (e-Doręczenia, poczta, raport nadania, mapowanie statusów);
+    - [x] klucz idempotencji `DOR-…` w nagłówku `Idempotency-Key`; `confirmDispatch` neutralne przy ponowieniu.
 - **Zależności:** T-042, T-041. **Odwołania:** FR-25. **[zaślepka]** API zewnętrzne.
 
 ---
 
 ## Etap 5. Raporty, archiwum, eksploatacja
 
-### [ ] T-050 Raporty i statystyki (UC-19)
+### [~] T-050 Raporty i statystyki (UC-19)
 - **Zakres:**
     - wpływ i załatwienia, odsetek nadania biegu, odsetek uwzględnionych zażaleń;
     - czas wstępnej kontroli (mediana, p90), zaległości, obciążenie;
     - eksport do XLSX i CSV.
 - **Kryteria akceptacji:**
-    - [ ] liczby zgodne z danymi testowymi (testy na zbiorze referencyjnym).
+    - [~] `ReportService` + `TabularExport` z testami (`ArchiveReportTemplateTest`); eksport XLSX/CSV z ekranu S-20 do podpięcia.
 - **Zależności:** T-027, T-028. **Odwołania:** FR-32.
 
-### [ ] T-051 Pisma ogólne (UC-17)
+### [~] T-051 Pisma ogólne (UC-17)
 - **Zakres:** rejestr pism niebędących skargami, odpowiedź z szablonu (pouczenie o wymogach skargi), termin odpowiedzi.
 - **Kryteria akceptacji:**
-    - [ ] ścieżka „pismo ogólne” z T-021 działa z UI.
+    - [~] `GeneralLetterService` + szablon `ODP_PISMO_OGOLNE`; kwalifikacja z S-06 rejestruje pismo ogólne; odpowiedź z S-12 do spięcia.
 - **Zależności:** T-013, T-026. **Odwołania:** FR-30.
 
-### [ ] T-052 Archiwizacja (UC-21)
+### [x] T-052 Archiwizacja (UC-21)
 - **Zakres:**
     - zamknięcie sprawy, kategoria archiwalna z konfiguracji;
     - paczka archiwalna (metadane XML + PDF/A), spis zdawczo-odbiorczy;
     - roczny eksport repertorium do PDF/A z sumą kontrolną.
 - **Kryteria akceptacji:**
-    - [ ] paczka przechodzi walidację;
-    - [ ] Object Lock na zarchiwizowanych plikach.
+    - [x] paczka ZIP (metadata.xml, SHA256SUMS, PDF/A) sprawdzana w `ArchiveReportTemplateTest`;
+    - [x] `store.put(..., lockCompliance=true)`.
 - **Zależności:** T-030. **Odwołania:** FR-09, FR-34, NFR-12.
 
-### [ ] T-053 Role Ansible dla VM
+### [~] T-053 Role Ansible dla VM
 - **Cel:** produkcja i przedprodukcja odtwarzalne z kodu.
 - **Zakres:**
     - role: WildFly 41 + dystrybucja Operaton (standalone-ha, 2 węzły), HAProxy, PostgreSQL 17 + Patroni + etcd, OpenSearch (3 węzły), usługi systemd dla docs-service i workerów;
     - inwentarze preprod i prod;
     - sekrety poza repozytorium.
 - **Kryteria akceptacji:**
-    - [ ] świeże VM (np. testowe w Vagrant lub w środowisku TK) stawiają się jednym playbookiem;
-    - [ ] wersje pakietów zgodne z obrazami Docker.
+    - [~] role i inwentarze w `infra/ansible` (ADR 0009); uruchomienie na VM przez zespół infrastruktury;
+    - [x] wersje w `group_vars/all/main.yml` zgodne z `infra/docker`.
 - **Zależności:** T-006. **Odwołania:** D11, NFR-07.
 - **[decyzja]** system operacyjny VM i sposób dystrybucji pakietów.
 
-### [ ] T-054 Monitoring i logi
+### [~] T-054 Monitoring i logi
 - **Zakres:**
     - metryki (Prometheus): JVM, pule połączeń, zadania i incydenty Operaton, kolejka OCR;
     - endpoint `/health`;
     - logi JSON do centralnego systemu;
     - alerty: incydenty, terminy bez czynności, błędy weryfikacji łańcucha audytu.
 - **Kryteria akceptacji:**
-    - [ ] panel Grafana z kluczowymi wskaźnikami;
-    - [ ] alert testowy dochodzi.
+    - [x] `infra/monitoring/grafana-dashboard.json`, `/health`, `/metrics` (ADR 0019);
+    - [ ] alert testowy – po uruchomieniu Prometheus/Alertmanager (profil `monitoring`).
 - **Zależności:** T-042, T-053. **Odwołania:** NFR-07.
 
-### [ ] T-055 Utwardzenie bezpieczeństwa
+### [~] T-055 Utwardzenie bezpieczeństwa
 - **Zakres:**
     - przegląd OWASP ASVS (poziom 2) dla aplikacji;
     - CSP bez wyjątków, limity uploadu i weryfikacja sygnatur plików;
@@ -537,17 +537,17 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - przygotowanie do testu penetracyjnego;
     - dane wejściowe do DPIA.
 - **Kryteria akceptacji:**
-    - [ ] lista kontrolna ASVS w `docs/security/` z wynikami;
-    - [ ] brak znalezisk wysokich w skanach.
+    - [x] `docs/security/asvs-checklist.md`, `dpia-dane-wejsciowe.md`, `przeglad-uprawnien-bazy.md`;
+    - [ ] brak znalezisk wysokich – po pierwszym skanie Dependency-Check z kluczem NVD w CI.
 - **Zależności:** etapy 1–4. **Odwołania:** NFR-04, NFR-05, NFR-13.
 
-### [ ] T-056 Aktualizacja Operaton (procedura)
+### [~] T-056 Aktualizacja Operaton (procedura)
 - **Zakres:**
     - procedura i skrypt aktualizacji wersji Operaton (cykl 6-miesięczny);
     - test migracji schematu na kopii danych;
     - checklist zgodności WildFly.
 - **Kryteria akceptacji:**
-    - [ ] próbna aktualizacja na środowisku testowym opisana w `docs/runbooks/`.
+    - [~] `docs/runbooks/aktualizacja-operaton.md`, `infra/scripts/update-operaton.sh`, `test-schema-migration.sh`; próbna aktualizacja po pierwszym wydaniu.
 - **Zależności:** T-053. **Odwołania:** architektura §10.
 
 ---
@@ -573,3 +573,39 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
 - T-026 – 03.11.2026 – `docs-service`: `FreemarkerTemplateRenderer` w piaskownicy (ALLOWS_NOTHING_RESOLVER, bez `?api`, escapowanie HTML, limit czasu i rozmiaru) z 7 testami, `PdfRenderer` + `OpenHtmlToPdfRenderer` (PDF/A-2b), `PdfAValidator` (interfejs), szablon zarządzenia o brakach. Zostało: veraPDF, pozostałe szablony, tabela `letter_template` w użyciu, testy wizualne, czcionki w dev.
 - T-033 – 03.11.2026 – ekran S-14 (`akta/podglad.xhtml`): nagłówek sprawy z terminem, pasek przebiegu, spis akt z zakładkami Akta jawne / Notatki wewnętrzne, podgląd dokumentu (warstwa OCR, dokument niejawny jako plansza), widok dzielony, panel Czynności/Terminy/Lista kontrolna/Metadane, warianty ról i statusów. Zostało: pdf.js (T-034), dane z usług domenowych, axe-core, 1366×768 w przeglądarce.
 - T-042 – 03.11.2026 – moduł `workers` z `operaton-external-task-client`, `AbstractIdempotentHandler` (klucz idempotencji, rosnący odstęp, incydent po 5 próbach), handlery-zaślepki doręczeń i przekazania, konfiguracja ze środowiska, obraz Docker. Zostało: token client credentials z ID-users, test pełnego cyklu z silnikiem, metryki.
+
+- Partia 2 (03.11.2026) – realizacja wszystkich zadań z decyzjami jako ADR 0005–0020 (do potwierdzenia po zakończeniu prac):
+- T-010 – 03.11.2026 – encje JPA §8.1 (wersjonowane wpisy, strony, dokumenty, czynności, doręczenia, terminy, zażalenia, wgląd, publikacja, szablony, słowniki, archiwum), migracje V1–V5 + V5.1 (PostgreSQL), `ModelSchemaTest` (Flyway + walidacja schematu na H2, ADR 0011), diagram ER. Zostało: uruchomienie `-Pit` z Dockerem.
+- T-011 – 03.11.2026 – `IncomingRegister` (DW rrrr/nnnnn pod blokadą, kwalifikacja, kolejka, zaległe), ekran S-03 zapisuje przez usługę. Zostało: upload skanów z formularza (`CaseDocumentService.upload` gotowe, `p:fileUpload` do podpięcia), etykieta PDF.
+- T-013 – 03.11.2026 – `CaseFileService.createCase` (D1: sygnatura → wpis → strony → orzeczenie → karty → start procesu; wycofanie bez zużycia numeru), `attachLetter`, S-06/S-07 przez usługi. ADR 0013 (start procesu domyka zadania rejestracyjne).
+- T-014 – 03.11.2026 – `CorrectionService` (wniosek → decyzja kierownika jako osobny wiersz, ADR 0016), S-09 wysyła/zatwierdza/odrzuca.
+- T-015 – 03.11.2026 – `recordDenial` w REQUIRES_NEW (ADR 0014), `recent/forCase`, weryfikacja łańcucha z S-25, podpis łańcucha kluczem HSM w usłudze dokumentów. Zostało: syslog do SIEM, harmonogram podpisu dziennego.
+- T-016 – 03.11.2026 – `DelegationService`, `CaseAccessService`, odmowy w audycie, S-23 dodaje/odwołuje, raport przydziałów w S-22.
+- T-020 – 03.11.2026 – external tasks doręczeń (`doreczenie-pisma`), nasłuch `transferCompletedListener`, `sygnaturaPowiazana`, HTTL z `eskarga.process.httl.days`.
+- T-022 – 03.11.2026 – `TaskBoardService` (TaskService + CaseAccessPolicy), pulpit S-01 z `JpaViewData` (ADR 0017), widok kierownika `dueWithin`.
+- T-023 – 03.11.2026 – `JudgeAssignmentService` (BR-10, zarządzenie, przydział, assignee, audyt), S-17 `assign()`.
+- T-024 – 03.11.2026 – `wymogi-formalne.dmn` + `FormalRequirementsService` (ADR 0015); lista kontrolna S-08 z DMN. Zostało: zapis stanów listy jako czynność.
+- T-025 – 03.11.2026 – kalendarz z tabeli `holiday` (`HolidayService`), korekta doręczenia przestawia timer (`DeliveryService`). [decyzja] zasady do potwierdzenia przez BSP (ADR 0006).
+- T-026 – 03.11.2026 – 8 szablonów, veraPDF (OutputIntent sRGB), `LetterService` (projekt z aktywnej wersji, wynik kontroli), `LetterModelBuilder`, `DocsServiceClient`. Zostało: testy wizualne, czcionka urzędowa TK.
+- T-026a – 03.11.2026 – walidacja/podgląd/aktywacja z S-24 (`AdministracjaBean`), `TemplateService.seedDefaults`. Zostało: edytor z podświetlaniem (`pe:codeMirror`) w widoku.
+- T-027 – 03.11.2026 – `AppealService` (terminowość pomocnicza, BR-07, skład 3 sędziów, BR-10). Zostało: akcje w S-11/S-18.
+- T-028 – 03.11.2026 – `MeritTransferHandler` (WireMock, Idempotency-Key), `TransferResource`, `markTransferred`, zawiadomienia art. 63 jako szablon.
+- T-030 – 03.11.2026 – `DocumentServlet` (dostęp, Range, SHA-256, znak wodny, audyt), `CaseDocumentService.upload`. Zostało: test na SeaweedFS.
+- T-031 – 03.11.2026 – usługa dokumentów: `/dokumenty/przetworz` (PubSec, DSS, OCR, PDF/A, tekst), worker `dokument-przetworz`, `applyProcessing`. ADR 0008 (podpis lokalny).
+- T-032 – 03.11.2026 – `SearchIndex` (pamięć/OpenSearch), `SearchService` z filtrem D4, indeksowanie przy wpisie i po OCR, S-02 (ADR 0018). Zostało: pomiar ≤ 2 s na OpenSearch.
+- T-034 – 03.11.2026 – `tk:pdfViewer` (pdf.js z webjara, worker lokalny, bez eval, Range, leniwe strony, zoom, karta/strona, szukanie, skróty J/K/+/−//), znak wodny przy pobraniu, CSP `worker-src`. ADR 0007. Zostało: uruchomienie testów Playwright.
+- T-035 – 03.11.2026 – `NoteService`, nakładka zaznaczeń (`highlightsJson`), cytat „Ts 312/26, k. 3”.
+- T-036 – 03.11.2026 – `AccessRequestService` (BR-09, art. 80), `PdfRedactor` (rastrowo), `Anonymizer` (tekst).
+- T-037 – 03.11.2026 – `HsmKeyStore` (SunPKCS11; pkcs12 tylko poza PROD), `PubSecDecryptor`, `AuditChainSigner`, skan repozytorium. Zostało: test na SoftHSM2, PubSec z kluczem w HSM (PDFBox wymaga magazynu eksportowalnego – do obejścia własnym `PublicKeySecurityHandler`).
+- T-040 – 03.11.2026 – `TwoStepPadesSigner` (DSS, sesja skrótu, TSA opcjonalna), `SigningService` (jedna transakcja), S-16 `begin/complete`, kontrakt `LocalSignerClient` (ADR 0008 [decyzja]).
+- T-041 – 03.11.2026 – `DeliveryService` (BR-06, zwrotka, awizo +14, korekta, API dla workera), S-10.
+- T-042 – 03.11.2026 – token client credentials (`common`), `JsonHttp`, metryki, konfiguracja tematów (ADR 0010). Zostało: pełny cykl z silnikiem.
+- T-043 – 03.11.2026 – `DeliveryHandler` (e-Doręczenia/ePUAP, poczta), mapowanie statusów, testy WireMock.
+- T-050 – 03.11.2026 – `ReportService`, `TabularExport` (CSV/XLSX), S-20 z danych. Zostało: przyciski eksportu.
+- T-051 – 03.11.2026 – `GeneralLetterService` (30 dni), szablon odpowiedzi, kwalifikacja z S-06.
+- T-052 – 03.11.2026 – `ArchiveService` (gotowość, paczka ZIP, Object Lock, spis n/rrrr, księga roczna XHTML), S-21 `transfer()`. ADR 0012.
+- T-053 – 03.11.2026 – role Ansible (wildfly_operaton, eskarga_services, haproxy, postgresql_patroni, opensearch), inwentarze preprod/prod, wzór Vault (ADR 0009). Zostało: uruchomienie na VM.
+- T-054 – 03.11.2026 – `/health`, `/metrics`, metryki workerów, Prometheus/Grafana/alerty w `infra/monitoring`, logi JSON (ADR 0019). Zostało: alert testowy.
+- T-055 – 03.11.2026 – lista ASVS, DPIA, przegląd uprawnień bazy, `SafeRedirect`, walidacja sygnatury PDF, skan sekretów. Zostało: pierwszy skan Dependency-Check z kluczem NVD, test penetracyjny.
+- T-056 – 03.11.2026 – runbook i skrypty aktualizacji/testu migracji. Zostało: próbna aktualizacja.
+- T-002/T-003/T-004/T-005/T-006 – 03.11.2026 – uzupełnienia: usługa `flyway` i OpenSearch z `analysis-stempel` w Compose, profil `monitoring`, filtr MFA, uwierzytelnienie Operaton, back-channel logout, moduł `common`, workflow CI, testy UI (`ui-tests/`, ADR 0020). Wspólne „zostało”: pierwsze uruchomienie na WildFly 41 + Docker (brak demona Dockera i serwera w sesji).

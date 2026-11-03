@@ -1,0 +1,3 @@
+name = eSkargaHSM
+library = {{ pkcs11_library | default('/usr/lib/softhsm/libsofthsm2.so') }}
+slot = {{ pkcs11_slot | default(0) }}

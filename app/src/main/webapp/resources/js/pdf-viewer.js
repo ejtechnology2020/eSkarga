@@ -1,0 +1,175 @@
+/* Widżet PDF eSkarga (T-034, T-035). pdf.js ładowany jako moduł z własnej domeny (webjar), worker lokalny, isEvalSupported=false.
+   Strony renderowane leniwie (IntersectionObserver) – dokument 200 stron otwiera się bez pobierania całości (HTTP Range).
+   Skróty (brief §6): J/K strona, +/- zoom, / szukaj, Esc zamyka wyszukiwanie. Nakładka zaznaczeń z data-highlights (JSON). */
+(function () {
+  'use strict';
+  const SCALE_STEP = 0.15;
+
+  async function loadLib(url) {
+    if (window.__eskargaPdfjs) { return window.__eskargaPdfjs; }
+    window.__eskargaPdfjs = import(url);
+    return window.__eskargaPdfjs;
+  }
+
+  async function mount(root) {
+    if (root.dataset.mounted) { return; }
+    root.dataset.mounted = '1';
+    const status = root.querySelector('.pdfv-status');
+    const pagesEl = root.querySelector('.pdfv-pages');
+    const scroll = root.querySelector('.pdfv-scroll');
+    const pageFrom = parseInt(root.dataset.pageFrom || '1', 10) || 1;
+    let highlights = [];
+    try { highlights = JSON.parse(root.dataset.highlights || '[]'); } catch (e) { highlights = []; }
+    let scale = 1.0;
+    let pdf = null;
+    let current = 1;
+    let pdfjs;
+    try {
+      pdfjs = await loadLib(root.dataset.lib);
+      pdfjs.GlobalWorkerOptions.workerSrc = root.dataset.worker;
+      status.textContent = 'Ładowanie dokumentu…';
+      pdf = await pdfjs.getDocument({ url: root.dataset.src, isEvalSupported: false, disableAutoFetch: true, disableStream: false, rangeChunkSize: 65536 }).promise;
+    } catch (e) {
+      status.textContent = 'Nie udało się otworzyć dokumentu. ' + (e && e.message ? e.message : '');
+      return;
+    }
+    status.textContent = '';
+    root.querySelector('.pdfv-count').textContent = String(pdf.numPages);
+    const rendered = new Map();
+
+    const holders = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const holder = document.createElement('div');
+      holder.className = 'pdfv-pg';
+      holder.dataset.page = String(i);
+      holder.setAttribute('aria-label', 'Karta ' + (pageFrom + i - 1) + ', strona ' + i);
+      holder.style.minHeight = '400px';
+      pagesEl.appendChild(holder);
+      holders.push(holder);
+    }
+
+    async function render(i, force) {
+      const holder = holders[i - 1];
+      if (!force && rendered.get(i) === scale) { return; }
+      rendered.set(i, scale);
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: scale * 1.33 });
+      holder.innerHTML = '';
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+      holder.style.minHeight = canvas.height + 'px';
+      holder.appendChild(canvas);
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
+      const textLayer = document.createElement('div');
+      textLayer.className = 'pdfv-text';
+      textLayer.style.width = canvas.width + 'px';
+      textLayer.style.height = canvas.height + 'px';
+      holder.appendChild(textLayer);
+      try {
+        const textContent = await page.getTextContent();
+        const tl = new pdfjs.TextLayer({ textContentSource: textContent, container: textLayer, viewport: viewport });
+        await tl.render();
+      } catch (e) { /* bez warstwy tekstowej (skan bez OCR) */ }
+      drawHighlights(holder, i, viewport);
+    }
+
+    function drawHighlights(holder, pageNo, viewport) {
+      highlights.filter(function (h) { return h.page === pageNo; }).forEach(function (h) {
+        const box = document.createElement('div');
+        box.className = 'pdfv-hl';
+        box.title = h.comment || 'zaznaczenie zespołu sędziego';
+        const r = viewport.convertToViewportRectangle([h.x, h.y, h.x + h.w, h.y + h.h]);
+        box.style.left = Math.min(r[0], r[2]) + 'px';
+        box.style.top = Math.min(r[1], r[3]) + 'px';
+        box.style.width = Math.abs(r[2] - r[0]) + 'px';
+        box.style.height = Math.abs(r[3] - r[1]) + 'px';
+        holder.appendChild(box);
+      });
+    }
+
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          const i = parseInt(en.target.dataset.page, 10);
+          render(i, false);
+          if (en.intersectionRatio > 0.4) { setCurrent(i); }
+        }
+      });
+    }, { root: scroll, threshold: [0.1, 0.5] });
+    holders.forEach(function (h) { io.observe(h); });
+
+    function setCurrent(i) {
+      current = i;
+      root.querySelector('.pdfv-num').value = String(i);
+      root.querySelector('.pdfv-karta').textContent = String(pageFrom + i - 1);
+    }
+    function goTo(i) {
+      i = Math.max(1, Math.min(pdf.numPages, i));
+      holders[i - 1].scrollIntoView({ block: 'start' });
+      setCurrent(i);
+    }
+    function setScale(s) {
+      scale = Math.max(0.5, Math.min(3, s));
+      root.querySelector('.pdfv-zoom').textContent = Math.round(scale * 100) + ' %';
+      holders.forEach(function (h, idx) { if (rendered.has(idx + 1)) { render(idx + 1, true); } });
+    }
+    async function search(q) {
+      const found = root.querySelector('.pdfv-found');
+      if (!q) { found.textContent = ''; return; }
+      let hits = 0; let first = 0;
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const tc = await page.getTextContent();
+        const text = tc.items.map(function (it) { return it.str; }).join(' ').toLowerCase();
+        const n = text.split(q.toLowerCase()).length - 1;
+        if (n > 0) { hits += n; if (!first) { first = i; } }
+      }
+      found.textContent = hits ? hits + ' trafień, pierwsze na stronie ' + first : 'brak trafień';
+      if (first) { goTo(first); }
+    }
+
+    root.addEventListener('click', function (ev) {
+      const btn = ev.target.closest('[data-act]');
+      if (!btn) { return; }
+      switch (btn.dataset.act) {
+        case 'zoom-in': setScale(scale + SCALE_STEP); break;
+        case 'zoom-out': setScale(scale - SCALE_STEP); break;
+        case 'fit': setScale((scroll.clientWidth - 32) / (holders[0].firstChild ? holders[0].firstChild.width / scale : 800)); break;
+        case 'prev': goTo(current - 1); break;
+        case 'next': goTo(current + 1); break;
+        case 'print': window.open(root.dataset.src, '_blank', 'noopener'); break;
+        default: break;
+      }
+    });
+    root.querySelector('.pdfv-num').addEventListener('change', function (ev) { goTo(parseInt(ev.target.value, 10) || 1); });
+    root.querySelector('.pdfv-q').addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') { search(ev.target.value.trim()); }
+      if (ev.key === 'Escape') { ev.target.value = ''; search(''); scroll.focus(); }
+    });
+    scroll.addEventListener('keydown', function (ev) {
+      if (ev.target.tagName === 'INPUT') { return; }
+      if (ev.key === 'j' || ev.key === 'J') { goTo(current + 1); ev.preventDefault(); }
+      if (ev.key === 'k' || ev.key === 'K') { goTo(current - 1); ev.preventDefault(); }
+      if (ev.key === '+' || ev.key === '=') { setScale(scale + SCALE_STEP); ev.preventDefault(); }
+      if (ev.key === '-') { setScale(scale - SCALE_STEP); ev.preventDefault(); }
+      if (ev.key === '/') { root.querySelector('.pdfv-q').focus(); ev.preventDefault(); }
+    });
+    if (root.dataset.canHighlight === 'true') {
+      pagesEl.addEventListener('dblclick', function (ev) {
+        const holder = ev.target.closest('.pdfv-pg');
+        if (!holder) { return; }
+        const rect = holder.getBoundingClientRect();
+        const detail = { page: parseInt(holder.dataset.page, 10), xPx: ev.clientX - rect.left, yPx: ev.clientY - rect.top, scale: scale * 1.33 };
+        root.dispatchEvent(new CustomEvent('eskarga:highlight', { detail: detail, bubbles: true }));
+      });
+    }
+    goTo(1);
+  }
+
+  function mountAll() { document.querySelectorAll('.pdfv').forEach(mount); }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', mountAll); } else { mountAll(); }
+  if (window.PrimeFaces && PrimeFaces.ajax) {
+    document.addEventListener('pfAjaxComplete', mountAll);
+  }
+})();

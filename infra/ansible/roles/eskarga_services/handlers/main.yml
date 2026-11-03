@@ -1,0 +1,4 @@
+- name: restart wildfly
+  ansible.builtin.systemd: { name: wildfly, state: restarted }
+- name: restart workers
+  ansible.builtin.systemd: { name: eskarga-workers, state: restarted, daemon_reload: true }

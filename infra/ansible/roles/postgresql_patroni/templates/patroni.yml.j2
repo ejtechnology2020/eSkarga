@@ -1,0 +1,38 @@
+scope: eskarga
+name: {{ inventory_hostname }}
+restapi:
+  listen: {{ ansible_host }}:8008
+  connect_address: {{ ansible_host }}:8008
+etcd3:
+  hosts: {% for h in groups['db'] %}{{ hostvars[h].ansible_host }}:2379{{ "," if not loop.last }}{% endfor %}
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    synchronous_mode: true
+    postgresql:
+      use_pg_rewind: true
+      parameters:
+        wal_level: replica
+        max_connections: 300
+        shared_buffers: 4GB
+        ssl: "on"
+        log_destination: jsonlog
+  initdb:
+    - encoding: UTF8
+    - locale: pl_PL.UTF-8
+    - data-checksums
+  post_bootstrap: /usr/bin/psql -f /var/lib/postgresql/init-roles.sql
+postgresql:
+  listen: {{ ansible_host }}:5432
+  connect_address: {{ ansible_host }}:5432
+  data_dir: /var/lib/postgresql/{{ postgresql_version }}/main
+  bin_dir: /usr/lib/postgresql/{{ postgresql_version }}/bin
+  authentication:
+    replication: { username: replicator, password: "{{ vault_db_password_replication }}" }
+    superuser: { username: postgres, password: "{{ vault_db_password_migration }}" }
+  parameters:
+    unix_socket_directories: /var/run/postgresql

@@ -1,0 +1,14 @@
+{
+  "name": "eskarga-ui-tests",
+  "private": true,
+  "description": "Testy UI (Playwright) i dostępności (axe-core) dla ekranów krytycznych eSkarga (T-005, T-033, T-034) – ADR 0020",
+  "scripts": {
+    "test": "playwright test",
+    "test:a11y": "playwright test --grep @a11y"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.49.1",
+    "@axe-core/playwright": "4.10.1",
+    "typescript": "5.7.2"
+  }
+}

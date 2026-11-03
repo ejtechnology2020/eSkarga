@@ -69,6 +69,8 @@ public class CaseFileService {
     AuditService audit;
     @Inject
     AppClock clock;
+    @Inject
+    pl.ejtechnology.tk.eSkarga.search.SearchService search;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public CaseFile createCase(CreateCaseCommand cmd) {
@@ -110,6 +112,10 @@ public class CaseFileService {
                 cmd.symbol() == DocketSymbol.TS ? ProcessVariables.RodzajPisma.SKARGA : ProcessVariables.RodzajPisma.WNIOSEK);
         cf.setProcessInstanceId(pi.getId());
         audit.record(cmd.userId(), "TK_REFERENT", "założenie sprawy", letter.getRegisterNo(), docket.format(), null);
+        if (search != null) {
+            search.indexCase(cf);
+            search.indexDocument(pismo, null);
+        }
         return cf;
     }
 
@@ -128,6 +134,9 @@ public class CaseFileService {
         letter.qualify(LetterQualification.PISMO_DO_SPRAWY, cf);
         if (!appeal) {
             process.supplementReceived(cf.getDocket());
+        }
+        if (search != null) {
+            search.indexDocument(doc, null);
         }
         audit.record(userId, "TK_REFERENT", appeal ? "dołączenie zażalenia" : "dołączenie pisma do akt", letter.getRegisterNo(), cf.getDocket().format(), null);
         return doc;

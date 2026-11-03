@@ -1,0 +1,32 @@
+global
+  log /dev/log local0
+  maxconn 4000
+  ssl-default-bind-options ssl-min-ver TLSv1.2
+defaults
+  mode http
+  timeout connect 5s
+  timeout client 60s
+  timeout server 120s
+  option forwardfor
+frontend https
+  bind *:443 ssl crt /etc/ssl/eskarga/{{ eskarga_domain }}.pem alpn h2,http/1.1
+  http-request set-header X-Forwarded-Proto https
+  http-response set-header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  default_backend app
+backend app
+  balance roundrobin
+  cookie ESKARGALB insert indirect nocache httponly secure
+  option httpchk GET /eskarga/health
+  http-check expect status 200
+{% for h in groups['app'] %}
+  server {{ h }} {{ hostvars[h].ansible_host }}:8080 check cookie {{ h }}
+{% endfor %}
+listen postgres
+  mode tcp
+  bind *:5000
+  option httpchk GET /primary
+  http-check expect status 200
+  default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+{% for h in groups['db'] %}
+  server {{ h }} {{ hostvars[h].ansible_host }}:5432 check port 8008
+{% endfor %}

@@ -49,6 +49,8 @@ import pl.ejtechnology.tk.eSkarga.domain.service.NoteService;
 import pl.ejtechnology.tk.eSkarga.domain.service.ReportService;
 import pl.ejtechnology.tk.eSkarga.domain.service.TemplateService;
 import pl.ejtechnology.tk.eSkarga.process.PreliminaryReviewProcess;
+import pl.ejtechnology.tk.eSkarga.search.InMemorySearchIndex;
+import pl.ejtechnology.tk.eSkarga.search.SearchService;
 import pl.ejtechnology.tk.eSkarga.web.AppClock;
 
 /**
@@ -71,6 +73,7 @@ public abstract class ServiceTestSupport {
     protected static AppClock clock;
     protected static InMemoryDocumentStore store;
     protected static StubDocsGateway docs;
+    protected static InMemorySearchIndex searchIndex;
     /** Walidator szablonów do testów: odrzuca źródło zawierające „<script” albo puste. */
     protected static TemplateService.TemplateValidator validator;
 
@@ -96,9 +99,11 @@ public abstract class ServiceTestSupport {
         public final TemplateService templates;
         public final NoteService notes;
         public final CaseAccessService caseAccess;
+        private final CaseAccessService caseAccess0;
         public final LetterService letters;
         public final SigningService signing;
         public final CaseDocumentService documents;
+        public final SearchService search;
 
         public Services(EntityManager em, PreliminaryReviewProcess process) {
             this.em = em;
@@ -114,12 +119,14 @@ public abstract class ServiceTestSupport {
             this.delegations = Wiring.inject(new DelegationService(), em, audit, clock);
             this.holidays = Wiring.inject(new HolidayService(), em, audit);
             this.incoming = Wiring.inject(new IncomingRegister(), em, audit, clock);
-            this.cases = Wiring.inject(new CaseFileService(), em, docketNumbers, process, audit, clock);
+            this.caseAccess0 = Wiring.inject(new CaseAccessService(), em, audit);
+            this.search = Wiring.inject(new SearchService(), em, searchIndex, caseAccess0);
+            this.cases = Wiring.inject(new CaseFileService(), em, docketNumbers, process, audit, clock, search);
             this.corrections = Wiring.inject(new CorrectionService(), em, audit, clock);
             this.deliveries = Wiring.inject(new DeliveryService(), em, holidays, process, audit);
             this.appeals = Wiring.inject(new AppealService(), em, cases, delegations, process, audit, clock);
             this.judges = Wiring.inject(new JudgeAssignmentService(), em, cases, delegations, engine.getTaskService(), audit, clock);
-            this.caseAccess = Wiring.inject(new CaseAccessService(), em, delegations, audit, clock);
+            this.caseAccess = caseAccess0;
             this.access = Wiring.inject(new AccessRequestService(), em, cases, audit, clock);
             this.generalLetters = Wiring.inject(new GeneralLetterService(), em, incoming, audit, clock);
             this.dictionaries = Wiring.inject(new DictionaryService(), em, audit);
@@ -129,7 +136,7 @@ public abstract class ServiceTestSupport {
             this.notes = Wiring.inject(new NoteService(), em, caseAccess, audit, clock);
             this.letters = Wiring.inject(new LetterService(), em, cases, templates, docs, store, engine.getTaskService(), audit, clock);
             this.signing = Wiring.inject(new SigningService(), em, cases, deliveries, docs, store, engine.getTaskService(), audit, clock);
-            this.documents = Wiring.inject(new CaseDocumentService(), em, cases, store, audit, clock);
+            this.documents = Wiring.inject(new CaseDocumentService(), em, cases, store, audit, clock, search);
         }
     }
 
@@ -140,6 +147,7 @@ public abstract class ServiceTestSupport {
         ClockUtil.setCurrentTime(Date.from(clock.instant()));
         store = new InMemoryDocumentStore();
         docs = new StubDocsGateway();
+        searchIndex = new InMemorySearchIndex();
         validator = (code, xhtml) -> xhtml == null || xhtml.isBlank() || xhtml.contains("<script")
                 ? new TemplateService.Validation(false, List.of("niedozwolona treść szablonu"))
                 : new TemplateService.Validation(true, List.of());

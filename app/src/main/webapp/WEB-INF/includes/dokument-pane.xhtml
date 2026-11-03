@@ -18,7 +18,12 @@
   </div>
   <h:panelGroup rendered="#{not doc.niejawny}">
     <div class="pane-sub"><span>karta akt #{doc.karty.replace('k. ', '')} · <b style="color: #171B24;">strona 1 z 14</b></span><span class="sp"></span><button type="button" class="btn s q" aria-expanded="false">Pokaż miniatury stron</button></div>
-    <div class="viewer">
+    <h:panelGroup rendered="#{not currentUser.demo}" layout="block" styleClass="viewer">
+      <tk:pdfViewer src="#{request.contextPath}/akta/dokument/#{doc.id}" title="#{doc.tytul}" pageFrom="#{doc.karty.replaceAll('[^0-9].*', '').replace('k', '')}"
+                    highlights="#{akta.highlightsJson(doc)}" canHighlight="#{akta.zespolSedziego}" downloadUrl="#{request.contextPath}/akta/dokument/#{doc.id}?pobierz=1" />
+      <p class="mut" jsf:rendered="#{akta.zespolSedziego}" xmlns:jsf="jakarta.faces">Zaznaczenia i komentarze widzi tylko zespół sędziego. Nie trafiają do akt jawnych.</p>
+    </h:panelGroup>
+    <div class="viewer" jsf:rendered="#{currentUser.demo}" xmlns:jsf="jakarta.faces">
       <tk:paper label="Treść dokumentu: #{doc.tytul}, strona 1">
         <h:panelGroup rendered="#{doc.id eq 'k1'}">
           <p class="r">Przykładowo, dnia 13.10.2026 r.</p>

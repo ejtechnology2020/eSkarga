@@ -1,0 +1,39 @@
+# Alerty (T-054): incydenty procesów, terminy bez czynności, błędy łańcucha audytu, kolejka OCR, brak workerów.
+groups:
+  - name: eskarga
+    rules:
+      - alert: OperatonIncidents
+        expr: operaton_incidents > 0
+        for: 5m
+        labels: { severity: critical }
+        annotations: { summary: "Incydenty w silniku procesów", description: "{{ $value }} incydentów – sprawdź Cockpit i logi workerów." }
+      - alert: ExternalTasksWithoutRetries
+        expr: operaton_external_tasks_no_retries > 0
+        for: 10m
+        labels: { severity: critical }
+        annotations: { summary: "External tasks bez prób – doręczenie albo przekazanie zatrzymane" }
+      - alert: DeadlinesOverdue
+        expr: eskarga_deadlines_overdue > 0
+        for: 1h
+        labels: { severity: warning }
+        annotations: { summary: "Terminy po upływie bez czynności", description: "{{ $value }} terminów po upływie – monitor S-19." }
+      - alert: DocumentsQueueGrowing
+        expr: eskarga_documents_pending_processing > 50
+        for: 30m
+        labels: { severity: warning }
+        annotations: { summary: "Kolejka OCR/PDF-A rośnie", description: "Sprawdź worker dokument-przetworz i usługę dokumentów." }
+      - alert: WorkersDown
+        expr: up{job="eskarga-workers"} == 0
+        for: 5m
+        labels: { severity: critical }
+        annotations: { summary: "Workery integracji nie odpowiadają" }
+      - alert: AppDown
+        expr: up{job="eskarga-app"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations: { summary: "Aplikacja eSkarga nie odpowiada na /metrics" }
+      - alert: AuditChainStalled
+        expr: increase(eskarga_audit_events_total[24h]) == 0
+        for: 1h
+        labels: { severity: warning }
+        annotations: { summary: "Dziennik zdarzeń bez nowych wpisów od 24 h (dzień roboczy?)" }

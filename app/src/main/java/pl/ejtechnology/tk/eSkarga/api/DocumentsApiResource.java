@@ -58,7 +58,7 @@ public class DocumentsApiResource {
         byte[] pdf = body.containsKey("pdf") ? Base64.getDecoder().decode(body.getString("pdf")) : null;
         documents.applyProcessing(id, new CaseDocumentService.ProcessingResult(pdf, body.getString("sha256", null), body.getBoolean("pdfaZgodny", false),
                 body.getBoolean("ocrWykonany", false), report == null ? null : report.toString(), report != null && report.getBoolean("podpisany", false),
-                report == null || report.getBoolean("wszystkieWazne", true)), "worker:" + (sc.getUserPrincipal() == null ? "?" : sc.getUserPrincipal().getName()));
+                report == null || report.getBoolean("wszystkieWazne", true), body.getString("tekst", null)), "worker:" + (sc.getUserPrincipal() == null ? "?" : sc.getUserPrincipal().getName()));
         return Response.noContent().build();
     }
 }

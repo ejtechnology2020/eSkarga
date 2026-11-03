@@ -1,0 +1,21 @@
+# Produkcja i przedprodukcja z kodu (T-053, ADR 0009): Ubuntu 24.04 LTS, pakiety z Nexusa TK, sekrety w Ansible Vault.
+# Uruchomienie: ansible-playbook -i inventories/preprod/hosts.yml site.yml --ask-vault-pass
+- name: Baza danych (PostgreSQL 17 + Patroni + etcd)
+  hosts: db
+  become: true
+  roles: [postgresql_patroni]
+
+- name: Wyszukiwanie (OpenSearch, 3 węzły)
+  hosts: search
+  become: true
+  roles: [opensearch]
+
+- name: Aplikacja (WildFly 41 + dystrybucja Operaton, standalone-ha, 2 węzły)
+  hosts: app
+  become: true
+  roles: [wildfly_operaton, eskarga_services]
+
+- name: Równoważenie ruchu (HAProxy)
+  hosts: lb
+  become: true
+  roles: [haproxy]

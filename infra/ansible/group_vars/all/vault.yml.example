@@ -1,0 +1,10 @@
+# Skopiuj do vault.yml i zaszyfruj: ansible-vault encrypt group_vars/all/vault.yml
+vault_db_password_app: "ZMIEN"
+vault_db_password_migration: "ZMIEN"
+vault_db_password_replication: "ZMIEN"
+vault_oidc_client_secret: "ZMIEN"
+vault_oidc_workers_secret: "ZMIEN"
+vault_s3_access_key: "ZMIEN"
+vault_s3_secret_key: "ZMIEN"
+vault_hsm_pin: "ZMIEN"
+vault_opensearch_admin_password: "ZMIEN"

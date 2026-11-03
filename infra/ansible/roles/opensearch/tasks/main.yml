@@ -1,0 +1,9 @@
+- name: OpenSearch z Nexusa (deb)
+  ansible.builtin.apt: { deb: "{{ nexus_base_url }}/opensearch/opensearch-{{ opensearch_version }}-linux-x64.deb" }
+- name: Wtyczka analizatora polskiego (ADR 0018)
+  ansible.builtin.command: { cmd: /usr/share/opensearch/bin/opensearch-plugin install --batch analysis-stempel, creates: /usr/share/opensearch/plugins/analysis-stempel }
+- name: Konfiguracja klastra (3 węzły, TLS między węzłami)
+  ansible.builtin.template: { src: opensearch.yml.j2, dest: /etc/opensearch/opensearch.yml, owner: opensearch, mode: "0640" }
+  notify: restart opensearch
+- name: Włącz
+  ansible.builtin.systemd: { name: opensearch, enabled: true, state: started }

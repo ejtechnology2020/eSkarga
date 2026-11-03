@@ -1,0 +1,2 @@
+- name: restart opensearch
+  ansible.builtin.systemd: { name: opensearch, state: restarted }

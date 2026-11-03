@@ -1,0 +1,15 @@
+[Unit]
+Description=WildFly 41 + Operaton (eSkarga)
+After=network-online.target
+[Service]
+User={{ eskarga_user }}
+Environment=JAVA_OPTS=-Xms{{ wildfly_heap }} -Xmx{{ wildfly_heap }} -Djava.net.preferIPv4Stack=true -Deskarga.environment={{ eskarga_environment }}
+EnvironmentFile=/etc/eskarga/app.env
+ExecStart={{ wildfly_home }}/bin/standalone.sh -c {{ wildfly_config }} -b {{ wildfly_bind_address }} -bprivate {{ wildfly_bind_address }} -Djboss.node.name={{ inventory_hostname }}
+Restart=on-failure
+LimitNOFILE=65536
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths={{ wildfly_home }}/standalone /var/log/eskarga /var/lib/eskarga
+[Install]
+WantedBy=multi-user.target

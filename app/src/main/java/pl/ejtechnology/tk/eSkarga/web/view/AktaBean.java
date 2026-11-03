@@ -35,6 +35,8 @@ public class AktaBean implements Serializable {
     private ViewData data;
     @Inject
     private CurrentUser currentUser;
+    @Inject
+    private pl.ejtechnology.tk.eSkarga.domain.service.NoteService notes;
 
     private String sygnatura = "Ts 312/26";
     private String widok;
@@ -94,6 +96,26 @@ public class AktaBean implements Serializable {
         if (split && drugiDokument == null) {
             drugiDokument = spis.size() > 1 ? spis.get(1) : dokument;
         }
+    }
+
+    /** Zaznaczenia zespołu sędziego (T-035) jako JSON dla nakładki widżetu PDF; poza zespołem – pusta lista (FR-24). */
+    public String highlightsJson(RecordPage doc) {
+        if (currentUser.isDemo() || doc == null || !doc.id().matches("\\d+")) {
+            return "[]";
+        }
+        StringBuilder sb = new StringBuilder("[");
+        for (var h : notes.highlights(Long.parseLong(doc.id()), currentUser.getLogin(), currentUser.getRoles())) {
+            if (sb.length() > 1) {
+                sb.append(',');
+            }
+            sb.append("{\"page\":").append(h.getPageNo()).append(",\"comment\":\"").append(h.getCommentText() == null ? "" : h.getCommentText().replace("\"", "'")).append("\"");
+            String g = h.getGeometryJson();
+            if (g != null && g.startsWith("{") && g.endsWith("}") && g.length() > 2) {
+                sb.append(',').append(g, 1, g.length() - 1);
+            }
+            sb.append('}');
+        }
+        return sb.append(']').toString();
     }
 
     public boolean isZespolSedziego() {

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:ui="jakarta.faces.facelets"
+              xmlns:h="jakarta.faces.html"
+              xmlns:cc="jakarta.faces.composite"
+              xmlns:pt="jakarta.faces.passthrough">
+  <!-- Widżet PDF (T-034, brief §4.3, §6): pdf.js z własnej domeny (webjar), worker lokalny, bez eval. Dokument strumieniowany
+       z /akta/dokument/{id} przez HTTP Range. Zaznaczenia (T-035) rysowane jako nakładka z JSON (tylko zespół sędziego). -->
+  <cc:interface>
+    <cc:attribute name="src" required="true" type="java.lang.String" />
+    <cc:attribute name="title" default="Dokument" />
+    <cc:attribute name="pageFrom" default="1" />
+    <cc:attribute name="highlights" default="[]" />
+    <cc:attribute name="canHighlight" default="false" />
+    <cc:attribute name="downloadUrl" default="" />
+  </cc:interface>
+  <cc:implementation>
+    <div id="#{cc.clientId}" class="pdfv" data-src="#{cc.attrs.src}" data-page-from="#{cc.attrs.pageFrom}" data-highlights="#{cc.attrs.highlights}"
+         data-can-highlight="#{cc.attrs.canHighlight}" data-worker="#{request.contextPath}/webjars/pdfjs-dist/6.4.299/build/pdf.worker.min.mjs"
+         data-lib="#{request.contextPath}/webjars/pdfjs-dist/6.4.299/build/pdf.min.mjs" role="region" aria-label="#{cc.attrs.title}">
+      <div class="pdfv-bar" role="toolbar" aria-label="Podgląd dokumentu">
+        <div class="row" role="group" aria-label="Powiększenie">
+          <button type="button" class="ibtn" data-act="zoom-out" aria-label="Pomniejsz (−)">−</button>
+          <b class="pdfv-zoom" aria-live="polite">100 %</b>
+          <button type="button" class="ibtn" data-act="zoom-in" aria-label="Powiększ (+)">+</button>
+          <button type="button" class="btn s q" data-act="fit">Dopasuj</button>
+        </div>
+        <div class="row" role="group" aria-label="Strony">
+          <button type="button" class="ibtn" data-act="prev" aria-label="Poprzednia strona (J)">‹</button>
+          <span class="pdfv-page">karta <b class="pdfv-karta">#{cc.attrs.pageFrom}</b> · strona <input type="number" class="pdfv-num" min="1" value="1" aria-label="Numer strony" /> z <span class="pdfv-count">…</span></span>
+          <button type="button" class="ibtn" data-act="next" aria-label="Następna strona (K)">›</button>
+        </div>
+        <div class="row pdfv-search" role="search">
+          <input type="search" class="pdfv-q" placeholder="Szukaj w dokumencie (/)" aria-label="Szukaj w dokumencie" />
+          <span class="pdfv-found mut" aria-live="polite"></span>
+        </div>
+        <span class="sp"></span>
+        <h:outputLink rendered="#{not empty cc.attrs.downloadUrl}" value="#{cc.attrs.downloadUrl}" styleClass="btn s" pt:download="">Pobierz</h:outputLink>
+        <button type="button" class="btn s" data-act="print">Drukuj</button>
+      </div>
+      <div class="pdfv-scroll" tabindex="0">
+        <div class="pdfv-pages"></div>
+      </div>
+      <p class="pdfv-status mut" role="status"></p>
+    </div>
+    <h:outputScript library="js" name="pdf-viewer.js" target="body" />
+  </cc:implementation>
+</ui:component>

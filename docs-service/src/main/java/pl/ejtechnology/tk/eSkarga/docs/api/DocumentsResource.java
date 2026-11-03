@@ -65,6 +65,7 @@ public class DocumentsResource {
                 .add("ocrWykonany", ocrResult.ocrDone())
                 .add("uwagaOcr", ocrResult.note() == null ? "" : ocrResult.note())
                 .add("raportPodpisu", signatures.toJson())
+                .add("tekst", extractText(current))
                 .add("pdf", Base64.getEncoder().encodeToString(current))
                 .build();
     }
@@ -126,6 +127,16 @@ public class DocumentsResource {
         JsonArrayBuilder kinds = Json.createArrayBuilder();
         r.kinds().forEach(kinds::add);
         return Json.createObjectBuilder().add("tekst", r.text()).add("zamiany", r.replacements()).add("rodzaje", kinds).build();
+    }
+
+    /** Warstwa tekstowa do indeksu wyszukiwania (T-032); limit 200 000 znaków. */
+    static String extractText(byte[] pdf) {
+        try (org.apache.pdfbox.pdmodel.PDDocument doc = org.apache.pdfbox.Loader.loadPDF(pdf)) {
+            String text = new org.apache.pdfbox.text.PDFTextStripper().getText(doc);
+            return text.length() > 200_000 ? text.substring(0, 200_000) : text;
+        } catch (java.io.IOException | RuntimeException e) {
+            return "";
+        }
     }
 
     static String sha256(byte[] data) {

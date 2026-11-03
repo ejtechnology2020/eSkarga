@@ -1,0 +1,34 @@
+- name: Katalogi konfiguracji i logów
+  ansible.builtin.file: { path: "{{ item }}", state: directory, owner: "{{ eskarga_user }}", mode: "0750" }
+  loop: [/etc/eskarga, /var/log/eskarga, /var/lib/eskarga]
+- name: Zmienne środowiskowe aplikacji (sekrety z Vault)
+  ansible.builtin.template: { src: app.env.j2, dest: /etc/eskarga/app.env, owner: "{{ eskarga_user }}", mode: "0600" }
+  notify: restart wildfly
+- name: Migracje Flyway rolą migracji (ADR 0016) – tylko na pierwszym węźle
+  ansible.builtin.command:
+    cmd: >
+      flyway -url=jdbc:postgresql://{{ groups['lb'][0] }}:5000/eskarga -user=eskarga_migration -password={{ vault_db_password_migration }}
+      -schemas=repertorium -locations=filesystem:{{ eskarga_home }}/db/migration,filesystem:{{ eskarga_home }}/db/migration-postgresql
+      -placeholders.app_role=eskarga_app migrate
+  run_once: true
+  no_log: true
+- name: Artefakty z Nexusa (WAR aplikacji, WAR usługi dokumentów, JAR workerów) z weryfikacją SHA-256
+  ansible.builtin.get_url:
+    url: "{{ nexus_base_url }}/eskarga/{{ item.name }}-{{ eskarga_version }}.{{ item.ext }}"
+    dest: "{{ eskarga_home }}/{{ item.name }}.{{ item.ext }}"
+    checksum: "sha256:{{ nexus_base_url }}/eskarga/{{ item.name }}-{{ eskarga_version }}.{{ item.ext }}.sha256"
+    owner: "{{ eskarga_user }}"
+  loop:
+    - { name: eskarga, ext: war }
+    - { name: eskarga-docs-service, ext: war }
+    - { name: eskarga-workers, ext: jar }
+- name: Wdrożenie WAR-ów do WildFly
+  ansible.builtin.copy: { src: "{{ eskarga_home }}/{{ item }}", dest: "{{ wildfly_home }}/standalone/deployments/{{ item }}", remote_src: true, owner: "{{ eskarga_user }}" }
+  loop: [eskarga.war, eskarga-docs-service.war]
+- name: Workery jako usługa systemd (ADR 0010)
+  ansible.builtin.template: { src: eskarga-workers.service.j2, dest: /etc/systemd/system/eskarga-workers.service }
+  notify: restart workers
+- name: Konfiguracja SoftHSM2 / PKCS#11 (dev/preprod; prod: HSM sieciowy)
+  ansible.builtin.template: { src: pkcs11.cfg.j2, dest: /etc/eskarga/pkcs11.cfg, owner: "{{ eskarga_user }}", mode: "0640" }
+- name: Włącz workery
+  ansible.builtin.systemd: { name: eskarga-workers, enabled: true, state: started, daemon_reload: true }
