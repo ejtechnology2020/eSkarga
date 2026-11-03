@@ -43,6 +43,21 @@ public class AuditService {
     }
 
     @Lock(LockType.READ)
+    public List<AuditEvent> recent(int limit) {
+        return em.createQuery("select e from AuditEvent e order by e.id desc", AuditEvent.class).setMaxResults(limit).getResultList();
+    }
+
+    @Lock(LockType.READ)
+    public List<AuditEvent> forCase(String caseRef, int limit) {
+        return em.createQuery("select e from AuditEvent e where e.caseRef = :c order by e.id desc", AuditEvent.class).setParameter("c", caseRef).setMaxResults(limit).getResultList();
+    }
+
+    @Lock(LockType.READ)
+    public List<AuditEvent> forUser(String userId, int limit) {
+        return em.createQuery("select e from AuditEvent e where e.userId = :u order by e.id desc", AuditEvent.class).setParameter("u", userId).setMaxResults(limit).getResultList();
+    }
+
+    @Lock(LockType.READ)
     public AuditChainVerifier.Result verifyChain() {
         List<AuditEvent> all = em.createQuery("select e from AuditEvent e order by e.id", AuditEvent.class).getResultList();
         return AuditChainVerifier.verify(all);

@@ -1,5 +1,15 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.application.FacesMessage;
+import pl.ejtechnology.tk.eSkarga.web.AppClock;
+import pl.ejtechnology.tk.eSkarga.domain.DocketNumber;
+import pl.ejtechnology.tk.eSkarga.domain.service.CaseFileService;
+import pl.ejtechnology.tk.eSkarga.domain.service.DelegationService;
+import pl.ejtechnology.tk.eSkarga.domain.service.JudgeAssignmentService;
+import pl.ejtechnology.tk.eSkarga.security.CurrentUser;
+import pl.ejtechnology.tk.eSkarga.security.OidcSettings;
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
@@ -23,12 +33,28 @@ import pl.ejtechnology.tk.eSkarga.web.model.JudgeLoad;
 public class WyznaczenieBean implements Serializable {
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
+    @Inject
+    private OidcSettings settings;
+    @Inject
+    private CurrentUser currentUser;
+    @Inject
+    private JudgeAssignmentService judges;
+    @Inject
+    private DelegationService delegations;
+    @Inject
+    private CaseFileService cases;
+    @Inject
+    private AppClock clock;
+    private String sygnatura;
 
     private String upowaznienie = "wazne";
     private String sedzia = "Adam Testowy";
 
     public boolean isUpowaznienieWazne() {
+        if (!settings.isDemo()) {
+            return CaseAccessPolicy.canActAsPresident(currentUser.getLogin(), currentUser.getRoles(), delegations.policyDelegations(currentUser.getLogin()), clock.today());
+        }
         if ("brak".equals(upowaznienie)) {
             return false;
         }
@@ -37,11 +63,33 @@ public class WyznaczenieBean implements Serializable {
     }
 
     public List<CaseSummary> getOczekujace() {
-        return List.of(demo.caseBy("Ts 318/26"), demo.caseBy("Ts 319/26"));
+        if (!settings.isDemo()) {
+            return judges.awaiting().stream().map(cf -> data.caseBy(cf.getDocket().format())).filter(java.util.Objects::nonNull).toList();
+        }
+        return List.of(data.caseBy("Ts 318/26"), data.caseBy("Ts 319/26"));
     }
+    /** UC-05 (BR-10): zarządzenie w aktach, przydział, assignee zadania kontroli, zdarzenie audytu – jedna transakcja. */
+    public String assign() {
+        if (settings.isDemo()) {
+            return "/czynnosci/podpis.xhtml?faces-redirect=true&stan=1";
+        }
+        try {
+            var cf = cases.byDocket(DocketNumber.parse(sygnatura)).orElseThrow(() -> new IllegalArgumentException("Wybierz sprawę"));
+            judges.assign(cf.getId(), sedzia, currentUser.getLogin(), currentUser.getRoles());
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Sędzia wyznaczony.", sedzia + " · " + sygnatura));
+            return "/akta/podglad.xhtml?faces-redirect=true&sygnatura=" + sygnatura.replace(" ", "%20");
+        } catch (SecurityException e) {
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Odmowa: brak ważnego upoważnienia (BR-10).", e.getMessage()));
+        } catch (RuntimeException e) {
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się wyznaczyć sędziego.", e.getMessage()));
+        }
+        return null;
+    }
+    public String getSygnatura() { return sygnatura; }
+    public void setSygnatura(String sygnatura) { this.sygnatura = sygnatura; }
 
     public List<JudgeLoad> getSedziowie() {
-        return demo.judgeLoads();
+        return data.judgeLoads();
     }
 
     public String getUpowaznienie() { return upowaznienie; }

@@ -78,7 +78,7 @@
                   <p:selectOneMenu id="d-rod" value="#{kolejka.rodzaj}"><f:selectItem itemLabel="uzupełnienie braków formalnych" itemValue="uzupelnienie" /><f:selectItem itemLabel="pismo procesowe — inne" itemValue="inne" /><f:selectItem itemLabel="zażalenie" itemValue="zazalenie" /></p:selectOneMenu></div>
               </h:panelGroup>
               <div class="fld"><span class="lbl">Podpowiedzi powiązań</span>
-                <ul style="margin: 0; padding-left: 20px;"><li>Ten sam pełnomocnik: <tk:sig value="#{demo.caseBy('Ts 287/26').sygnatura}" /> (zakończona)</li><li>Ten sam przepis: art. 505¹ § 1 k.p.c. — 1 sprawa</li></ul></div>
+                <ul style="margin: 0; padding-left: 20px;"><li>Ten sam pełnomocnik: <tk:sig value="#{dane.caseBy('Ts 287/26').sygnatura}" /> (zakończona)</li><li>Ten sam przepis: art. 505¹ § 1 k.p.c. — 1 sprawa</li></ul></div>
               <div class="row"><p:commandButton value="Zakwalifikuj i dołącz do akt" action="#{kolejka.qualify}" styleClass="p" /><button type="button" class="btn">Odłóż</button></div>
               <p class="hint">Po dołączeniu pismo dostanie kolejny numer karty (k. 28–29), a asystent sędziego — zadanie.</p>
             </div>

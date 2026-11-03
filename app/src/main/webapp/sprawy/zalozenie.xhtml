@@ -12,6 +12,8 @@
        okno potwierdzenia z kolejną sygnaturą (p:dialog). -->
   <f:metadata>
     <f:viewParam name="stan" value="#{zalozenie.stan}" />
+    <f:viewParam name="pismo" value="#{zalozenie.pismo}" />
+    <f:viewParam name="repertorium" value="#{zalozenie.repertorium}" />
     <f:viewAction action="#{zalozenie.applyState}" />
   </f:metadata>
   <ui:define name="title">Założenie sprawy Ts/Tw</ui:define>
@@ -37,7 +39,7 @@
             <section class="card" aria-labelledby="h-k1">
               <h2 id="h-k1">Krok 1 · Strony</h2>
               <tk:message rendered="#{zalozenie.duplikat}" tone="warn" icon="alert-triangle" role="alert">
-                <b>Możliwy duplikat.</b> Ten sam skarżący ma sprawę <tk:sig value="#{demo.caseBy('Ts 276/26').sygnatura}" /> (zażalenie w rozpoznaniu). Sprawdź, czy to nie pismo do tej sprawy.
+                <b>Możliwy duplikat.</b> Ten sam skarżący ma sprawę <tk:sig value="#{dane.caseBy('Ts 276/26').sygnatura}" /> (zażalenie w rozpoznaniu). Sprawdź, czy to nie pismo do tej sprawy.
                 <div class="row" style="margin-top: 8px;"><button type="button" class="btn s">Porównaj pisma</button>
                   <p:commandButton value="To nowa skarga — kontynuuj" action="#{zalozenie.setDuplikat(false)}" update="zf" styleClass="s q" /></div>
               </tk:message>

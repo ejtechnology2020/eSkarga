@@ -68,7 +68,7 @@
         <div class="main"></div>
         <aside class="side" aria-label="Rejestracja zwrotki">
           <h:panelGroup rendered="#{ekspedycja.tab eq 1}" layout="block" styleClass="card hl" pt:aria-labelledby="h-zw">
-            <div class="card-h"><h2 id="h-zw">Rejestracja zwrotki</h2><tk:sig value="#{demo.caseBy('Ts 312/26').sygnatura}" /></div>
+            <div class="card-h"><h2 id="h-zw">Rejestracja zwrotki</h2><tk:sig value="#{dane.caseBy('Ts 312/26').sygnatura}" /></div>
             <p class="mut">Zarządzenie o usunięciu braków · adw. Anna Testowa · wysłane 28.10.2026</p>
             <div class="fld"><p:outputLabel for="z-dat" value="Data doręczenia" indicateRequired="true" />
               <p:datePicker id="z-dat" value="#{ekspedycja.dataDoreczenia}" pattern="dd.MM.yyyy" showIcon="false"><p:ajax event="dateSelect" listener="#{ekspedycja.dateChanged}" update="side" /><p:ajax listener="#{ekspedycja.dateChanged}" update="side" /></p:datePicker></div>
@@ -93,7 +93,7 @@
       <p:dialog id="dlg" widgetVar="dlgWys" header="Wysłać 1 przesyłkę?" modal="true" visible="#{ekspedycja.dialog}" closable="false" width="680" responsive="true">
         <dl class="dl"><dt>Sprawa</dt><dd>Ts 318/26</dd><dt>Dokument</dt><dd>Zawiadomienie o wpisie do repertorium</dd><dt>Adresat</dt><dd>r.pr. Oleńka Testowa (pełnomocnik ustanowiony 27.10.2026)</dd><dt>Kanał</dt><dd>e-Doręczenia · AE:PL-54321-09876-EDCBA-21</dd></dl>
         <tk:effects value="#{ekspedycja.skutkiWysylki}" />
-        <f:facet name="footer"><p:commandButton value="#{msg['common.cancel']}" action="#{ekspedycja.setDialog(false)}" update="dlg" oncomplete="PF('dlgWys').hide()" process="@this" /><p:commandButton value="Wyślij" styleClass="p" oncomplete="PF('dlgWys').hide()" /></f:facet>
+        <f:facet name="footer"><p:commandButton value="#{msg['common.cancel']}" action="#{ekspedycja.setDialog(false)}" update="dlg" oncomplete="PF('dlgWys').hide()" process="@this" /><p:commandButton value="Wyślij" styleClass="p" action="#{ekspedycja.registerReceipt}" update="dlg @form" oncomplete="if (!args.validationFailed) PF('dlgWys').hide()" /></f:facet>
       </p:dialog>
     </h:form>
   </ui:define>

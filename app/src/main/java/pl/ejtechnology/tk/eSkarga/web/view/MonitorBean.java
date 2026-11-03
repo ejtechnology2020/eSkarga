@@ -1,5 +1,6 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class MonitorBean implements Serializable {
     }
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
 
     public List<KpiTile> getKpis() {
         return List.of(
@@ -42,11 +43,11 @@ public class MonitorBean implements Serializable {
                         new DeadlineView(DeadlineType.OCZEKIWANIE, DeadlineState.OVERDUE, null, null, "4 dni · 3 dni po terminie", false), "Marek Przykładowski", null, true, Tone.ERR),
                 new Row("2", "Ts 315/26", true, "Brak zwrotki ponad 14 dni",
                         new DeadlineView(DeadlineType.ZWROTKA, DeadlineState.OVERDUE, null, null, "18 dni · 4 dni po terminie", false), "Marek Przykładowski", null, true, Tone.ERR),
-                new Row("3", "Ts 301/26", true, "Termin na zażalenie", demo.caseBy("Ts 301/26").termin(), "Marek Przykładowski", null, true, Tone.WARN),
+                new Row("3", "Ts 301/26", true, "Termin na zażalenie", data.caseBy("Ts 301/26").termin(), "Marek Przykładowski", null, true, Tone.WARN),
                 new Row("4", "Ts 318/26", true, "Oczekuje na wyznaczenie sędziego", DeadlineView.none("6 dni"), "sędzia TK Maria Makietowa", "(Prezes TK)", false, Tone.NEUTRAL),
                 new Row("5", "Ts 319/26", true, "Oczekuje na wyznaczenie sędziego", DeadlineView.none("0 dni"), "sędzia TK Maria Makietowa", "(Prezes TK)", false, Tone.NEUTRAL));
     }
 
-    public List<HBar> getReferenci() { return demo.clerkLoads(); }
-    public List<HBar> getSedziowie() { return demo.judgeBars(); }
+    public List<HBar> getReferenci() { return data.clerkLoads(); }
+    public List<HBar> getSedziowie() { return data.judgeBars(); }
 }

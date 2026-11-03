@@ -73,6 +73,12 @@ public class CaseDocumentService {
                 + "and d.classified = false order by d.id", CaseDocument.class).setMaxResults(50).getResultList();
     }
 
+    public List<CaseDocument> searchByTitle(String query, int limit) {
+        String like = "%" + (query == null ? "" : query.trim().toLowerCase()) + "%";
+        return em.createQuery("select d from CaseDocument d where d.internalNote = false and lower(d.title) like :q order by d.id desc", CaseDocument.class)
+                .setParameter("q", like).setMaxResults(limit).getResultList();
+    }
+
     public CaseDocument require(long id) {
         CaseDocument d = em.find(CaseDocument.class, id);
         if (d == null) {

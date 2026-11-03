@@ -213,6 +213,23 @@ public class CaseFileService {
         return max == null ? 0 : max;
     }
 
+    /** Wyszukiwanie proste (S-02 bez OpenSearch): sygnatura, strona, przedmiot, wzorzec – bez filtru dostępu (nakłada go wołający). */
+    public List<CaseFile> search(String query, int limit) {
+        String q = query == null ? "" : query.trim();
+        if (q.isEmpty()) {
+            return List.of();
+        }
+        try {
+            DocketNumber dn = DocketNumber.parse(q);
+            return byDocket(dn).map(List::of).orElse(List.of());
+        } catch (IllegalArgumentException notADocket) {
+            String like = "%" + q.toLowerCase() + "%";
+            return em.createQuery("select distinct c from CaseFile c left join Party p on p.caseFile = c left join CaseFileVersion v on v.caseFile = c "
+                            + "where lower(p.displayName) like :q or lower(v.reviewSubject) like :q or lower(v.reviewStandard) like :q order by c.id desc", CaseFile.class)
+                    .setParameter("q", like).setMaxResults(limit).getResultList();
+        }
+    }
+
     /** Podpowiedzi powiązań (FR-05): ten sam skarżący/pełnomocnik albo przepis. */
     public List<CaseFile> related(String partyName, String reviewAct) {
         return em.createQuery("select distinct p.caseFile from Party p where lower(p.displayName) = lower(:n)", CaseFile.class)

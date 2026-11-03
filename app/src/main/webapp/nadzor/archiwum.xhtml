@@ -9,7 +9,7 @@
                 xmlns:pt="jakarta.faces.passthrough"
                 xmlns:tk="jakarta.faces.composite/tk">
   <!-- S-21 Przekazanie do archiwum (UC-21): lista spraw zamkniętych, spis zdawczo-odbiorczy (podgląd PDF), potwierdzenie; stan=blad – brak PDF/A. -->
-  <f:metadata><f:viewParam name="stan" value="#{archiwum.stan}" /></f:metadata>
+  <f:metadata><f:viewParam name="stan" value="#{archiwum.stan}" /><f:viewParam name="sygnatura" value="#{archiwum.sygnatura}" /></f:metadata>
   <ui:param name="mainClass" value="rel" />
   <ui:define name="title">Przekazanie do archiwum</ui:define>
   <ui:define name="eyebrow">S-21</ui:define>
@@ -48,7 +48,7 @@
     <h:form id="df">
       <p:dialog id="dlg" widgetVar="dlgArch" header="Potwierdzić przekazanie 1 sprawy do archiwum?" modal="true" visible="#{archiwum.dialog}" closable="false" width="680" responsive="true">
         <tk:effects value="#{archiwum.skutki}" />
-        <f:facet name="footer"><p:commandButton value="#{msg['common.cancel']}" action="#{archiwum.setDialog(false)}" update="dlg" oncomplete="PF('dlgArch').hide()" process="@this" /><p:commandButton value="Przekaż" styleClass="p" oncomplete="PF('dlgArch').hide()" /></f:facet>
+        <f:facet name="footer"><p:commandButton value="#{msg['common.cancel']}" action="#{archiwum.setDialog(false)}" update="dlg" oncomplete="PF('dlgArch').hide()" process="@this" /><p:commandButton value="Przekaż" styleClass="p" action="#{archiwum.transfer}" update="dlg @form" oncomplete="if (!args.validationFailed) PF('dlgArch').hide()" /></f:facet>
       </p:dialog>
     </h:form>
   </ui:define>

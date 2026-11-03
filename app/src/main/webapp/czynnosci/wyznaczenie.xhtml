@@ -11,7 +11,7 @@
                 xmlns:tk="jakarta.faces.composite/tk">
   <!-- S-17 Wyznaczenie sędziego (UC-05): baner upoważnienia (BR-10), sprawy oczekujące, obciążenie sędziów, podgląd zarządzenia.
        Parametr upowaznienie=brak pokazuje stan bez ważnego upoważnienia. -->
-  <f:metadata><f:viewParam name="upowaznienie" value="#{wyznaczenie.upowaznienie}" /></f:metadata>
+  <f:metadata><f:viewParam name="upowaznienie" value="#{wyznaczenie.upowaznienie}" /><f:viewParam name="sygnatura" value="#{wyznaczenie.sygnatura}" /></f:metadata>
   <ui:define name="title">Wyznaczenie sędziego do wstępnej kontroli</ui:define>
   <ui:define name="eyebrow">S-17</ui:define>
   <ui:define name="subtitle">Wybierz sprawę, potem sędziego. Obciążenie liczone na dziś, 03.11.2026.</ui:define>
@@ -23,7 +23,7 @@
   </ui:define>
   <ui:define name="actions">
     <button type="button" class="btn" disabled="#{wyznaczenie.upowaznienieWazne ? null : 'disabled'}">Wyznacz zbiorczo (2)</button>
-    <h:link outcome="/czynnosci/podpis" styleClass="btn p" value="Wyznacz i podpisz zarządzenie" pt:aria-disabled="#{not wyznaczenie.upowaznienieWazne}" pt:aria-describedby="why" rendered="#{wyznaczenie.upowaznienieWazne}" />
+    <h:form rendered="#{wyznaczenie.upowaznienieWazne}" styleClass="inl"><p:commandButton action="#{wyznaczenie.assign}" styleClass="p" value="Wyznacz i podpisz zarządzenie" pt:aria-describedby="why" ajax="false" /></h:form>
     <span class="btn p" aria-disabled="true" aria-describedby="why" jsf:rendered="#{not wyznaczenie.upowaznienieWazne}">Wyznacz i podpisz zarządzenie</span>
   </ui:define>
   <ui:define name="content">

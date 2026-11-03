@@ -36,7 +36,7 @@ public class MenuBean implements Serializable {
     @Inject
     private CurrentUser currentUser;
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
     @Inject
     private Fmt fmt;
 
@@ -55,7 +55,7 @@ public class MenuBean implements Serializable {
             if (currentUser.getRoles().stream().noneMatch(s::visibleFor)) {
                 continue;
             }
-            Integer cnt = demo.menuCounter(s, role);
+            Integer cnt = data.menuCounter(s, role);
             byGroup.computeIfAbsent(s.group(), g -> new ArrayList<>())
                     .add(new Item(s, fmt.msg(s.messageKey()), ctx + s.path(), s == current, cnt == null ? null : cnt.toString()));
         }

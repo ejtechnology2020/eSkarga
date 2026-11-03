@@ -1,5 +1,6 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.util.List;
 
@@ -20,7 +21,7 @@ import pl.ejtechnology.tk.eSkarga.web.model.SearchHit;
 public class WyszukiwarkaBean implements Serializable {
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
 
     private String q = "Testowa";
     private int tab;
@@ -32,11 +33,11 @@ public class WyszukiwarkaBean implements Serializable {
     }
 
     public List<CaseSummary> getCases() {
-        return demo.searchCases(q);
+        return data.searchCases(q);
     }
 
     public List<SearchHit> getHits() {
-        return demo.searchHits(q);
+        return data.searchHits(q);
     }
 
     public boolean isEmptyResult() {

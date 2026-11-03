@@ -1,5 +1,6 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -18,7 +19,7 @@ import pl.ejtechnology.tk.eSkarga.web.model.IncomingLetterRow;
 public class DziennikBean implements Serializable {
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
 
     private List<IncomingLetterRow> rows;
     private IncomingLetterRow selected;
@@ -30,7 +31,7 @@ public class DziennikBean implements Serializable {
 
     @PostConstruct
     void init() {
-        rows = demo.incomingLetters();
+        rows = data.incomingLetters();
         selected = rows.get(0);
     }
 

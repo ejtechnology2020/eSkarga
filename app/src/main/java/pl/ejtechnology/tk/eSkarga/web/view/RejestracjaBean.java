@@ -1,5 +1,10 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import jakarta.servlet.http.HttpServletRequest;
+import pl.ejtechnology.tk.eSkarga.domain.service.IncomingRegister;
+import pl.ejtechnology.tk.eSkarga.security.CurrentUser;
+import pl.ejtechnology.tk.eSkarga.security.OidcSettings;
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,11 +33,19 @@ import pl.ejtechnology.tk.eSkarga.web.model.TimelineEntry;
 public class RejestracjaBean implements Serializable {
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
     @Inject
     private AppClock clock;
     @Inject
     private Fmt fmt;
+    @Inject
+    private OidcSettings settings;
+    @Inject
+    private CurrentUser currentUser;
+    @Inject
+    private IncomingRegister incoming;
+    @Inject
+    private HttpServletRequest request;
 
     private String stan = "wypelniony";
     private IntakeChannel kanal = IntakeChannel.POCZTA;
@@ -102,8 +115,19 @@ public class RejestracjaBean implements Serializable {
             fc.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, fmt.msg("msg.fixFields", 3), null));
             return;
         }
-        // Docelowo: IncomingRegister.register(...) nadaje numer dziennika w jednej transakcji i zapisuje zdarzenie audytu (T-011).
-        numerDziennika = "DW 2026/04812";
+        if (settings.isDemo()) {
+            numerDziennika = "DW 2026/04812";
+        } else {
+            try {
+                LocalDate filedOn = LocalDate.parse(wniesienie.trim().substring(0, 10), Fmt.DATE);
+                var letter = incoming.register(new IncomingRegister.RegisterCommand(kanal, wplyw.atZone(AppClock.WARSAW).toInstant(), filedOn, dataNiepewna, nadawca,
+                        zalaczniki == null ? 0 : zalaczniki, odpisy == null ? 0 : odpisy, klauzula, currentUser.getLogin(), request.getRemoteAddr()));
+                numerDziennika = letter.getRegisterNo();
+            } catch (RuntimeException e) {
+                fc.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się zarejestrować pisma.", e.getMessage()));
+                return;
+            }
+        }
         zarejestrowano = true;
         fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, fmt.msg("msg.registered", numerDziennika),
                 fmt.msg("msg.registered.detail", fmt.dateTime(wplyw), "BP-1")));
@@ -137,7 +161,7 @@ public class RejestracjaBean implements Serializable {
     }
 
     public List<TimelineEntry> getRecent() {
-        return demo.recentIntake();
+        return data.recentIntake();
     }
 
     public String getStan() { return stan; }

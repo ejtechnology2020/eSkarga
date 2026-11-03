@@ -1,5 +1,6 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.util.List;
 
@@ -19,18 +20,18 @@ import pl.ejtechnology.tk.eSkarga.web.model.PublicationItem;
 public class RejestryBean implements Serializable {
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
 
     private boolean comfy;
     private String szablon = "pouczenie";
     private String tresc = "Szanowny Panie,\n\nw odpowiedzi na pismo z 30.10.2026 r. uprzejmie informuję, że skarga konstytucyjna musi spełniać wymogi art. 53 ustawy z dnia 30 listopada 2016 r. o organizacji i trybie postępowania przed Trybunałem Konstytucyjnym. W szczególności skargę sporządza adwokat lub radca prawny, a wnosi się ją w terminie 3 miesięcy od doręczenia ostatecznego orzeczenia (art. 77 ust. 1).\n\nZ poważaniem\nWydział Weryfikacyjny";
 
-    public List<AppealRow> getZazalenia() { return demo.appeals(); }
-    public List<GeneralLetterRow> getPismaOgolne() { return demo.generalLetters(); }
-    public List<AccessRequestRow> getWnioskiOWglad() { return demo.accessRequests(); }
-    public AccessRequestRow getWybranyWniosek() { return demo.accessRequests().stream().filter(AccessRequestRow::wybrany).findFirst().orElse(null); }
-    public List<PublicationItem> getPublikacje() { return demo.publications(); }
-    public PublicationItem getWybranaPublikacja() { return demo.publications().stream().filter(PublicationItem::wybrany).findFirst().orElse(null); }
+    public List<AppealRow> getZazalenia() { return data.appeals(); }
+    public List<GeneralLetterRow> getPismaOgolne() { return data.generalLetters(); }
+    public List<AccessRequestRow> getWnioskiOWglad() { return data.accessRequests(); }
+    public AccessRequestRow getWybranyWniosek() { return data.accessRequests().stream().filter(AccessRequestRow::wybrany).findFirst().orElse(null); }
+    public List<PublicationItem> getPublikacje() { return data.publications(); }
+    public PublicationItem getWybranaPublikacja() { return data.publications().stream().filter(PublicationItem::wybrany).findFirst().orElse(null); }
     public boolean isComfy() { return comfy; }
     public void setComfy(boolean comfy) { this.comfy = comfy; }
     public String getSzablon() { return szablon; }

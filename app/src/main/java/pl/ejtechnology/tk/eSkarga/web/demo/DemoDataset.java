@@ -62,7 +62,7 @@ import pl.ejtechnology.tk.eSkarga.web.model.UserRow;
  */
 @Named("demo")
 @ApplicationScoped
-public class DemoDataset implements Serializable {
+public class DemoDataset implements Serializable, pl.ejtechnology.tk.eSkarga.web.ViewData {
 
     public static final LocalDate TODAY = LocalDate.of(2026, 11, 3);
 
@@ -589,42 +589,9 @@ public class DemoDataset implements Serializable {
     }
 
     /** Kalendarz dni wolnych 2026 z dniem wolnym w Trybunale za 15.08.2026 (sobota). */
+    @Override
     public List<CalendarMonth> calendar(int year) {
-        String[] names = {"Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"};
-        Map<LocalDate, String> hol = new LinkedHashMap<>();
-        hol.put(d(year, 1, 1), "Nowy Rok");
-        hol.put(d(year, 1, 6), "Trzech Króli");
-        LocalDate easter = PolishHolidays.easterSunday(year);
-        hol.put(easter, "Wielkanoc");
-        hol.put(easter.plusDays(1), "Poniedziałek Wielkanocny");
-        hol.put(d(year, 5, 1), "Święto Pracy");
-        hol.put(d(year, 5, 3), "Święto Konstytucji 3 Maja");
-        hol.put(easter.plusDays(49), "Zielone Świątki");
-        hol.put(easter.plusDays(60), "Boże Ciało");
-        hol.put(d(year, 8, 15), "Wniebowzięcie NMP");
-        hol.put(d(year, 11, 1), "Wszystkich Świętych");
-        hol.put(d(year, 11, 11), "Narodowe Święto Niepodległości");
-        hol.put(d(year, 12, 24), "Wigilia");
-        hol.put(d(year, 12, 25), "Boże Narodzenie");
-        hol.put(d(year, 12, 26), "Drugi dzień Bożego Narodzenia");
-        Map<LocalDate, String> own = Map.of(d(year, 11, 10), "Dzień wolny za 15.08." + year + " (sobota)");
-        List<CalendarMonth> months = new ArrayList<>();
-        for (int m = 1; m <= 12; m++) {
-            LocalDate first = LocalDate.of(year, m, 1);
-            int lead = first.getDayOfWeek().getValue() - 1;
-            List<CalendarMonth.Cell> cells = new ArrayList<>();
-            for (int i = 0; i < lead; i++) {
-                cells.add(new CalendarMonth.Cell("", "", ""));
-            }
-            for (int day = 1; day <= first.lengthOfMonth(); day++) {
-                LocalDate dd = LocalDate.of(year, m, day);
-                String cls = hol.containsKey(dd) ? "hol" : own.containsKey(dd) ? "own" : dd.getDayOfWeek().getValue() >= 6 ? "we" : "";
-                String title = hol.getOrDefault(dd, own.getOrDefault(dd, ""));
-                cells.add(new CalendarMonth.Cell(String.valueOf(day), cls, title));
-            }
-            months.add(new CalendarMonth(names[m - 1], cells));
-        }
-        return months;
+        return pl.ejtechnology.tk.eSkarga.web.CalendarBuilder.build(year, Map.of(d(year, 11, 10), "Dzień wolny za 15.08." + year + " (sobota)"));
     }
 
     public Set<LocalDate> extraDaysOff(int year) {

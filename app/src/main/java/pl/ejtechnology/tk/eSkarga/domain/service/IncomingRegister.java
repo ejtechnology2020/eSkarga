@@ -81,6 +81,10 @@ public class IncomingRegister {
         return em.createQuery("select l from IncomingLetter l where l.qualification is null order by l.receivedAt", IncomingLetter.class).getResultList();
     }
 
+    public java.util.Optional<IncomingLetter> byRegisterNo(String registerNo) {
+        return em.createQuery("select l from IncomingLetter l where l.registerNo = :n", IncomingLetter.class).setParameter("n", registerNo).getResultStream().findFirst();
+    }
+
     public List<IncomingLetter> between(Instant from, Instant to) {
         return em.createQuery("select l from IncomingLetter l where l.receivedAt between :a and :b order by l.registerNo desc", IncomingLetter.class)
                 .setParameter("a", from).setParameter("b", to).getResultList();

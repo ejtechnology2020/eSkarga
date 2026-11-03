@@ -1,5 +1,6 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.util.List;
 
@@ -19,7 +20,7 @@ import pl.ejtechnology.tk.eSkarga.web.model.TimelineEntry;
 public class RepertoriumBean implements Serializable {
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
 
     private DocketSymbol symbol = DocketSymbol.TS;
     private int rok = 2026;
@@ -32,7 +33,7 @@ public class RepertoriumBean implements Serializable {
     }
 
     public void reload() {
-        rows = demo.cases().stream().filter(c -> c.sygnatura().symbol() == symbol && c.sygnatura().year() == rok
+        rows = data.cases().stream().filter(c -> c.sygnatura().symbol() == symbol && c.sygnatura().year() == rok
                 && !c.sygnatura().format().equals("Ts 319/26")).sorted((a, b) -> b.sygnatura().number() - a.sygnatura().number()).toList();
     }
 

@@ -1,5 +1,11 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.application.FacesMessage;
+import pl.ejtechnology.tk.eSkarga.domain.service.DeliveryService;
+import pl.ejtechnology.tk.eSkarga.security.CurrentUser;
+import pl.ejtechnology.tk.eSkarga.security.OidcSettings;
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -26,7 +32,14 @@ import pl.ejtechnology.tk.eSkarga.web.model.Effect;
 public class EkspedycjaBean implements Serializable {
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
+    @Inject
+    private OidcSettings settings;
+    @Inject
+    private CurrentUser currentUser;
+    @Inject
+    private DeliveryService deliveries;
+    private DeliveryRow wybrane;
 
     private String stan;
     private int tab = 1;
@@ -48,21 +61,51 @@ public class EkspedycjaBean implements Serializable {
 
     /** Termin 7 dni na braki od daty doręczenia (art. 61 ust. 3) – przelicza się przy każdej zmianie daty. */
     public DeadlineComputation getTermin() {
-        return new DeadlineCalculator(new PolishHolidays(demo.extraDaysOff(2026))).sevenDaysFromDelivery(dataDoreczenia);
+        return new DeadlineCalculator(new PolishHolidays(data.extraDaysOff(2026))).sevenDaysFromDelivery(dataDoreczenia);
     }
 
     public void dateChanged() {
         korekta = !dataDoreczenia.equals(LocalDate.of(2026, 11, 2));
     }
+    public void select(DeliveryRow row) {
+        wybrane = row;
+    }
+    /** UC-08: zwrotka / UPD uruchamia termin (D6); korekta daty wymaga uzasadnienia i przestawia timer. */
+    public void registerReceipt() {
+        if (settings.isDemo()) {
+            dialog = false;
+            return;
+        }
+        try {
+            var d = deliveryFor(wybrane).orElseThrow(() -> new IllegalStateException("Wybierz doręczenie z listy"));
+            if (d.getDeliveredOn() == null) {
+                deliveries.registerReceipt(d.getId(), dataDoreczenia, sposob, currentUser.getLogin());
+            } else {
+                deliveries.correctReceipt(d.getId(), dataDoreczenia, sposob, uzasadnienie, currentUser.getLogin());
+            }
+            dialog = false;
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Doręczenie zarejestrowane.", "Termin: " + getTermin().end()));
+        } catch (RuntimeException e) {
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się zarejestrować doręczenia.", e.getMessage()));
+        }
+    }
+    private java.util.Optional<pl.ejtechnology.tk.eSkarga.domain.model.Delivery> deliveryFor(DeliveryRow row) {
+        if (row == null) {
+            return java.util.Optional.empty();
+        }
+        return java.util.stream.Stream.concat(deliveries.unconfirmed().stream(), deliveries.delivered().stream())
+                .filter(d -> d.getDocument().getCaseFile().getDocket().equals(row.sprawa()) && d.getDocument().getTitle().equals(row.dokument())).findFirst();
+    }
+    public DeliveryRow getWybrane() { return wybrane; }
 
     public List<Effect> getSkutkiWysylki() {
         return List.of(Effect.warning("Wysyłki nie można cofnąć. Wpis trafi do książki nadawczej."),
                 Effect.next("To zawiadomienie nie uruchamia terminu."));
     }
 
-    public List<DeliveryRow> getDoWyslania() { return demo.toSend(); }
-    public List<DeliveryRow> getBezPotwierdzenia() { return demo.unconfirmed(); }
-    public List<DeliveryRow> getDoreczone() { return demo.delivered(); }
+    public List<DeliveryRow> getDoWyslania() { return data.toSend(); }
+    public List<DeliveryRow> getBezPotwierdzenia() { return data.unconfirmed(); }
+    public List<DeliveryRow> getDoreczone() { return data.delivered(); }
     public String getStan() { return stan; }
     public void setStan(String stan) { this.stan = stan; }
     public int getTab() { return tab; }

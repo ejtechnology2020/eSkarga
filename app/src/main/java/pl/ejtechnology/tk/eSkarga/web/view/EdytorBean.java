@@ -1,5 +1,11 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import pl.ejtechnology.tk.eSkarga.domain.DocketNumber;
+import pl.ejtechnology.tk.eSkarga.domain.service.CaseFileService;
+import pl.ejtechnology.tk.eSkarga.domain.service.LetterKind;
+import pl.ejtechnology.tk.eSkarga.domain.service.LetterService;
+import pl.ejtechnology.tk.eSkarga.security.OidcSettings;
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.util.List;
 
@@ -25,9 +31,17 @@ import pl.ejtechnology.tk.eSkarga.web.model.TimelineEntry;
 public class EdytorBean implements Serializable {
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
     @Inject
     private CurrentUser currentUser;
+    @Inject
+    private OidcSettings settings;
+    @Inject
+    private LetterService letters;
+    @Inject
+    private CaseFileService cases;
+    private String sygnaturaParam;
+    private String uzasadnienieTekst;
 
     private String stan;
     private String rodzaj = "odmowa";
@@ -54,8 +68,33 @@ public class EdytorBean implements Serializable {
                     "Nie można przesłać projektu sędziemu.", "Wybierz podstawę prawną odmowy — art. 61 ust. 4 pkt 1, 2 albo 3."));
             return;
         }
-        FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Projekt przesłany sędziemu.", "Wersja v3 z 3 · 03.11.2026 09:02."));
+        if (!settings.isDemo()) {
+            try {
+                var cf = cases.byDocket(DocketNumber.parse(getSygnatura())).orElseThrow(() -> new IllegalArgumentException("Brak sprawy " + getSygnatura()));
+                LetterKind kind = switch (rodzaj == null ? "" : rodzaj) {
+                    case "braki" -> LetterKind.ZARZ_BRAKI;
+                    case "nadanie" -> LetterKind.POST_NADANIE_BIEGU;
+                    case "zazalenie" -> LetterKind.POST_ZAZALENIE_ROZSTRZYGNIECIE;
+                    case "bez-rozpoznania" -> LetterKind.POST_ZAZALENIE_BEZ_ROZPOZNANIA;
+                    default -> LetterKind.POST_ODMOWA;
+                };
+                java.util.Map<String, Object> extra = new java.util.LinkedHashMap<>();
+                String digits = podstawa.replaceAll("\\D", "");
+                extra.put("podstawaOdmowy", Integer.parseInt(digits.isEmpty() ? "3" : digits));
+                extra.put("uzasadnienie", uzasadnienieTekst == null || uzasadnienieTekst.isBlank() ? List.of(getUzasadnienie()) : List.of(uzasadnienieTekst.split("\\n\\n")));
+                extra.put("braki", getBraki().stream().filter(b -> b.wstawDoPisma() || b.stan() == ChecklistItem.State.BRAK).map(b -> b.wymog() + " (" + b.podstawa() + ")").toList());
+                letters.draft(cf.getId(), kind, extra, currentUser.getDisplayName(), currentUser.getLogin());
+            } catch (RuntimeException e) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się sporządzić projektu.", e.getMessage()));
+                return;
+            }
+        }
+        FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Projekt przesłany sędziemu.", settings.isDemo() ? "Wersja v3 z 3 · 03.11.2026 09:02." : "Projekt w aktach, czynność w stanie PROJEKT."));
     }
+    public String getSygnaturaParam() { return sygnaturaParam; }
+    public void setSygnaturaParam(String s) { this.sygnaturaParam = s; }
+    public String getUzasadnienieTekst() { return uzasadnienieTekst; }
+    public void setUzasadnienieTekst(String s) { this.uzasadnienieTekst = s; }
 
     public boolean isSklad() { return "sklad".equals(stan); }
     public boolean isSedzia() { return "sedzia".equals(stan) || isSklad(); }
@@ -63,7 +102,7 @@ public class EdytorBean implements Serializable {
     public boolean isAsystent() { return !isSedzia() && !isLock(); }
     public boolean isReadOnly() { return isLock() || isSedzia(); }
 
-    public String getSygnatura() { return isSklad() ? "Ts 276/26" : "Ts 312/26"; }
+    public String getSygnatura() { return sygnaturaParam != null && !sygnaturaParam.isBlank() ? sygnaturaParam : isSklad() ? "Ts 276/26" : "Ts 312/26"; }
     public String getRodzajLabel() { return isSklad() ? "Postanowienie w sprawie zażalenia" : "Postanowienie o odmowie nadania dalszego biegu"; }
     public String getOpis() { return isSklad() ? "skład trzech sędziów · posiedzenie 12.11.2026" : "projekt warunkowy — na wypadek, gdyby pismo z 03.11.2026 nie usunęło braku"; }
     public String getEyebrow() { return isLock() ? "tylko do odczytu" : isSklad() ? "skład trzech sędziów" : isSedzia() ? "widok sędziego" : "widok asystenta"; }
@@ -84,7 +123,7 @@ public class EdytorBean implements Serializable {
                 new TimelineEntry(DemoDataset.dt(2026, 11, 2, 17, 7), "sędzia TK Piotr Fikcyjny:", "„Poczekajmy z decyzją na ocenę pisma z 03.11.” <span class=\"tag\">otwarta</span>", null, false, true));
     }
 
-    public List<ChecklistItem> getBraki() { return demo.checklist("Ts 312/26"); }
+    public List<ChecklistItem> getBraki() { return data.checklist(getSygnatura()); }
     public String getStan() { return stan; }
     public void setStan(String stan) { this.stan = stan; }
     public String getRodzaj() { return rodzaj; }

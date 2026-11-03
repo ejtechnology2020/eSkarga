@@ -1,5 +1,6 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class PulpitBean implements Serializable {
     @Inject
     private CurrentUser currentUser;
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
 
     private AppRole role;
     private List<KpiTile> kpis;
@@ -39,9 +40,9 @@ public class PulpitBean implements Serializable {
     @PostConstruct
     void init() {
         role = currentUser.getRole();
-        kpis = demo.kpisFor(role);
-        tasks = demo.tasksFor(role);
-        notifications = demo.notificationsFor(role);
+        kpis = data.kpisFor(role);
+        tasks = data.tasksFor(role);
+        notifications = data.notificationsFor(role);
     }
 
     public String getGreeting() {
@@ -114,7 +115,7 @@ public class PulpitBean implements Serializable {
     }
 
     public List<HBar> getJudgeBars() {
-        return demo.judgeBars();
+        return data.judgeBars();
     }
 
     public String getFilter() {

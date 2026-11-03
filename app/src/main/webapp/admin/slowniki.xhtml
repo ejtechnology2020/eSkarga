@@ -53,7 +53,7 @@
         <p:tab title="Kalendarz dni wolnych">
           <section class="card" aria-labelledby="h-kal">
             <div class="card-h"><h2 id="h-kal">Kalendarz dni wolnych · #{administracja.rok}</h2>
-              <div class="row"><p:commandButton value="‹" action="#{administracja.prevYear}" update="@form" pt:aria-label="Poprzedni rok" styleClass="q" /><b>#{administracja.rok}</b><p:commandButton value="›" action="#{administracja.nextYear}" update="@form" pt:aria-label="Następny rok" styleClass="q" /><button type="button" class="btn s p">Dodaj dzień wolny</button></div></div>
+              <div class="row"><p:commandButton value="‹" action="#{administracja.prevYear}" update="@form" pt:aria-label="Poprzedni rok" styleClass="q" /><b>#{administracja.rok}</b><p:commandButton value="›" action="#{administracja.nextYear}" update="@form" pt:aria-label="Następny rok" styleClass="q" /><p:commandButton value="Dodaj dzień wolny" styleClass="s p" action="#{administracja.addHoliday}" update="@form" /></div></div>
             <div class="legend"><span><i class="sw-i hol"></i>święto ustawowe</span><span><i class="sw-i own"></i>dzień wolny w Trybunale</span><span><i class="sw-i we"></i>sobota, niedziela</span></div>
             <div class="cal">
               <ui:repeat value="#{administracja.kalendarz}" var="m">

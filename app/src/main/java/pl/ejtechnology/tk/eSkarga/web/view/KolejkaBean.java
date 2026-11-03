@@ -1,5 +1,14 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.application.FacesMessage;
+import pl.ejtechnology.tk.eSkarga.domain.DocketNumber;
+import pl.ejtechnology.tk.eSkarga.domain.service.GeneralLetterService;
+import pl.ejtechnology.tk.eSkarga.domain.service.CaseFileService;
+import pl.ejtechnology.tk.eSkarga.domain.service.IncomingRegister;
+import pl.ejtechnology.tk.eSkarga.security.CurrentUser;
+import pl.ejtechnology.tk.eSkarga.security.OidcSettings;
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.util.List;
 
@@ -23,7 +32,19 @@ import pl.ejtechnology.tk.eSkarga.web.model.QueueItem;
 public class KolejkaBean implements Serializable {
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
+    @Inject
+    private OidcSettings settings;
+    @Inject
+    private CurrentUser currentUser;
+    @Inject
+    private IncomingRegister incoming;
+    @Inject
+    private CaseFileService cases;
+    @Inject
+    private GeneralLetterService generalLetters;
+    private String temat = "";
+    private int strony = 1;
 
     private List<QueueItem> items;
     private QueueItem selected;
@@ -34,25 +55,45 @@ public class KolejkaBean implements Serializable {
 
     @PostConstruct
     void init() {
-        items = demo.queue();
-        selected = items.stream().filter(QueueItem::wybrane).findFirst().orElse(items.get(0));
+        items = data.queue();
+        selected = items.stream().filter(QueueItem::wybrane).findFirst().orElse(items.isEmpty() ? null : items.get(0));
     }
 
     public CaseSummary getSprawa() {
-        return demo.caseBy(sygnatura);
+        return data.caseBy(sygnatura);
     }
 
     public void select(QueueItem it) {
         selected = it;
     }
 
+    /** UC-02: kwalifikacja pisma; założenie sprawy w S-07, pismo do sprawy = kolejne karty + komunikat do procesu, pismo ogólne = rejestr z terminem odpowiedzi. */
     public String qualify() {
-        // Docelowo: CaseFileService.attachLetter / createCase w jednej transakcji (D1) + zdarzenie audytu.
         if (decyzja == LetterQualification.NOWA_SKARGA_TS || decyzja == LetterQualification.NOWY_WNIOSEK_TW) {
-            return "/sprawy/zalozenie.xhtml?faces-redirect=true";
+            return "/sprawy/zalozenie.xhtml?faces-redirect=true" + (selected == null ? "" : "&pismo=" + selected.nr().replace(" ", "%20").replace("/", "%2F"))
+                    + "&repertorium=" + (decyzja == LetterQualification.NOWA_SKARGA_TS ? "TS" : "TW");
+        }
+        if (!settings.isDemo() && selected != null) {
+            try {
+                long letterId = incoming.byRegisterNo(selected.nr()).orElseThrow(() -> new IllegalArgumentException("Brak pisma " + selected.nr())).getId();
+                if (decyzja == LetterQualification.PISMO_OGOLNE) {
+                    generalLetters.register(letterId, temat == null || temat.isBlank() ? "pismo ogólne" : temat, currentUser.getLogin());
+                    return "/rejestry/pisma-ogolne.xhtml?faces-redirect=true";
+                }
+                var cf = cases.byDocket(DocketNumber.parse(sygnatura)).orElseThrow(() -> new IllegalArgumentException("Brak sprawy " + sygnatura));
+                cases.attachLetter(cf.getId(), letterId, "zazalenie".equals(rodzaj) ? "Zażalenie" : "Pismo uzupełniające", Math.max(1, strony), "zazalenie".equals(rodzaj), currentUser.getLogin());
+            } catch (RuntimeException e) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się zakwalifikować pisma.", e.getMessage()));
+                return null;
+            }
         }
         return "/akta/podglad.xhtml?faces-redirect=true&sygnatura=" + sygnatura.replace(" ", "%20");
     }
+
+    public String getTemat() { return temat; }
+    public void setTemat(String temat) { this.temat = temat; }
+    public int getStrony() { return strony; }
+    public void setStrony(int strony) { this.strony = strony; }
 
     public List<QueueItem> getItems() { return items; }
     public QueueItem getSelected() { return selected; }

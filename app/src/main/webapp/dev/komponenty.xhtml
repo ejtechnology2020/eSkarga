@@ -25,15 +25,15 @@
       </section>
       <section class="card" aria-labelledby="k-sig">
         <div class="card-h"><h2 id="k-sig">Sygnatura i flagi sprawy</h2><span class="tag info">p:commandLink + p:tag</span></div>
-        <div class="col"><tk:sig value="#{demo.caseBy('Ts 312/26').sygnatura}" copy="true" /><tk:sig value="#{demo.caseBy('Tw 14/26').sygnatura}" copy="true" />
-          <tk:sig value="#{demo.caseBy('Ts 287/26').sygnatura}" related="#{demo.caseBy('Ts 287/26').powiazana}" /></div>
+        <div class="col"><tk:sig value="#{dane.caseBy('Ts 312/26').sygnatura}" copy="true" /><tk:sig value="#{dane.caseBy('Tw 14/26').sygnatura}" copy="true" />
+          <tk:sig value="#{dane.caseBy('Ts 287/26').sygnatura}" related="#{dane.caseBy('Ts 287/26').powiazana}" /></div>
         <div class="row"><ui:repeat value="#{komponenty.flagi}" var="f"><tk:flag value="#{f}" /></ui:repeat></div>
         <p class="hint">Flaga pokazuje się tylko, gdy jest aktywna. Każda ma ikonę i tekst.</p>
       </section>
     </div>
     <section class="card" aria-labelledby="k-case">
       <div class="card-h"><h2 id="k-case">Kafelek sprawy</h2><span class="tag info">p:panel</span><span class="mut">pulpit, wyniki wyszukiwania</span></div>
-      <div class="grid g3"><tk:caseTile value="#{demo.caseBy('Ts 312/26')}" /><tk:caseTile value="#{demo.caseBy('Ts 301/26')}" /><tk:caseTile value="#{demo.caseBy('Ts 318/26')}" /></div>
+      <div class="grid g3"><tk:caseTile value="#{dane.caseBy('Ts 312/26')}" /><tk:caseTile value="#{dane.caseBy('Ts 301/26')}" /><tk:caseTile value="#{dane.caseBy('Ts 318/26')}" /></div>
     </section>
     <div class="grid g2">
       <section class="card" aria-labelledby="k-ban">

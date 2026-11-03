@@ -11,7 +11,7 @@
                 xmlns:tk="jakarta.faces.composite/tk">
   <!-- S-16 Podpis kwalifikowany (D10): okno dialogowe z krokami (p:steps) otwierane z S-14 lub S-15.
        Stan przełącza parametr stan=1|2|2-brak-aplikacji|3|3-brak-karty|3-pin|3-cert|3-polaczenie|4|4-weryfikacja|4-sklad. -->
-  <f:metadata><f:viewParam name="stan" value="#{podpis.stan}" /><f:viewAction action="#{podpis.applyState}" /></f:metadata>
+  <f:metadata><f:viewParam name="stan" value="#{podpis.stan}" /><f:viewParam name="dokument" value="#{podpis.dokumentId}" /><f:viewParam name="rodzaj" value="#{podpis.rodzajPisma}" /><f:viewAction action="#{podpis.applyState}" /></f:metadata>
   <ui:param name="navMini" value="#{true}" />
   <ui:param name="mainClass" value="bare" />
   <ui:define name="title">Podpis kwalifikowany</ui:define>
@@ -31,7 +31,7 @@
           <h:panelGroup rendered="#{podpis.krok eq 0}" layout="block" styleClass="col gap12" pt:aria-labelledby="k1h">
             <h3 id="k1h" class="h2-17">Co podpisujesz</h3>
             <dl class="dl"><dt>Dokument</dt><dd><b>Zarządzenie o wyznaczeniu sędziego</b> · 1 strona · <a href="#">podgląd PDF</a></dd>
-              <dt>Sprawa</dt><dd><tk:sig value="#{demo.caseBy('Ts 318/26').sygnatura}" /> · Przykładowa Spółka z o.o.</dd>
+              <dt>Sprawa</dt><dd><tk:sig value="#{dane.caseBy('Ts 318/26').sygnatura}" /> · Przykładowa Spółka z o.o.</dd>
               <dt>Podpisujesz jako</dt><dd>sędzia TK Maria Makietowa — wykonująca obowiązki Prezesa TK (upoważnienie z 30.10.2026)</dd>
               <dt>Certyfikat</dt><dd>kwalifikowany · ważny do 14.03.2028</dd></dl>
             <div class="card acc"><span class="eyebrow">Skutek po podpisie</span><tk:effects value="#{podpis.skutki}" /></div>
@@ -65,7 +65,10 @@
         <div class="df">
           <h:link outcome="/pulpit" styleClass="btn" value="#{podpis.cancelLabel}" />
           <p:commandButton rendered="#{podpis.hasError}" value="#{podpis.error.action}" action="#{podpis.retry}" update="pf" styleClass="p" process="@this" />
-          <p:commandButton rendered="#{not podpis.hasError and podpis.krok lt 3}" value="#{podpis.nextLabel}" action="#{podpis.next}" update="pf" styleClass="p" disabled="#{podpis.waiting}" process="@this" />
+          <p:commandButton rendered="#{not podpis.hasError and podpis.krok eq 0}" value="#{podpis.nextLabel}" action="#{podpis.next}" update="pf" styleClass="p" process="@this" />
+          <p:commandButton rendered="#{not podpis.hasError and podpis.krok eq 1}" value="#{podpis.nextLabel}" action="#{podpis.begin}" update="pf" styleClass="p" process="@form" />
+          <p:commandButton rendered="#{not podpis.hasError and podpis.krok eq 2}" value="#{podpis.nextLabel}" action="#{podpis.complete}" update="pf" styleClass="p" disabled="#{podpis.waiting and empty podpis.podpis}" process="@form" />
+          <h:inputHidden id="certyfikaty" value="#{podpis.certyfikaty}" /><h:inputHidden id="podpisWartosc" value="#{podpis.podpis}" /><h:inputHidden id="skrot" value="#{podpis.skrot}" />
           <h:link rendered="#{not podpis.hasError and podpis.krok eq 3}" outcome="/akta/podglad" styleClass="btn p" value="#{podpis.nextLabel}"><f:param name="sygnatura" value="Ts 318/26" /></h:link>
         </div>
       </h:form>

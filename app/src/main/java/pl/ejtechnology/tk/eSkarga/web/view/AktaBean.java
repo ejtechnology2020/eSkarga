@@ -1,5 +1,6 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.util.List;
 
@@ -31,7 +32,7 @@ import pl.ejtechnology.tk.eSkarga.web.model.TimelineEntry;
 public class AktaBean implements Serializable {
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
     @Inject
     private CurrentUser currentUser;
 
@@ -51,19 +52,19 @@ public class AktaBean implements Serializable {
     }
 
     public void load() {
-        sprawa = demo.caseBy(sygnatura);
+        sprawa = data.caseBy(sygnatura);
         if (sprawa == null) {
-            sprawa = demo.caseBy("Ts 312/26");
+            sprawa = data.caseBy("Ts 312/26");
             sygnatura = "Ts 312/26";
         }
-        spis = demo.recordPages(sygnatura);
+        spis = data.recordPages(sygnatura);
         dokument = spis.get(0);
         if (widok == null) {
             AppRole r = currentUser.getRole();
             widok = r == AppRole.TK_REFERENT || r == AppRole.TK_KIEROWNIK ? "referent" : "asystent";
         }
         if ("zakonczona".equals(widok)) {
-            sprawa = demo.caseBy("Ts 287/26");
+            sprawa = data.caseBy("Ts 287/26");
             sygnatura = sprawa.sygnatura().format();
         }
         if ("lista".equals(widok)) {
@@ -156,10 +157,10 @@ public class AktaBean implements Serializable {
     public void setSygnatura(String sygnatura) { this.sygnatura = sygnatura; }
     public String getWidok() { return widok; }
     public void setWidok(String widok) { this.widok = widok; }
-    public List<TimelineEntry> getCzynnosci() { return demo.timeline(sygnatura); }
-    public List<ProcessStep> getPrzebieg() { return demo.processSteps(sygnatura); }
-    public List<ChecklistItem> getLista() { return demo.checklist(sygnatura); }
-    public List<DeadlineView> getTerminy() { return demo.deadlines(sygnatura); }
+    public List<TimelineEntry> getCzynnosci() { return data.timeline(sygnatura); }
+    public List<ProcessStep> getPrzebieg() { return data.processSteps(sygnatura); }
+    public List<ChecklistItem> getLista() { return data.checklist(sygnatura); }
+    public List<DeadlineView> getTerminy() { return data.deadlines(sygnatura); }
     public long getBraki() { return getLista().stream().filter(i -> i.stan() == ChecklistItem.State.BRAK).count(); }
     public int getJawne() { return (int) spis.stream().filter(p -> !p.isNiejawny()).count(); }
 }

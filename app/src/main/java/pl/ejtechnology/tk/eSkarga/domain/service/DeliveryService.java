@@ -198,6 +198,10 @@ public class DeliveryService {
         return em.createQuery("select d from Delivery d where d.deliveredOn is not null order by d.deliveredOn desc", Delivery.class).getResultList();
     }
 
+    public List<Deadline> deadlines(CaseFile cf) {
+        return em.createQuery("select x from Deadline x where x.caseFile = :c order by x.createdAt desc", Deadline.class).setParameter("c", cf).getResultList();
+    }
+
     public List<Deadline> runningDeadlines(CaseFile cf) {
         return em.createQuery("select x from Deadline x where x.caseFile = :c and x.status = :s", Deadline.class)
                 .setParameter("c", cf).setParameter("s", DeadlineStatus.BIEGNIE).getResultList();

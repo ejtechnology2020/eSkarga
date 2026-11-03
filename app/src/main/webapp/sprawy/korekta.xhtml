@@ -8,7 +8,7 @@
                 xmlns:p="primefaces"
                 xmlns:tk="jakarta.faces.composite/tk">
   <!-- S-09 Korekta wpisu i akceptacja (UC-22): dwie kolumny przed/po, uzasadnienie (wymagane), widok kierownika „Zatwierdź” / „Odrzuć”. -->
-  <f:metadata><f:viewParam name="stan" value="#{korekta.stan}" /><f:viewAction action="#{korekta.applyState}" /></f:metadata>
+  <f:metadata><f:viewParam name="stan" value="#{korekta.stan}" /><f:viewParam name="sygnatura" value="#{korekta.sygnatura}" /><f:viewAction action="#{korekta.applyState}" /></f:metadata>
   <ui:define name="title">Korekta wpisu Ts 318/26</ui:define>
   <ui:define name="crumbs">
     <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Sprawy" /></li><li><h:link outcome="/sprawy/repertorium" value="Repertorium Ts 2026" /></li><li><span aria-current="page">Korekta wpisu Ts 318/26</span></li></ol></nav>
@@ -42,7 +42,7 @@
             <p:commandButton value="Wyślij do akceptacji" action="#{korekta.send}" update="kf st" styleClass="p" /><button type="button" class="btn">Anuluj korektę</button></h:panelGroup>
           <h:panelGroup rendered="#{korekta.kierownik and not korekta.zatwierdzono}" layout="block" styleClass="col gap12">
             <div class="fld"><p:outputLabel for="uw" value="Uwagi kierownika (wymagane przy odrzuceniu)" /><p:inputTextarea id="uw" value="#{korekta.uwagi}" rows="3" styleClass="ta80" /></div>
-            <div class="row"><p:commandButton value="Zatwierdź korektę" action="#{korekta.approve}" update="kf st" styleClass="p" /><button type="button" class="btn d">Odrzuć</button></div>
+            <div class="row"><p:commandButton value="Zatwierdź korektę" action="#{korekta.approve}" update="kf st" styleClass="p" /><p:commandButton value="Odrzuć" action="#{korekta.reject}" update="kf st" styleClass="d" /></div>
           </h:panelGroup>
         </section>
         <aside class="side card" aria-labelledby="h-kto">

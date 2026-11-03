@@ -1,5 +1,15 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import pl.ejtechnology.tk.eSkarga.web.AppClock;
+import pl.ejtechnology.tk.eSkarga.domain.model.Profession;
+import pl.ejtechnology.tk.eSkarga.domain.model.PowerOfAttorneyKind;
+import pl.ejtechnology.tk.eSkarga.domain.model.PartyRole;
+import pl.ejtechnology.tk.eSkarga.domain.docket.DocketNumberService;
+import pl.ejtechnology.tk.eSkarga.domain.service.CaseFileService;
+import pl.ejtechnology.tk.eSkarga.domain.service.IncomingRegister;
+import pl.ejtechnology.tk.eSkarga.security.CurrentUser;
+import pl.ejtechnology.tk.eSkarga.security.OidcSettings;
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -29,9 +39,26 @@ import pl.ejtechnology.tk.eSkarga.web.model.Effect;
 public class ZalozenieBean implements Serializable {
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
     @Inject
     private Fmt fmt;
+    @Inject
+    private OidcSettings settings;
+    @Inject
+    private CurrentUser currentUser;
+    @Inject
+    private IncomingRegister incoming;
+    @Inject
+    private CaseFileService cases;
+    @Inject
+    private DocketNumberService docketNumbers;
+    @Inject
+    private AppClock clock;
+    private String pismo;
+    private String pelnomocnik = "adw. Anna Testowa";
+    private String adresEDoreczen;
+    private boolean pilna;
+    private boolean anonimizacja;
 
     private int krok = 2; // indeks 0..2
     private String stan;
@@ -93,19 +120,55 @@ public class ZalozenieBean implements Serializable {
     }
 
     /** Zatwierdzenie w jednej transakcji: sygnatura + wpis + start procesu (D1, T-013). */
+    /** UC-03 (D1): sygnatura, wpis, strony, orzeczenie, karty akt i start procesu w jednej transakcji. */
     public String confirm() {
         dialog = false;
-        return "/akta/podglad.xhtml?faces-redirect=true&sygnatura=" + getNastepnaSygnatura().format().replace(" ", "%20");
+        DocketNumber docket = getNastepnaSygnatura();
+        if (!settings.isDemo()) {
+            try {
+                long letterId = incoming.byRegisterNo(pismo == null ? "" : pismo).orElseThrow(() -> new IllegalArgumentException("Wybierz pismo z kolejki (parametr pismo)")).getId();
+                List<CaseFileService.PartyData> parties = new java.util.ArrayList<>();
+                parties.add(new CaseFileService.PartyData(repertorium.equals("TS") ? PartyRole.SKARZACY : PartyRole.WNIOSKODAWCA, skarzacy, adres, adresEDoreczen, null, null, null, null));
+                if (!dzialaSam && pelnomocnik != null && !pelnomocnik.isBlank()) {
+                    parties.add(new CaseFileService.PartyData(PartyRole.PELNOMOCNIK, pelnomocnik, null, null, PowerOfAttorneyKind.SZCZEGOLNE,
+                            pelnomocnik.startsWith("r.pr.") ? Profession.RADCA_PRAWNY : Profession.ADWOKAT, null, wniesienie));
+                }
+                var cf = cases.createCase(new CaseFileService.CreateCaseCommand(DocketSymbol.valueOf(repertorium), letterId, parties, przepisy, null, wzorce,
+                        organ, sygnOrzeczenia, null, doreczenie, false, pilna, anonimizacja, 6, currentUser.getLogin()));
+                docket = cf.getDocket();
+            } catch (RuntimeException e) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się założyć sprawy.", e.getMessage()));
+                return null;
+            }
+        }
+        return "/akta/podglad.xhtml?faces-redirect=true&sygnatura=" + docket.format().replace(" ", "%20");
     }
 
     /** Kolejna sygnatura do okna potwierdzenia (podgląd licznika). */
     public DocketNumber getNastepnaSygnatura() {
+        if (!settings.isDemo()) {
+            try {
+                return docketNumbers.peekNextNumber(DocketSymbol.valueOf(repertorium), clock.today());
+            } catch (RuntimeException e) {
+                return new DocketNumber(DocketSymbol.valueOf(repertorium), 0, clock.today().getYear());
+            }
+        }
         return new DocketNumber(DocketSymbol.valueOf(repertorium), repertorium.equals("TS") ? 319 : 15, 2026);
     }
+    public String getPismo() { return pismo; }
+    public void setPismo(String pismo) { this.pismo = pismo; }
+    public String getPelnomocnik() { return pelnomocnik; }
+    public void setPelnomocnik(String pelnomocnik) { this.pelnomocnik = pelnomocnik; }
+    public String getAdresEDoreczen() { return adresEDoreczen; }
+    public void setAdresEDoreczen(String a) { this.adresEDoreczen = a; }
+    public boolean isPilna() { return pilna; }
+    public void setPilna(boolean pilna) { this.pilna = pilna; }
+    public boolean isAnonimizacja() { return anonimizacja; }
+    public void setAnonimizacja(boolean anonimizacja) { this.anonimizacja = anonimizacja; }
 
     /** Termin z art. 77 – wyliczenie pomocnicze, ocenia sędzia (BR-03, D6). */
     public DeadlineComputation getArt77() {
-        return new DeadlineCalculator(new PolishHolidays(demo.extraDaysOff(2026))).threeMonthsFromRulingDelivery(doreczenie, List.of());
+        return new DeadlineCalculator(new PolishHolidays(data.extraDaysOff(2026))).threeMonthsFromRulingDelivery(doreczenie, List.of());
     }
 
     public boolean isArt77Przekroczony() {

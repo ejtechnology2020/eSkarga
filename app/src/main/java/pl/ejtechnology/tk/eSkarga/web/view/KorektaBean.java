@@ -1,5 +1,9 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import pl.ejtechnology.tk.eSkarga.domain.DocketNumber;
+import pl.ejtechnology.tk.eSkarga.domain.service.CorrectionService;
+import pl.ejtechnology.tk.eSkarga.domain.service.CaseFileService;
+import pl.ejtechnology.tk.eSkarga.security.OidcSettings;
 import java.io.Serializable;
 import java.util.List;
 
@@ -30,6 +34,16 @@ public class KorektaBean implements Serializable {
     private CurrentUser currentUser;
     @Inject
     private Fmt fmt;
+    @Inject
+    private OidcSettings settings;
+    @Inject
+    private CaseFileService cases;
+    @Inject
+    private CorrectionService corrections;
+    private String sygnatura = "Ts 318/26";
+    private String nowyPrzedmiot;
+    private String nowyWzorzec;
+    private String nowaPowiazana;
 
     private String stan;
     private String uzasadnienie = "Błąd pisowni w nazwisku pełnomocnika i niepełny przedmiot. Skarga wskazuje także art. 86 ust. 1 ustawy o VAT (k. 3 akt).";
@@ -57,10 +71,63 @@ public class KorektaBean implements Serializable {
                     "Bez niego wniosek nie trafi do kierownika."));
             return;
         }
+        if (!settings.isDemo()) {
+            try {
+                var cf = cases.byDocket(DocketNumber.parse(sygnatura)).orElseThrow(() -> new IllegalArgumentException("Brak sprawy " + sygnatura));
+                corrections.request(cf.getId(), new CorrectionService.Changes(blank(nowyPrzedmiot), blank(nowyWzorzec), blank(nowaPowiazana)), uzasadnienie, currentUser.getLogin());
+            } catch (RuntimeException e) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się złożyć wniosku o korektę.", e.getMessage()));
+                return;
+            }
+        }
         wyslano = true;
     }
+    private static String blank(String s) {
+        return s == null || s.isBlank() ? null : s;
+    }
+    public void reject() {
+        if (!settings.isDemo()) {
+            try {
+                var pending = pendingVersion().orElseThrow(() -> new IllegalStateException("Brak korekty oczekującej dla " + sygnatura));
+                corrections.reject(pending.getId(), currentUser.getLogin(), uwagi);
+            } catch (RuntimeException e) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się odrzucić korekty.", e.getMessage()));
+                return;
+            }
+        }
+        wyslano = false;
+    }
+    private java.util.Optional<pl.ejtechnology.tk.eSkarga.domain.model.CaseFileVersion> pendingVersion() {
+        return cases.byDocket(DocketNumber.parse(sygnatura)).flatMap(cf -> corrections.history(cf.getId()).stream()
+                .filter(v -> v.getCorrectionStatus() == pl.ejtechnology.tk.eSkarga.domain.model.CorrectionStatus.OCZEKUJE).findFirst());
+    }
+    /** Historia wersji wpisu (FR-08) – w trybie demo pusta (dane statyczne w widoku). */
+    public List<pl.ejtechnology.tk.eSkarga.domain.model.CaseFileVersion> getHistoria() {
+        if (settings.isDemo()) {
+            return List.of();
+        }
+        return cases.byDocket(DocketNumber.parse(sygnatura)).map(cf -> corrections.history(cf.getId())).orElse(List.of());
+    }
+    public String getSygnatura() { return sygnatura; }
+    public void setSygnatura(String sygnatura) { this.sygnatura = sygnatura; }
+    public String getNowyPrzedmiot() { return nowyPrzedmiot; }
+    public void setNowyPrzedmiot(String s) { this.nowyPrzedmiot = s; }
+    public String getNowyWzorzec() { return nowyWzorzec; }
+    public void setNowyWzorzec(String s) { this.nowyWzorzec = s; }
+    public String getNowaPowiazana() { return nowaPowiazana; }
+    public void setNowaPowiazana(String s) { this.nowaPowiazana = s; }
 
+    /** UC-22: akceptacja kierownika (druga osoba) – nowa wersja wpisu staje się obowiązująca. */
     public void approve() {
+        if (!settings.isDemo()) {
+            try {
+                var pending = pendingVersion().orElseThrow(() -> new IllegalStateException("Brak korekty oczekującej dla " + sygnatura));
+                corrections.approve(pending.getId(), currentUser.getLogin(), currentUser.getRoles());
+            } catch (RuntimeException e) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się zatwierdzić korekty.", e.getMessage()));
+                return;
+            }
+        }
         zatwierdzono = true;
     }
 

@@ -11,14 +11,14 @@
                 xmlns:tk="jakarta.faces.composite/tk">
   <!-- S-15 Edytor projektu pisma (UC-07/UC-10/UC-12, D13): dane pisma + podgląd PDF na żywo ze znakiem wodnym „Projekt”,
        wersja („v2 z 3”), komentarze sędziego; akcje asystenta i sędziego; skład 3 sędziów z listą podpisujących. -->
-  <f:metadata><f:viewParam name="stan" value="#{edytor.stan}" /><f:viewAction action="#{edytor.applyState}" /></f:metadata>
+  <f:metadata><f:viewParam name="stan" value="#{edytor.stan}" /><f:viewParam name="sygnatura" value="#{edytor.sygnaturaParam}" /><f:viewAction action="#{edytor.applyState}" /></f:metadata>
   <ui:param name="navMini" value="#{true}" />
   <ui:define name="title">#{edytor.rodzajLabel}</ui:define>
   <ui:define name="crumbs">
     <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Czynności i decyzje" /></li><li><a href="#">Projekty pism</a></li><li><span aria-current="page">#{edytor.sygnatura} · #{edytor.rodzajLabel}</span></li></ol></nav>
   </ui:define>
   <ui:define name="eyebrow">S-15 · #{edytor.eyebrow}</ui:define>
-  <ui:define name="subtitle"><tk:sig value="#{demo.caseBy(edytor.sygnatura).sygnatura}" /> · #{edytor.opis}</ui:define>
+  <ui:define name="subtitle"><tk:sig value="#{dane.caseBy(edytor.sygnatura).sygnatura}" /> · #{edytor.opis}</ui:define>
   <ui:define name="actions">
     <h:form id="acts" styleClass="row">
       <h:panelGroup rendered="#{edytor.asystent}"><button type="button" class="btn">Zapisz projekt</button><p:commandButton value="Prześlij sędziemu" action="#{edytor.sendToJudge}" update="@all" styleClass="p" /></h:panelGroup>

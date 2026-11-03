@@ -1,5 +1,12 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.application.FacesMessage;
+import jakarta.inject.Inject;
+import pl.ejtechnology.tk.eSkarga.domain.service.LetterKind;
+import pl.ejtechnology.tk.eSkarga.domain.service.SigningService;
+import pl.ejtechnology.tk.eSkarga.security.CurrentUser;
+import pl.ejtechnology.tk.eSkarga.security.OidcSettings;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +38,18 @@ public class PodpisBean implements Serializable {
             "polaczenie", new SignError("Przerwano połączenie z aplikacją do podpisu", "Dokument nie został podpisany. Sprawdź, czy aplikacja nadal działa.", "SIG-CONN-499", "Spróbuj ponownie"),
             "weryfikacja", new SignError("Podpis odrzucony przy weryfikacji", "Serwer nie potwierdził ważności podpisu (brak odpowiedzi usługi znacznika czasu). Dokument pozostaje niepodpisany.", "SIG-VER-TSA", "Spróbuj ponownie"));
 
+    @Inject
+    private OidcSettings settings;
+    @Inject
+    private CurrentUser currentUser;
+    @Inject
+    private SigningService signing;
+    private Long dokumentId;
+    private String rodzajPisma = "ZARZ_BRAKI";
+    private String sesja;
+    private String skrot;
+    private String certyfikaty;
+    private String podpis;
     private String stan = "1";
     private int krok = 0;
     private String blad;
@@ -58,6 +77,48 @@ public class PodpisBean implements Serializable {
     public void retry() {
         blad = null;
     }
+    /** Krok 1 (D10): dane do podpisu dla aplikacji lokalnej – do przeglądarki trafia skrót, nigdy dokument ani klucz. */
+    public void begin() {
+        if (settings.isDemo() || dokumentId == null) {
+            next();
+            return;
+        }
+        try {
+            var d = signing.begin(dokumentId, certyfikaty == null ? List.of() : List.of(certyfikaty.split(",")), "RSA_SHA256", currentUser.getLogin());
+            sesja = d.sessionId();
+            skrot = d.digestBase64();
+            krok = 2;
+        } catch (RuntimeException e) {
+            blad = "weryfikacja";
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się rozpocząć podpisu.", e.getMessage()));
+        }
+    }
+    /** Krok 2: wartość podpisu z karty (aplikacja lokalna) → złożenie, status czynności i ruch procesu w jednej transakcji. */
+    public void complete() {
+        if (settings.isDemo() || dokumentId == null) {
+            next();
+            return;
+        }
+        try {
+            signing.complete(dokumentId, sesja, podpis, !sklad, LetterKind.valueOf(rodzajPisma), currentUser.getLogin());
+            krok = 3;
+            podpisano = true;
+            blad = null;
+        } catch (RuntimeException e) {
+            blad = "weryfikacja";
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Podpis odrzucony.", e.getMessage()));
+        }
+    }
+    public Long getDokumentId() { return dokumentId; }
+    public void setDokumentId(Long id) { this.dokumentId = id; }
+    public String getRodzajPisma() { return rodzajPisma; }
+    public void setRodzajPisma(String r) { this.rodzajPisma = r; }
+    public String getSesja() { return sesja; }
+    public String getSkrot() { return skrot; }
+    public String getCertyfikaty() { return certyfikaty; }
+    public void setCertyfikaty(String c) { this.certyfikaty = c; }
+    public String getPodpis() { return podpis; }
+    public void setPodpis(String p) { this.podpis = p; }
 
     public SignError getError() {
         return blad == null ? null : ERRORS.get(blad);

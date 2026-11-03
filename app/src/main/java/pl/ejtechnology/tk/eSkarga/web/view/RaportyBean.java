@@ -1,5 +1,6 @@
 package pl.ejtechnology.tk.eSkarga.web.view;
 
+import pl.ejtechnology.tk.eSkarga.web.ViewData;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class RaportyBean implements Serializable {
     }
 
     @Inject
-    private DemoDataset demo;
+    private ViewData data;
 
     private String stan;
     private LocalDate od = LocalDate.of(2026, 1, 1);
@@ -64,9 +65,9 @@ public class RaportyBean implements Serializable {
     private void buildChart() {
         StringBuilder sb = new StringBuilder();
         sb.append("{\"type\":\"line\",\"data\":{\"labels\":[\"I\",\"II\",\"III\",\"IV\",\"V\",\"VI\",\"VII\",\"VIII\",\"IX\",\"X\"],");
-        sb.append("\"datasets\":[{\"label\":\"Wpływ\",\"data\":").append(json(demo.monthlyIntake()))
+        sb.append("\"datasets\":[{\"label\":\"Wpływ\",\"data\":").append(json(data.monthlyIntake()))
           .append(",\"borderColor\":\"#233A6B\",\"backgroundColor\":\"#233A6B\",\"borderWidth\":3,\"tension\":0.1,\"fill\":false},");
-        sb.append("{\"label\":\"Załatwienia\",\"data\":").append(json(demo.monthlyDisposed()))
+        sb.append("{\"label\":\"Załatwienia\",\"data\":").append(json(data.monthlyDisposed()))
           .append(",\"borderColor\":\"#8A5A00\",\"backgroundColor\":\"#8A5A00\",\"borderWidth\":3,\"borderDash\":[8,5],\"tension\":0.1,\"fill\":false}]},");
         sb.append("\"options\":{\"maintainAspectRatio\":false,\"plugins\":{\"legend\":{\"display\":false}},");
         sb.append("\"scales\":{\"y\":{\"beginAtZero\":true,\"max\":40,\"grid\":{\"color\":\"#D3D8E0\"}},\"x\":{\"grid\":{\"display\":false}}}}}");
@@ -97,19 +98,19 @@ public class RaportyBean implements Serializable {
 
     public String getDataText() {
         StringBuilder sb = new StringBuilder("Wpływ: ");
-        int[] a = demo.monthlyIntake();
+        int[] a = data.monthlyIntake();
         for (int i = 0; i < a.length; i++) {
             sb.append(a[i]).append(i < a.length - 1 ? ", " : ". ");
         }
         sb.append("Załatwienia: ");
-        int[] b = demo.monthlyDisposed();
+        int[] b = data.monthlyDisposed();
         for (int i = 0; i < b.length; i++) {
             sb.append(b[i]).append(i < b.length - 1 ? ", " : ".");
         }
         return sb.toString();
     }
 
-    public List<HBar> getOutcomes() { return demo.outcomes(); }
+    public List<HBar> getOutcomes() { return data.outcomes(); }
     public String getChartConfig() { return chartConfig; }
     public String getStan() { return stan; }
     public void setStan(String stan) { this.stan = stan; }

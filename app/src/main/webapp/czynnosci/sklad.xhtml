@@ -16,7 +16,7 @@
   </ui:define>
   <ui:define name="banners"><tk:banner icon="shield" title="Działasz na podstawie upoważnienia z 30.10.2026" text="(ważne do 31.12.2026)" /></ui:define>
   <ui:define name="eyebrow">S-18</ui:define>
-  <ui:define name="subtitle"><tk:sig value="#{demo.caseBy(sklad.sygnatura).sygnatura}" /> · #{sklad.skarzacy} · pełn. adw. Jan Makieta</ui:define>
+  <ui:define name="subtitle"><tk:sig value="#{dane.caseBy(sklad.sygnatura).sygnatura}" /> · #{sklad.skarzacy} · pełn. adw. Jan Makieta</ui:define>
   <ui:define name="actions">
     <h:link rendered="#{not sklad.poTerminie}" outcome="/czynnosci/podpis" styleClass="btn p" value="Skieruj i podpisz zarządzenie" />
     <h:link rendered="#{sklad.poTerminie}" outcome="/czynnosci/edytor" styleClass="btn p" value="Przygotuj postanowienie o pozostawieniu bez rozpoznania" />

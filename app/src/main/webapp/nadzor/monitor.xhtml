@@ -23,7 +23,7 @@
             <div class="dens" role="group" aria-label="#{msg['common.density']}"><button type="button" aria-pressed="true">#{msg['common.compact']}</button><button type="button" aria-pressed="false">#{msg['common.comfy']}</button></div></div>
           <p:dataTable value="#{monitor.rows}" var="r" rowStyleClass="#{r.wiersz.css()}" summary="Sprawy wymagające uwagi">
             <p:column styleClass="chk"><input type="checkbox" class="chk22" aria-label="#{fmt.msg('common.select', r.sprawa)}" /></p:column>
-            <p:column headerText="Sprawa"><h:panelGroup rendered="#{r.sygnatura}"><tk:sig value="#{demo.caseBy(r.sprawa).sygnatura}" /><h:panelGroup rendered="#{demo.caseBy(r.sprawa).hasFlag('PILNA_ART_79')}"> <span class="flag pil">Pilna</span></h:panelGroup></h:panelGroup><span class="mono" jsf:rendered="#{not r.sygnatura}">#{r.sprawa}</span></p:column>
+            <p:column headerText="Sprawa"><h:panelGroup rendered="#{r.sygnatura}"><tk:sig value="#{dane.caseBy(r.sprawa).sygnatura}" /><h:panelGroup rendered="#{dane.caseBy(r.sprawa).hasFlag('PILNA_ART_79')}"> <span class="flag pil">Pilna</span></h:panelGroup></h:panelGroup><span class="mono" jsf:rendered="#{not r.sygnatura}">#{r.sprawa}</span></p:column>
             <p:column headerText="Przyczyna">#{r.przyczyna}</p:column>
             <p:column headerText="Termin"><tk:deadline value="#{r.termin}" /></p:column>
             <p:column headerText="Odpowiedzialny">#{r.odpowiedzialny} <span class="mut" jsf:rendered="#{not empty r.odpUwaga}">#{r.odpUwaga}</span></p:column>
