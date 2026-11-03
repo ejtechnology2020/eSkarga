@@ -17,7 +17,7 @@ import jakarta.security.enterprise.authentication.mechanism.http.openid.PromptTy
  * {@link SecurityModeExtension}, żeby serwer nie próbował odpytać nieistniejącego dostawcy.
  */
 @OpenIdAuthenticationMechanismDefinition(
-        providerURI = "#{oidcSettings.issuer}",
+        providerURI = "#{oidcSettings.providerUri}",
         clientId = "#{oidcSettings.clientId}",
         clientSecret = "#{oidcSettings.clientSecret}",
         redirectURI = "${baseURL}/callback",

@@ -33,3 +33,11 @@ Demon Dockera nie był dostępny w sesji, w której powstał ten plik – konfig
 - profil `monitoring` – Prometheus (:9090) i Grafana (:3000) z panelem `infra/monitoring/grafana-dashboard.json`.
 - workery: `ESKARGA_APP_API`, `ESKARGA_DOCS_API`, `ESKARGA_EXTERNAL_BASE_URL` (WireMock) – tematy `doreczenie-pisma`, `przekazanie-merytoryczne`, cykl `dokument-przetworz`.
 - aplikacja: `ESKARGA_SEARCH_URL`, `ESKARGA_DOCS_URL`, `ESKARGA_DOCS_OIDC_*`, `ESKARGA_HSM_MODE`, `ESKARGA_METRICS_ALLOW`.
+
+## ID-users lokalnie (http://localhost:8180/realms/id-users)
+
+- Issuer w tokenach i w przeglądarce to zawsze `http://localhost:8180/realms/id-users` (`ESKARGA_OIDC_ISSUER`).
+- Kontener aplikacji pyta o discovery, token i JWKS pod adresem `ESKARGA_OIDC_PROVIDERURI`: `http://oidc:8180/...` dla Keycloaka
+  z tego Compose (uruchomionego z `--hostname-backchannel-dynamic=true`) albo `http://host.docker.internal:8180/...`, gdy ID-users
+  działa na hoście (`OIDC_PROVIDER_URI` w `.env`, usługa `oidc` wtedy zbędna: `docker compose up -d --scale oidc=0`).
+- W Keycloaku na hoście realm `id-users` musi mieć klientów jak w `keycloak/id-users-realm.json` (`eskarga`, `eskarga-workers`).

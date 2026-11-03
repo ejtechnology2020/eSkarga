@@ -18,13 +18,14 @@ services:
       ESKARGA_ENVIRONMENT: TEST
       ESKARGA_FACES_STAGE: Development
       ESKARGA_SECURITY_MODE: ${ESKARGA_SECURITY_MODE:-oidc}
-      ESKARGA_OIDC_ISSUER: http://localhost:8180/realms/id-users
+      ESKARGA_OIDC_ISSUER: http://localhost:8180/realms/id-users            # iss w tokenach = adres używany w przeglądarce
+      ESKARGA_OIDC_PROVIDERURI: ${OIDC_PROVIDER_URI:-http://oidc:8180/realms/id-users}   # discovery z kontenera; dla Keycloaka na hoście: http://host.docker.internal:8180/realms/id-users
       ESKARGA_OIDC_CLIENTID: eskarga
       ESKARGA_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
       ESKARGA_OIDC_ROLESCLAIM: ${OIDC_ROLES_CLAIM:-resource_access.eskarga.roles}
       ESKARGA_OIDC_MFACLAIM: ${OIDC_MFA_CLAIM:-acr}
       ESKARGA_OIDC_MFAREQUIREDVALUE: ${OIDC_MFA_VALUE:-mfa,wysoki}
-      ESKARGA_WORKERS_JWKSURI: http://oidc:8180/realms/id-users/protocol/openid-connect/certs
+      ESKARGA_WORKERS_JWKSURI: ${OIDC_PROVIDER_URI:-http://oidc:8180/realms/id-users}/protocol/openid-connect/certs
       ESKARGA_DOCS_TSAURL: http://tsa:3180/
       ESKARGA_DOCS_TRUSTSTORE: ${ESKARGA_DOCS_TRUSTSTORE:-}
       ESKARGA_S3_ENDPOINT: http://s3:9000
@@ -34,12 +35,14 @@ services:
       ESKARGA_DEMO_TODAY: ${ESKARGA_DEMO_TODAY:-}
       ESKARGA_SEARCH_URL: http://opensearch:9200
       ESKARGA_DOCS_URL: http://localhost:8080/eskarga-docs/api
-      ESKARGA_DOCS_OIDC_TOKENURL: http://oidc:8180/realms/id-users/protocol/openid-connect/token
+      ESKARGA_DOCS_OIDC_TOKENURL: ${OIDC_PROVIDER_URI:-http://oidc:8180/realms/id-users}/protocol/openid-connect/token
       ESKARGA_DOCS_OIDC_CLIENTID: eskarga
       ESKARGA_DOCS_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
       ESKARGA_HSM_MODE: ${ESKARGA_HSM_MODE:-off}
       ESKARGA_PDF_FONTDIR: /usr/share/fonts/truetype/liberation
       ESKARGA_METRICS_ALLOW: "*"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8080:8080"   # aplikacja /eskarga, Cockpit /operaton
       - "9990:9990"   # konsola WildFly (tylko dev)
@@ -165,7 +168,9 @@ services:
     # Keycloak zgodny z kontraktem ID-users (realm id-users, klient eskarga code+PKCE, role pod resource_access, acr haslo/mfa/wysoki,
     # back-channel logout z sid, konto serwisowe workerów). Port 8180 jak w kontrakcie dev.
     image: quay.io/keycloak/keycloak:26.3
-    command: ["start-dev", "--http-port=8180", "--import-realm", "--hostname=http://localhost:8180"]
+    # hostname = adres z przeglądarki (issuer); backchannel-dynamic = token/JWKS pod adresem, z którego pyta kontener (oidc:8180)
+    command: ["start-dev", "--http-port=8180", "--import-realm", "--hostname=http://localhost:8180", "--hostname-backchannel-dynamic=true"]
+    profiles: ["", "oidc-local"]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?ustaw w .env}
@@ -198,7 +203,7 @@ services:
       dockerfile: infra/docker/workers/Dockerfile
     environment:
       ESKARGA_ENGINE_REST: http://app:8080/engine-rest
-      ESKARGA_OIDC_TOKEN_URL: http://oidc:8180/realms/id-users/protocol/openid-connect/token
+      ESKARGA_OIDC_TOKEN_URL: ${OIDC_PROVIDER_URI:-http://oidc:8180/realms/id-users}/protocol/openid-connect/token
       ESKARGA_OIDC_CLIENT_ID: eskarga-workers
       ESKARGA_OIDC_CLIENT_SECRET: ${OIDC_WORKERS_SECRET:?ustaw w .env}
       ESKARGA_APP_API: http://app:8080/eskarga/api

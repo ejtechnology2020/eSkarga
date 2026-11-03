@@ -31,6 +31,15 @@ public class OidcSettings implements Serializable {
         return value("eskarga.oidc.issuer", "http://localhost:8180/realms/id-users");
     }
 
+    /**
+     * Adres discovery ID-users widziany z serwera aplikacji; domyślnie równy issuerowi. W Dockerze kontener nie dosięga
+     * {@code localhost:8180}, więc podaje się {@code http://oidc:8180/realms/id-users} (Keycloak z dynamicznym back-channelem),
+     * a {@code iss} tokenów pozostaje {@code http://localhost:8180/realms/id-users}.
+     */
+    public String getProviderUri() {
+        return value("eskarga.oidc.providerUri", getIssuer());
+    }
+
     public String getClientId() {
         return value("eskarga.oidc.clientId", "eskarga");
     }
