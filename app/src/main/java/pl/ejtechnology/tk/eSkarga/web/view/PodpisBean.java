@@ -50,6 +50,7 @@ public class PodpisBean implements Serializable {
     private String skrot;
     private String certyfikaty;
     private String podpis;
+    private String algorytmPodpisu = "RSA_SHA256";
     private String stan = "1";
     private int krok = 0;
     private String blad;
@@ -84,7 +85,7 @@ public class PodpisBean implements Serializable {
             return;
         }
         try {
-            var d = signing.begin(dokumentId, certyfikaty == null ? List.of() : List.of(certyfikaty.split(",")), "RSA_SHA256", currentUser.getLogin());
+            var d = signing.begin(dokumentId, certyfikaty == null ? List.of() : List.of(certyfikaty.split(",")), algorytmPodpisu == null ? "RSA_SHA256" : algorytmPodpisu, currentUser.getLogin());
             sesja = d.sessionId();
             skrot = d.digestBase64();
             krok = 2;
@@ -118,6 +119,8 @@ public class PodpisBean implements Serializable {
     public String getCertyfikaty() { return certyfikaty; }
     public void setCertyfikaty(String c) { this.certyfikaty = c; }
     public String getPodpis() { return podpis; }
+    public String getAlgorytmPodpisu() { return algorytmPodpisu; }
+    public void setAlgorytmPodpisu(String a) { this.algorytmPodpisu = a; }
     public void setPodpis(String p) { this.podpis = p; }
 
     public SignError getError() {

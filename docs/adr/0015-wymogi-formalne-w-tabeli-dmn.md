@@ -1,6 +1,6 @@
 # ADR 0015 – Wymogi formalne skargi i wniosku w tabeli decyzyjnej DMN
 
-Status: propozycja (treść wymogów do potwierdzenia przez Biuro Służby Prawnej)
+Status: zaakceptowana 03.11.2026 (tabela DMN (treść „na razie ok”))
 
 ## Kontekst
 

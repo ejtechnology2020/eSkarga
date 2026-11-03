@@ -66,9 +66,11 @@
           <h:link outcome="/pulpit" styleClass="btn" value="#{podpis.cancelLabel}" />
           <p:commandButton rendered="#{podpis.hasError}" value="#{podpis.error.action}" action="#{podpis.retry}" update="pf" styleClass="p" process="@this" />
           <p:commandButton rendered="#{not podpis.hasError and podpis.krok eq 0}" value="#{podpis.nextLabel}" action="#{podpis.next}" update="pf" styleClass="p" process="@this" />
-          <p:commandButton rendered="#{not podpis.hasError and podpis.krok eq 1}" value="#{podpis.nextLabel}" action="#{podpis.begin}" update="pf" styleClass="p" process="@form" />
-          <p:commandButton rendered="#{not podpis.hasError and podpis.krok eq 2}" value="#{podpis.nextLabel}" action="#{podpis.complete}" update="pf" styleClass="p" disabled="#{podpis.waiting and empty podpis.podpis}" process="@form" />
-          <h:inputHidden id="certyfikaty" value="#{podpis.certyfikaty}" /><h:inputHidden id="podpisWartosc" value="#{podpis.podpis}" /><h:inputHidden id="skrot" value="#{podpis.skrot}" />
+          <p:commandButton rendered="#{not podpis.hasError and podpis.krok eq 1}" value="#{podpis.nextLabel}" action="#{podpis.begin}" update="pf" styleClass="p" process="@form" pt:data-sign-step="certyfikaty" />
+          <p:commandButton rendered="#{not podpis.hasError and podpis.krok eq 2}" value="#{podpis.nextLabel}" action="#{podpis.complete}" update="pf" styleClass="p" process="@form" pt:data-sign-step="podpisz" />
+          <p id="sign-error" class="mut err" role="alert"></p>
+          <h:outputScript library="js" name="eskarga-sign.js" target="body" />
+          <h:inputHidden id="certyfikaty" value="#{podpis.certyfikaty}" /><h:inputHidden id="podpisWartosc" value="#{podpis.podpis}" /><h:inputHidden id="skrot" value="#{podpis.skrot}" /><h:inputHidden id="algorytm" value="#{podpis.algorytmPodpisu}" />
           <h:link rendered="#{not podpis.hasError and podpis.krok eq 3}" outcome="/akta/podglad" styleClass="btn p" value="#{podpis.nextLabel}"><f:param name="sygnatura" value="Ts 318/26" /></h:link>
         </div>
       </h:form>

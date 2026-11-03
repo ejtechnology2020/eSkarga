@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/poczta/przesylki",
+    "headers": {
+      "Idempotency-Key": {
+        "matches": ".+"
+      }
+    }
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "numerNadania": "RR{{randomValue length=9 type='NUMERIC'}}PL",
+      "status": "NADANA",
+      "kluczIdempotencji": "{{request.headers.Idempotency-Key}}"
+    },
+    "transformers": [
+      "response-template"
+    ]
+  }
+}

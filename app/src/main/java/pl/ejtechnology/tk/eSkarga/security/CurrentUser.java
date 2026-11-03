@@ -36,6 +36,8 @@ public class CurrentUser implements Serializable {
     private Fmt fmt;
     @Inject
     private HttpServletRequest request;
+    @Inject
+    private jakarta.enterprise.inject.Instance<jakarta.security.enterprise.identitystore.openid.OpenIdContext> openId;
 
     private AppRole demoRole;
 
@@ -96,7 +98,8 @@ public class CurrentUser implements Serializable {
                 return r;
             }
         }
-        return AppRole.TK_REFERENT;
+        Set<AppRole> fromToken = tokenRoles();
+        return fromToken.isEmpty() ? AppRole.TK_REFERENT : fromToken.iterator().next();
     }
 
     public Set<AppRole> getRoles() {
@@ -110,7 +113,28 @@ public class CurrentUser implements Serializable {
                 roles.add(r);
             }
         }
+        roles.addAll(tokenRoles());
         return roles;
+    }
+
+    /** Role z tokenu dostępu ID-users ({@code resource_access.<client>.roles}, {@code realm_access.roles}) – niezależnie od mapowania grup kontenera. */
+    Set<AppRole> tokenRoles() {
+        try {
+            if (openId == null || openId.isUnsatisfied()) {
+                return EnumSet.noneOf(AppRole.class);
+            }
+            var ctx = openId.get();
+            if (ctx.getAccessToken() == null || ctx.getAccessToken().getToken() == null) {
+                return EnumSet.noneOf(AppRole.class);
+            }
+            String[] parts = ctx.getAccessToken().getToken().split("\\.");
+            if (parts.length != 3) {
+                return EnumSet.noneOf(AppRole.class);
+            }
+            return RoleMapper.roles(pl.ejtechnology.tk.eSkarga.common.security.JwtRs256Verifier.json(parts[1]), settings.getRolesClaim(), settings.getRealmRolesClaim(), settings.getRolePrefix());
+        } catch (RuntimeException e) {
+            return EnumSet.noneOf(AppRole.class);
+        }
     }
 
     /** Rola wybrana w górnym pasku (użytkownik z kilkoma rolami); w trybie demo przełącza wariant ekranu. */

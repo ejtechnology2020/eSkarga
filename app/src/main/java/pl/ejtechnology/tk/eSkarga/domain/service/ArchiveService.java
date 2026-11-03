@@ -53,8 +53,32 @@ public class ArchiveService {
     @Inject
     AppClock clock;
 
+    /** Właściwość {@code eskarga.archive.retention.<SPOSOB>} = {@code KATEGORIA:LATA} (np. {@code B10:10}) albo {@code A} (wieczyście). */
+    public static final String RETENTION_PROPERTY_PREFIX = "eskarga.archive.retention.";
+
+    /**
+     * Kategoria i okres przechowywania (ADR 0012, decyzja 03.11.2026: konfigurowalny czas): nadpisanie z konfiguracji
+     * ({@value #RETENTION_PROPERTY_PREFIX}{@code <SPOSOB>}) ma pierwszeństwo przed tabelą {@code archive_category}, którą
+     * administrator edytuje w S-24 ({@link DictionaryService#updateArchiveCategory}).
+     */
     public Optional<ArchiveCategory> categoryFor(ClosingMode mode) {
+        String override = pl.ejtechnology.tk.eSkarga.common.security.Settings.value(RETENTION_PROPERTY_PREFIX + mode.name(), "");
+        if (!override.isBlank()) {
+            return Optional.of(parseOverride(mode, override));
+        }
         return Optional.ofNullable(em.find(ArchiveCategory.class, mode));
+    }
+
+    static ArchiveCategory parseOverride(ClosingMode mode, String value) {
+        String v = value.trim();
+        if (v.equalsIgnoreCase("A")) {
+            return new ArchiveCategory(mode, "A", null);
+        }
+        String[] parts = v.split(":");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Oczekiwano KATEGORIA:LATA albo A, otrzymano: " + value);
+        }
+        return new ArchiveCategory(mode, parts[0].trim(), Integer.parseInt(parts[1].trim()));
     }
 
     public Readiness readiness(CaseFile cf) {

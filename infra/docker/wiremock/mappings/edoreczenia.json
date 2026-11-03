@@ -1,5 +1,25 @@
 {
-  "request": {"method": "POST", "urlPath": "/edoreczenia/przesylki"},
-  "response": {"status": 202, "headers": {"Content-Type": "application/json"},
-    "jsonBody": {"identyfikatorPrzesylki": "AE-{{randomValue length=8 type='ALPHANUMERIC'}}", "status": "PRZYJETA"}}
+  "request": {
+    "method": "POST",
+    "urlPath": "/edoreczenia/przesylki",
+    "headers": {
+      "Idempotency-Key": {
+        "matches": ".+"
+      }
+    }
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "identyfikator": "EDO-{{request.headers.Idempotency-Key}}",
+      "status": "PRZYJETA",
+      "kluczIdempotencji": "{{request.headers.Idempotency-Key}}"
+    },
+    "transformers": [
+      "response-template"
+    ]
+  }
 }

@@ -36,6 +36,30 @@ public class DictionaryService {
         return entry;
     }
 
+    public List<pl.ejtechnology.tk.eSkarga.domain.model.ArchiveCategory> archiveCategories() {
+        return em.createQuery("select a from ArchiveCategory a order by a.closingMode", pl.ejtechnology.tk.eSkarga.domain.model.ArchiveCategory.class).getResultList();
+    }
+
+    /** Kategoria archiwalna i okres przechowywania (lata, {@code null} = wieczyście) – konfiguracja, nie kod (ADR 0012). */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public pl.ejtechnology.tk.eSkarga.domain.model.ArchiveCategory updateArchiveCategory(pl.ejtechnology.tk.eSkarga.domain.model.ClosingMode mode, String category, Integer retentionYears, String adminId) {
+        if (category == null || category.isBlank()) {
+            throw new IllegalArgumentException("Kategoria archiwalna jest wymagana");
+        }
+        if (retentionYears != null && retentionYears <= 0) {
+            throw new IllegalArgumentException("Okres przechowywania musi być dodatni albo pusty (wieczyście)");
+        }
+        var current = em.find(pl.ejtechnology.tk.eSkarga.domain.model.ArchiveCategory.class, mode);
+        if (current == null) {
+            current = new pl.ejtechnology.tk.eSkarga.domain.model.ArchiveCategory(mode, category, retentionYears);
+            em.persist(current);
+        } else {
+            current.update(category, retentionYears, adminId, java.time.Instant.now());
+        }
+        audit.record(adminId, "TK_ADMIN", "zmiana kategorii archiwalnej " + mode + " → " + category + " / " + (retentionYears == null ? "wieczyście" : retentionYears + " lat"), null, null, null);
+        return current;
+    }
+
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void withdrawReviewStandard(long id, String adminId) {
         ReviewStandard s = em.find(ReviewStandard.class, id);

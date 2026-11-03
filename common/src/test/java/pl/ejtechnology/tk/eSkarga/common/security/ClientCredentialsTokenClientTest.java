@@ -62,6 +62,27 @@ class ClientCredentialsTokenClientTest {
     }
 
     @Test
+    void privateKeyJwtZamiastSekretu() throws Exception {
+        java.security.KeyPairGenerator g = java.security.KeyPairGenerator.getInstance("RSA");
+        g.initialize(2048);
+        java.security.KeyPair kp = g.generateKeyPair();
+        ClientCredentialsTokenClient c = new ClientCredentialsTokenClient(url(), "eskarga-workers", null, "eskarga", kp.getPrivate(), "klucz-2026");
+        assertThat(c.usesPrivateKeyJwt()).isTrue();
+        assertThat(c.token()).startsWith("tok-");
+        String body = bodies.get(bodies.size() - 1);
+        assertThat(body).contains("client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer").contains("client_assertion=").doesNotContain("client_secret");
+        String assertion = java.net.URLDecoder.decode(body.replaceAll(".*client_assertion=([^&]*).*", "$1"), StandardCharsets.UTF_8);
+        String[] parts = assertion.split("\\.");
+        assertThat(parts).hasSize(3);
+        String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+        assertThat(payload).contains("\"iss\":\"eskarga-workers\"").contains("\"aud\":\"" + url() + "\"").contains("\"jti\"");
+        java.security.Signature sig = java.security.Signature.getInstance("SHA256withRSA");
+        sig.initVerify(kp.getPublic());
+        sig.update((parts[0] + "." + parts[1]).getBytes(StandardCharsets.US_ASCII));
+        assertThat(sig.verify(java.util.Base64.getUrlDecoder().decode(parts[2]))).isTrue();
+    }
+
+    @Test
     void odmowaDostawcyToBlad() {
         status = 401;
         try {

@@ -25,22 +25,55 @@ public final class ClientCredentialsTokenClient {
     private final String clientId;
     private final String clientSecret;
     private final String scope;
+    private final java.security.PrivateKey assertionKey;
+    private final String assertionKid;
     private final HttpClient http;
     private volatile String cached;
     private volatile Instant expiresAt = Instant.EPOCH;
 
     public ClientCredentialsTokenClient(String tokenUrl, String clientId, String clientSecret, String scope) {
+        this(tokenUrl, clientId, clientSecret, scope, null, null);
+    }
+
+    /** Uwierzytelnienie {@code private_key_jwt} (zalecane przez ID-users – rotacja klucza bez przerwy): klucz zamiast sekretu. */
+    public ClientCredentialsTokenClient(String tokenUrl, String clientId, String clientSecret, String scope, java.security.PrivateKey assertionKey, String assertionKid) {
         this.tokenUrl = tokenUrl;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.scope = scope;
+        this.assertionKey = assertionKey;
+        this.assertionKid = assertionKid;
         this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     }
 
-    /** Konfiguracja {@code <prefix>.tokenUrl}, {@code <prefix>.clientId}, {@code <prefix>.clientSecret}, {@code <prefix>.scope}. */
+    /**
+     * Konfiguracja {@code <prefix>.tokenUrl}, {@code .clientId}, {@code .scope} oraz {@code .clientSecret} albo (zalecane) {@code .keyStore}
+     * (PKCS#12), {@code .keyStorePassword}, {@code .keyAlias} dla {@code private_key_jwt}.
+     */
     public static ClientCredentialsTokenClient fromSettings(String prefix) {
+        String ks = Settings.value(prefix + ".keyStore", "");
+        java.security.PrivateKey key = null;
+        String kid = null;
+        if (!ks.isBlank()) {
+            try {
+                java.security.KeyStore store = java.security.KeyStore.getInstance("PKCS12");
+                char[] pwd = Settings.value(prefix + ".keyStorePassword", "").toCharArray();
+                try (var in = new java.io.FileInputStream(ks)) {
+                    store.load(in, pwd);
+                }
+                String alias = Settings.value(prefix + ".keyAlias", store.aliases().nextElement());
+                key = (java.security.PrivateKey) store.getKey(alias, pwd);
+                kid = alias;
+            } catch (java.security.GeneralSecurityException | IOException e) {
+                throw new IllegalStateException("Nie udało się wczytać klucza klienta " + prefix, e);
+            }
+        }
         return new ClientCredentialsTokenClient(Settings.value(prefix + ".tokenUrl", ""), Settings.value(prefix + ".clientId", ""),
-                Settings.value(prefix + ".clientSecret", ""), Settings.value(prefix + ".scope", ""));
+                Settings.value(prefix + ".clientSecret", ""), Settings.value(prefix + ".scope", ""), key, kid);
+    }
+
+    public boolean usesPrivateKeyJwt() {
+        return assertionKey != null;
     }
 
     public boolean configured() {
@@ -62,7 +95,13 @@ public final class ClientCredentialsTokenClient {
     }
 
     private void fetch() {
-        StringBuilder form = new StringBuilder("grant_type=client_credentials&client_id=").append(enc(clientId)).append("&client_secret=").append(enc(clientSecret));
+        StringBuilder form = new StringBuilder("grant_type=client_credentials&client_id=").append(enc(clientId));
+        if (assertionKey != null) {
+            form.append("&client_assertion_type=").append(enc("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"))
+                    .append("&client_assertion=").append(enc(clientAssertion()));
+        } else {
+            form.append("&client_secret=").append(enc(clientSecret));
+        }
         if (scope != null && !scope.isBlank()) {
             form.append("&scope=").append(enc(scope));
         }
@@ -88,6 +127,26 @@ public final class ClientCredentialsTokenClient {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(e);
         }
+    }
+
+    /** JWT RS256: iss = sub = client_id, aud = adres tokenu (Keycloak), ważność 60 s, jti losowe. */
+    String clientAssertion() {
+        try {
+            long now = Instant.now().getEpochSecond();
+            String header = b64("{\"alg\":\"RS256\",\"typ\":\"JWT\"" + (assertionKid == null ? "" : ",\"kid\":\"" + assertionKid + "\"") + "}");
+            String payload = b64("{\"iss\":\"" + clientId + "\",\"sub\":\"" + clientId + "\",\"aud\":\"" + tokenUrl + "\",\"jti\":\"" + java.util.UUID.randomUUID()
+                    + "\",\"iat\":" + now + ",\"exp\":" + (now + 60) + "}");
+            java.security.Signature sig = java.security.Signature.getInstance("SHA256withRSA");
+            sig.initSign(assertionKey);
+            sig.update((header + "." + payload).getBytes(StandardCharsets.US_ASCII));
+            return header + "." + payload + "." + java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(sig.sign());
+        } catch (java.security.GeneralSecurityException e) {
+            throw new IllegalStateException("Nie udało się podpisać client_assertion", e);
+        }
+    }
+
+    private static String b64(String s) {
+        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(s.getBytes(StandardCharsets.UTF_8));
     }
 
     private static String enc(String s) {

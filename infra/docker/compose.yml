@@ -18,20 +18,23 @@ services:
       ESKARGA_ENVIRONMENT: TEST
       ESKARGA_FACES_STAGE: Development
       ESKARGA_SECURITY_MODE: ${ESKARGA_SECURITY_MODE:-oidc}
-      ESKARGA_OIDC_ISSUER: http://oidc:8081/tk
+      ESKARGA_OIDC_ISSUER: http://localhost:8180/realms/id-users
       ESKARGA_OIDC_CLIENTID: eskarga
       ESKARGA_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
-      ESKARGA_OIDC_ROLESCLAIM: ${OIDC_ROLES_CLAIM:-roles}
+      ESKARGA_OIDC_ROLESCLAIM: ${OIDC_ROLES_CLAIM:-resource_access.eskarga.roles}
       ESKARGA_OIDC_MFACLAIM: ${OIDC_MFA_CLAIM:-acr}
-      ESKARGA_OIDC_MFAREQUIREDVALUE: ${OIDC_MFA_VALUE:-mfa}
-      ESKARGA_S3_ENDPOINT: http://s3:8333
+      ESKARGA_OIDC_MFAREQUIREDVALUE: ${OIDC_MFA_VALUE:-mfa,wysoki}
+      ESKARGA_WORKERS_JWKSURI: http://oidc:8180/realms/id-users/protocol/openid-connect/certs
+      ESKARGA_DOCS_TSAURL: http://tsa:3180/
+      ESKARGA_DOCS_TRUSTSTORE: ${ESKARGA_DOCS_TRUSTSTORE:-}
+      ESKARGA_S3_ENDPOINT: http://s3:9000
       ESKARGA_S3_BUCKET: eskarga-akta
       ESKARGA_S3_ACCESSKEY: ${S3_ACCESS_KEY:?ustaw w .env}
       ESKARGA_S3_SECRETKEY: ${S3_SECRET_KEY:?ustaw w .env}
       ESKARGA_DEMO_TODAY: ${ESKARGA_DEMO_TODAY:-}
       ESKARGA_SEARCH_URL: http://opensearch:9200
       ESKARGA_DOCS_URL: http://localhost:8080/eskarga-docs/api
-      ESKARGA_DOCS_OIDC_TOKENURL: http://oidc:8081/tk/token
+      ESKARGA_DOCS_OIDC_TOKENURL: http://oidc:8180/realms/id-users/protocol/openid-connect/token
       ESKARGA_DOCS_OIDC_CLIENTID: eskarga
       ESKARGA_DOCS_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
       ESKARGA_HSM_MODE: ${ESKARGA_HSM_MODE:-off}
@@ -51,7 +54,9 @@ services:
         condition: service_completed_successfully
       oidc:
         condition: service_started
-      s3:
+      s3-init:
+        condition: service_completed_successfully
+      tsa:
         condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/operaton/app/cockpit/"]
@@ -99,19 +104,34 @@ services:
       retries: 20
 
   s3:
-    # Lekkie S3 na dev (SeaweedFS); produkcja: nowe repozytorium z Object Lock (D12)
-    image: chrislusf/seaweedfs:latest
-    command: server -s3 -s3.port=8333 -dir=/data -master.volumeSizeLimitMB=1024 -s3.config=/etc/seaweedfs/s3.json
+    # Repozytorium dokumentów S3 z Object Lock (D5, ADR 0022): MinIO; kubełek zakłada init z --with-lock.
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?ustaw w .env}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?ustaw w .env}
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # konsola (tylko dev)
     volumes:
       - s3-data:/data
-      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
-    ports:
-      - "8333:8333"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8333/"]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 10s
-      timeout: 3s
-      retries: 10
+      timeout: 5s
+      retries: 12
+
+  s3-init:
+    image: minio/mc:latest
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?ustaw w .env}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?ustaw w .env}
+    entrypoint: ["/bin/sh", "/init-bucket.sh"]
+    volumes:
+      - ./minio/init-bucket.sh:/init-bucket.sh:ro
+    depends_on:
+      s3:
+        condition: service_healthy
 
   opensearch:
     build:
@@ -142,15 +162,26 @@ services:
       SOFTHSM_USER_PIN: ${SOFTHSM_USER_PIN:?ustaw w .env}
 
   oidc:
-    # Mock ID-users (OIDC): konfigurowalne claimy ról i acr – kontrakt ID-users do potwierdzenia (T-004)
-    image: ghcr.io/navikt/mock-oauth2-server:2.1.10
+    # Keycloak zgodny z kontraktem ID-users (realm id-users, klient eskarga code+PKCE, role pod resource_access, acr haslo/mfa/wysoki,
+    # back-channel logout z sid, konto serwisowe workerów). Port 8180 jak w kontrakcie dev.
+    image: quay.io/keycloak/keycloak:26.3
+    command: ["start-dev", "--http-port=8180", "--import-realm", "--hostname=http://localhost:8180"]
     environment:
-      SERVER_PORT: 8081
-      JSON_CONFIG_PATH: /config/mock-oauth2.json
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?ustaw w .env}
+      KC_HEALTH_ENABLED: "true"
     volumes:
-      - ./oidc/mock-oauth2.json:/config/mock-oauth2.json:ro
+      - ./keycloak/id-users-realm.json:/opt/keycloak/data/import/id-users-realm.json:ro
     ports:
-      - "8081:8081"
+      - "8180:8180"
+
+  tsa:
+    # Deweloperski serwer znaczników czasu RFC 3161 (ADR 0023); prod: kwalifikowany TSA (ESKARGA_DOCS_TSAURL).
+    build: ./tsa
+    ports:
+      - "3180:3180"
+    volumes:
+      - tsa-data:/tsa/data
 
   wiremock:
     # Zaślepki systemów zewnętrznych: e-Doręczenia, operator pocztowy, repertoria SK/K/U (D7)
@@ -167,6 +198,9 @@ services:
       dockerfile: infra/docker/workers/Dockerfile
     environment:
       ESKARGA_ENGINE_REST: http://app:8080/engine-rest
+      ESKARGA_OIDC_TOKEN_URL: http://oidc:8180/realms/id-users/protocol/openid-connect/token
+      ESKARGA_OIDC_CLIENT_ID: eskarga-workers
+      ESKARGA_OIDC_CLIENT_SECRET: ${OIDC_WORKERS_SECRET:?ustaw w .env}
       ESKARGA_APP_API: http://app:8080/eskarga/api
       ESKARGA_DOCS_API: http://app:8080/eskarga-docs/api
       ESKARGA_EXTERNAL_BASE_URL: http://wiremock:8080
@@ -199,5 +233,6 @@ services:
 volumes:
   db-data:
   s3-data:
+  tsa-data:
   opensearch-data:
   softhsm-tokens:

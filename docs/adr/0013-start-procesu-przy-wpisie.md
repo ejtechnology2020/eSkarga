@@ -1,6 +1,6 @@
 # ADR 0013 – Start procesu w chwili zatwierdzenia wpisu; zadania rejestracyjne domykane przez adapter
 
-Status: propozycja (do potwierdzenia po zakończeniu prac)
+Status: zaakceptowana 03.11.2026 (start procesu przy wpisie)
 
 ## Kontekst
 

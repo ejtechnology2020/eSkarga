@@ -26,8 +26,9 @@ public class OidcSettings implements Serializable {
         return MODE_DEMO.equalsIgnoreCase(getMode());
     }
 
+    /** Issuer ID-users (kontrakt 03.11.2026): test {@code https://login.test.id-users.example.com/realms/id-users}, dev {@code http://localhost:8180/realms/id-users}. */
     public String getIssuer() {
-        return value("eskarga.oidc.issuer", "https://id-users.invalid/realms/tk");
+        return value("eskarga.oidc.issuer", "http://localhost:8180/realms/id-users");
     }
 
     public String getClientId() {
@@ -38,9 +39,17 @@ public class OidcSettings implements Serializable {
         return value("eskarga.oidc.clientSecret", "");
     }
 
-    /** Nazwa claimu z rolami (np. {@code roles} albo {@code realm_access.roles}) – do potwierdzenia z zespołem ID-users. */
+    /**
+     * Ścieżka claimu z rolami aplikacji. Kontrakt ID-users: role klienta są pod {@code resource_access.<client_id>.roles}
+     * (wymaga zakresu {@code roles} przy rejestracji); role realmu – {@code realm_access.roles}.
+     */
     public String getRolesClaim() {
-        return value("eskarga.oidc.rolesClaim", "roles");
+        return value("eskarga.oidc.rolesClaim", "resource_access." + getClientId() + ".roles");
+    }
+
+    /** Dodatkowa ścieżka ról (realm) – role globalne ID-users mapowane tak samo; pusta = pomijana. */
+    public String getRealmRolesClaim() {
+        return value("eskarga.oidc.realmRolesClaim", "realm_access.roles");
     }
 
     public String getGroupsClaim() {
@@ -56,9 +65,23 @@ public class OidcSettings implements Serializable {
         return value("eskarga.oidc.mfaClaim", "acr");
     }
 
-    /** Wymagana wartość claimu MFA; pusta = nie wymuszaj (tylko dev). */
+    /** Wymagane wartości {@code acr} (ID-users: {@code haslo} = LoA 1, {@code mfa} = LoA 2, {@code wysoki} = LoA 3); pusta = nie wymuszaj (tylko dev). */
     public String getMfaRequiredValue() {
-        return value("eskarga.oidc.mfaRequiredValue", "mfa");
+        return value("eskarga.oidc.mfaRequiredValue", "mfa,wysoki");
+    }
+
+    /** Parametry żądania autoryzacji: {@code acr_values} z najniższym wymaganym poziomem (ID-users honoruje {@code acr_values=mfa}). */
+    public String[] getExtraParameters() {
+        String required = getMfaRequiredValue();
+        if (required.isBlank()) {
+            return new String[0];
+        }
+        return new String[] {"acr_values=" + required.split(",")[0].trim()};
+    }
+
+    /** Oczekiwany odbiorca tokenów ({@code aud}/{@code azp}) – domyślnie identyfikator klienta. */
+    public String getAudience() {
+        return value("eskarga.oidc.audience", getClientId());
     }
 
     /** Prefiks ról ID-users mapowanych 1:1 na role aplikacji, np. {@code TK_}. */

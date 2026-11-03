@@ -1,6 +1,6 @@
 # ADR 0016 – Migracje Flyway jako osobny krok wdrożenia; aplikacja bez UPDATE na wpisach repertorium
 
-Status: propozycja (do potwierdzenia po zakończeniu prac)
+Status: zaakceptowana 03.11.2026 (migracje jako osobny krok, brak UPDATE)
 
 ## Kontekst
 

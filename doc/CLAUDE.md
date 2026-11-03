@@ -66,6 +66,8 @@ Nie wprowadzaj innych frameworków (Spring, Quarkus, Angular, React, Lombok) bez
   src/main/webapp/            Facelets (.xhtml), zasoby, widżet pdf.js
 /docs-service                 WAR: OCR, PDF/A, DSS, anonimizacja, PKCS#11
 /workers                      JAR-y external tasks (doręczenia, poczta, SK, archiwum)
+/common                       JAR: weryfikacja tokenów ID-users, client credentials
+/local-signer                 JAR na stacji sędziego: podpis skrótu kluczem YubiKey (PKCS#11)
 /infra/docker                 compose.yml, obrazy dev/test
 /infra/ansible                role dla VM (WildFly, PostgreSQL/Patroni, OpenSearch, HAProxy)
 /docs/adr                     decyzje architektoniczne (ADR)
@@ -164,8 +166,8 @@ Używaj wyłącznie danych fikcyjnych, np. „Jan Przykładowy”, „adw. Anna 
 
 ## Otwarte kwestie (nie implementuj na sztywno)
 
-- Kontrakt OIDC ID-users (endpointy, claimy ról i grup, MFA, API użytkowników, instancja testowa).
-- Aplikacja lokalna do podpisu: SDK dostawcy kart czy własna. Do tego czasu używaj interfejsu `LocalSignerClient` z implementacją testową.
-- Produkty repozytorium S3 i HSM (zakup). Kod pisz pod API S3 i PKCS#11, bez zależności od dostawcy.
-- API e-Doręczeń, operatora pocztowego i repertoriów SK/K/U. Do tego czasu twórz tylko interfejsy i zaślepki WireMock.
-- Kategorie archiwalne i okresy retencji. Trzymaj je w konfiguracji.
+- Kontrakt OIDC ID-users – znany od 03.11.2026 (ADR 0002, tabela): role `resource_access.<client_id>.roles`, `acr` haslo/mfa/wysoki, client credentials (`private_key_jwt`), back-channel logout z `sid`. Otwarte: ostateczny adres środowiska TEST, rejestracja klienta w portalu integratora.
+- Aplikacja lokalna do podpisu: decyzja 03.11.2026 – na razie certyfikat niekwalifikowany na kluczu YubiKey (moduł `local-signer`, ADR 0008).
+- Produkty repozytorium S3 i HSM (zakup). Kod pisz pod API S3 i PKCS#11, bez zależności od dostawcy. Dev: MinIO z Object Lock (ADR 0022), SoftHSM2.
+- API e-Doręczeń, operatora pocztowego i repertoriów SK/K/U – decyzja 03.11.2026: zaślepki WireMock są kontraktem tymczasowym (ADR 0021).
+- Kategorie archiwalne i okresy retencji – w konfiguracji (tabela edytowana w S-24 i właściwości `eskarga.archive.retention.*`, ADR 0012).

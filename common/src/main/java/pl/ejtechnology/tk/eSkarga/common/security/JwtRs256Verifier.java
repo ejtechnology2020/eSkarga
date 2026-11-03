@@ -51,8 +51,8 @@ public class JwtRs256Verifier implements TokenVerifier {
     public static JwtRs256Verifier fromSettings() {
         String issuer = Settings.value("eskarga.oidc.issuer", "");
         String jwks = Settings.value(JWKS_PROPERTY, issuer.endsWith("/") ? issuer + "protocol/openid-connect/certs" : issuer + "/.well-known/jwks.json");
-        return new JwtRs256Verifier(issuer, Settings.value(AUDIENCE_PROPERTY, "eskarga-api"), Settings.value("eskarga.oidc.rolesClaim", "roles"),
-                () -> fetchJwks(jwks));
+        String audience = Settings.value(AUDIENCE_PROPERTY, "eskarga");
+        return new JwtRs256Verifier(issuer, audience, Settings.value("eskarga.workers.rolesClaim", "resource_access." + audience + ".roles"), () -> fetchJwks(jwks));
     }
 
     public JwtRs256Verifier(String issuer, String audience, String rolesClaim, Supplier<Map<String, RSAPublicKey>> keySource) {
@@ -66,8 +66,8 @@ public class JwtRs256Verifier implements TokenVerifier {
     public static JwtRs256Verifier forClient() {
         String issuer = Settings.value("eskarga.oidc.issuer", "");
         String jwks = Settings.value(JWKS_PROPERTY, issuer.endsWith("/") ? issuer + "protocol/openid-connect/certs" : issuer + "/.well-known/jwks.json");
-        return new JwtRs256Verifier(issuer, Settings.value("eskarga.oidc.clientId", "eskarga"), Settings.value("eskarga.oidc.rolesClaim", "roles"),
-                () -> fetchJwks(jwks));
+        String clientId = Settings.value("eskarga.oidc.clientId", "eskarga");
+        return new JwtRs256Verifier(issuer, clientId, Settings.value("eskarga.oidc.rolesClaim", "resource_access." + clientId + ".roles"), () -> fetchJwks(jwks));
     }
 
     @Override
@@ -102,8 +102,8 @@ public class JwtRs256Verifier implements TokenVerifier {
             if (!issuer.equals(payload.getString("iss", null))) {
                 return Optional.empty();
             }
-            if (!audienceMatches(payload.get("aud"))) {
-                return Optional.empty();
+            if (!audienceMatches(payload.get("aud")) && !audience.equals(payload.getString("azp", null))) {
+                return Optional.empty(); // kontrakt ID-users: walidacja aud albo azp
             }
             if (payload.containsKey("exp")) {
                 Instant exp = Instant.ofEpochSecond(payload.getJsonNumber("exp").longValue());

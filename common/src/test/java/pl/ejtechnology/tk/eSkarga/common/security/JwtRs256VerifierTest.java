@@ -59,6 +59,15 @@ class JwtRs256VerifierTest {
     }
 
     @Test
+    void azpZastepujeBrakujaceAud() throws Exception {
+        long exp = Instant.now().plusSeconds(300).getEpochSecond();
+        String payload = "{\"iss\":\"https://id.example.test/realms/tk\",\"azp\":\"eskarga-api\",\"exp\":" + exp + ",\"sub\":\"w\",\"realm_access\":{\"roles\":[\"eskarga-worker\"]}}";
+        assertThat(verifier.verify(token(good, "k1", payload))).isPresent();
+        String other = payload.replace("\"azp\":\"eskarga-api\"", "\"azp\":\"inny\"");
+        assertThat(verifier.verify(token(good, "k1", other))).isEmpty();
+    }
+
+    @Test
     void odrzucaObcyKluczWydawceOdbiorceIPrzeterminowany() throws Exception {
         long exp = Instant.now().plusSeconds(300).getEpochSecond();
         assertThat(verifier.verify(token(other, "k1", payload("https://id.example.test/realms/tk", "\"eskarga-api\"", exp, "\"eskarga-worker\"")))).as("podpis innym kluczem").isEmpty();

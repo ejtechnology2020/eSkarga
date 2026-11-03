@@ -1,9 +1,0 @@
-{
-  "identities": [
-    {
-      "name": "eskarga-dev",
-      "credentials": [{"accessKey": "eskarga-dev", "secretKey": "ZMIEN-MNIE-W-ENV"}],
-      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
-    }
-  ]
-}

@@ -16,3 +16,15 @@
 ## Konsekwencje
 Dystrybucja aplikacji lokalnej i czytników na stanowiskach, polityka CORS, obsługa błędów z ekranu S-16 (brak aplikacji, brak karty,
 błędny PIN, certyfikat nieważny, przerwane połączenie, odrzucenie przy weryfikacji).
+
+
+## Decyzja 03.11.2026 – YubiKey z certyfikatem niekwalifikowanym
+
+- Sędzia podpisuje kluczem w slocie PIV YubiKey (certyfikat niekwalifikowany wystawiony przez wewnętrzne CA TK). Moduł
+  `local-signer` (JAR na stacji sędziego) otwiera token przez SunPKCS11 + `libykcs11`, nasłuchuje tylko na `127.0.0.1:17227`
+  i akceptuje CORS wyłącznie z adresu eSkargi. Przeglądarka przekazuje do niego **skrót** (krok 1 z serwera), a zwraca
+  wartość podpisu (RSA PKCS#1 v1.5 z DigestInfo albo ECDSA w DER) – dokładnie to, czego wymaga DSS `signDocument` (krok 2).
+- Podpis jest zaawansowany (PAdES-B-B, z TSA dev: B-T), nie kwalifikowany; walidacja DSS wymaga dodania CA TK do
+  `eskarga.docs.trustStore`, inaczej wynik to INDETERMINATE i ostrzeżenie w aktach.
+- Przejście na podpis kwalifikowany (karta + SDK dostawcy) nie zmienia kontraktu: inna implementacja `local-signer`.
+- Tryb `--pkcs12` istnieje tylko dla testów automatycznych.

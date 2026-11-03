@@ -12,9 +12,10 @@ docker compose -f infra/docker/compose.yml logs -f app
 | Aplikacja | http://localhost:8080/eskarga/ | przez mock OIDC (poniżej) |
 | Cockpit Operaton | http://localhost:8080/operaton/ | `demo` / `demo` (dystrybucja) |
 | Konsola WildFly | http://localhost:9990/ | `add-user.sh` w kontenerze |
-| Mock ID-users (OIDC) | http://localhost:8081/tk | dowolny login; role i `acr` z `oidc/mock-oauth2.json` |
+| ID-users dev (Keycloak, realm `id-users`) | http://localhost:8180 | konsola `admin` / `KEYCLOAK_ADMIN_PASSWORD`; użytkownicy testowi `jtestowy` (referent), `kprzykladowa` (biuro podawcze), `pfikcyjny` (sędzia, Prezes), `atestowy` (asystent), `mprzykladowska` (kierownik), `aarchiwalna`, `admin.techniczny` – hasło dev `Test1234!` |
+| S3 (MinIO) | http://localhost:9000 (API), http://localhost:9001 (konsola) | `S3_ACCESS_KEY` / `S3_SECRET_KEY`; kubełek `eskarga-akta` z Object Lock |
+| TSA dev (RFC 3161) | http://localhost:3180 | certyfikat do magazynu zaufania: `/tsa.crt` |
 | PostgreSQL | localhost:5432 | role z `.env` |
-| S3 (SeaweedFS) | http://localhost:8333 | klucze z `.env` |
 | OpenSearch | http://localhost:9200 | bez TLS (tylko dev) |
 | WireMock | http://localhost:8089/__admin | – |
 

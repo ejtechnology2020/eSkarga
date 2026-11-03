@@ -1,5 +1,24 @@
 {
-  "request": {"method": "POST", "urlPath": "/repertoria/sk/sprawy", "headers": {"Idempotency-Key": {"matches": ".+"}}},
-  "response": {"status": 201, "headers": {"Content-Type": "application/json"},
-    "jsonBody": {"sygnatura": "SK 41/26", "idempotencyKey": "{{request.headers.Idempotency-Key}}"}}
+  "request": {
+    "method": "POST",
+    "urlPath": "/repertorium-sk/sprawy",
+    "headers": {
+      "Idempotency-Key": {
+        "matches": ".+"
+      }
+    }
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "sygnatura": "SK {{randomValue length=2 type='NUMERIC'}}/26",
+      "kluczIdempotencji": "{{request.headers.Idempotency-Key}}"
+    },
+    "transformers": [
+      "response-template"
+    ]
+  }
 }

@@ -1,0 +1,80 @@
+{
+  "realm": "id-users",
+  "enabled": true,
+  "displayName": "ID-users (dev) – realm zgodny z kontraktem dla eSkargi",
+  "sslRequired": "none",
+  "accessTokenLifespan": 300,
+  "attributes": { "acr.loa.map": "{\"haslo\":1,\"mfa\":2,\"wysoki\":3}", "frontendUrl": "http://localhost:8180" },
+  "roles": {
+    "realm": [ { "name": "TK_SEDZIA", "description": "rola realmu – sędzia TK (mapowana jak role klienta)" } ],
+    "client": {
+      "eskarga": [
+        { "name": "TK_REFERENT" }, { "name": "TK_ASYSTENT" }, { "name": "TK_SEDZIA" }, { "name": "TK_PREZES" }, { "name": "TK_KIEROWNIK" },
+        { "name": "TK_BIURO_PODAWCZE" }, { "name": "TK_ARCHIWISTA" }, { "name": "TK_ADMIN" },
+        { "name": "eskarga-worker", "description": "konto serwisowe workerów – API /eskarga/api" },
+        { "name": "eskarga-docs", "description": "wywołania usługi dokumentów" }
+      ]
+    }
+  },
+  "clients": [
+    {
+      "clientId": "eskarga",
+      "name": "eSkarga – aplikacja WWW (klient poufny, code + PKCE S256)",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "dev-eskarga-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": false,
+      "redirectUris": ["http://localhost:8080/eskarga/callback", "http://app:8080/eskarga/callback"],
+      "webOrigins": ["http://localhost:8080"],
+      "defaultClientScopes": ["openid", "profile", "email", "roles", "acr"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "backchannel.logout.url": "http://app:8080/eskarga/oidc/backchannel-logout",
+        "backchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "http://localhost:8080/eskarga/+",
+        "acr.loa.map": "{\"haslo\":1,\"mfa\":2,\"wysoki\":3}"
+      },
+      "protocolMappers": [
+        { "name": "client roles", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "config": { "usermodel.clientRoleMapping.clientId": "eskarga", "claim.name": "resource_access.${client_id}.roles", "multivalued": "true", "access.token.claim": "true", "id.token.claim": "true" } },
+        { "name": "acr loa level", "protocol": "openid-connect", "protocolMapper": "oidc-acr-mapper", "config": { "id.token.claim": "true", "access.token.claim": "true" } }
+      ]
+    },
+    {
+      "clientId": "eskarga-workers",
+      "name": "eSkarga – workery integracji (client credentials)",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "dev-workers-secret",
+      "standardFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": false,
+      "defaultClientScopes": ["roles"],
+      "protocolMappers": [
+        { "name": "audience eskarga", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper",
+          "config": { "included.client.audience": "eskarga", "access.token.claim": "true" } }
+      ]
+    }
+  ],
+  "users": [
+    { "username": "jtestowy", "firstName": "Jan", "lastName": "Testowy", "email": "jtestowy@tk.example", "enabled": true, "credentials": [{ "type": "password", "value": "Test1234!", "temporary": false }],
+      "clientRoles": { "eskarga": ["TK_REFERENT"] } },
+    { "username": "kprzykladowa", "firstName": "Katarzyna", "lastName": "Przykładowa", "enabled": true, "credentials": [{ "type": "password", "value": "Test1234!", "temporary": false }],
+      "clientRoles": { "eskarga": ["TK_BIURO_PODAWCZE"] } },
+    { "username": "pfikcyjny", "firstName": "Piotr", "lastName": "Fikcyjny", "enabled": true, "credentials": [{ "type": "password", "value": "Test1234!", "temporary": false }],
+      "clientRoles": { "eskarga": ["TK_SEDZIA", "TK_PREZES"] } },
+    { "username": "atestowy", "firstName": "Adam", "lastName": "Testowy", "enabled": true, "credentials": [{ "type": "password", "value": "Test1234!", "temporary": false }],
+      "clientRoles": { "eskarga": ["TK_ASYSTENT"] } },
+    { "username": "mprzykladowska", "firstName": "Maria", "lastName": "Przykładowska", "enabled": true, "credentials": [{ "type": "password", "value": "Test1234!", "temporary": false }],
+      "clientRoles": { "eskarga": ["TK_KIEROWNIK"] } },
+    { "username": "aarchiwalna", "firstName": "Anna", "lastName": "Archiwalna", "enabled": true, "credentials": [{ "type": "password", "value": "Test1234!", "temporary": false }],
+      "clientRoles": { "eskarga": ["TK_ARCHIWISTA"] } },
+    { "username": "admin.techniczny", "firstName": "Admin", "lastName": "Techniczny", "enabled": true, "credentials": [{ "type": "password", "value": "Test1234!", "temporary": false }],
+      "clientRoles": { "eskarga": ["TK_ADMIN"] } },
+    { "username": "service-account-eskarga-workers", "enabled": true, "serviceAccountClientId": "eskarga-workers", "clientRoles": { "eskarga": ["eskarga-worker", "eskarga-docs"] } },
+    { "username": "service-account-eskarga", "enabled": true, "serviceAccountClientId": "eskarga", "clientRoles": { "eskarga": ["eskarga-docs"] } }
+  ]
+}

@@ -17,6 +17,7 @@
     <module>app</module>
     <module>docs-service</module>
     <module>workers</module>
+    <module>local-signer</module>
   </modules>
 
   <properties>

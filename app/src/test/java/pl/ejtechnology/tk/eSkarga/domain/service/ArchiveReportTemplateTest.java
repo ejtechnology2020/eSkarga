@@ -83,6 +83,31 @@ class ArchiveReportTemplateTest extends ServiceTestSupport {
     }
 
     @Test
+    void okresPrzechowywaniaJestKonfigurowalny() {
+        run(s -> {
+            var cat = s.dictionaries.updateArchiveCategory(ClosingMode.UMORZENIE, "B25", 25, "admin");
+            assertThat(cat.getRetentionYears()).isEqualTo(25);
+            assertThat(s.archive.categoryFor(ClosingMode.UMORZENIE)).map(c -> c.getCategory()).contains("B25");
+        });
+        System.setProperty("eskarga.archive.retention.UMORZENIE", "BE50:50");
+        System.setProperty("eskarga.archive.retention.COFNIECIE", "A");
+        try {
+            run(s -> {
+                assertThat(s.archive.categoryFor(ClosingMode.UMORZENIE)).get().satisfies(c -> {
+                    assertThat(c.getCategory()).isEqualTo("BE50");
+                    assertThat(c.getRetentionYears()).isEqualTo(50);
+                });
+                assertThat(s.archive.categoryFor(ClosingMode.COFNIECIE)).get().satisfies(c -> assertThat(c.getRetentionYears()).isNull());
+            });
+        } finally {
+            System.clearProperty("eskarga.archive.retention.UMORZENIE");
+            System.clearProperty("eskarga.archive.retention.COFNIECIE");
+        }
+        assertThatThrownBy(() -> run(s -> s.dictionaries.updateArchiveCategory(ClosingMode.UMORZENIE, "B10", 0, "admin"))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ArchiveService.parseOverride(ClosingMode.UMORZENIE, "zle")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void brakPdfaAlboNadanieBieguBlokujePrzekazanie() {
         CaseFile bezPdfa = closedCase(ClosingMode.BEZ_ROZPOZNANIA, LocalDate.of(2026, 10, 21), false);
         assertThatThrownBy(() -> tx(s -> s.archive.transfer(bezPdfa.getId(), "archiwista"))).isInstanceOf(IllegalStateException.class).hasMessageContaining("PDF/A");

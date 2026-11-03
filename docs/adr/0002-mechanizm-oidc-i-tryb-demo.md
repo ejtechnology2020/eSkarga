@@ -35,3 +35,19 @@
 - **Usługi techniczne:** tokeny client credentials (`ClientCredentialsTokenClient`) dla aplikacji → usługa dokumentów
   (rola `eskarga-docs`) i workerów → API aplikacji (rola `eskarga-worker`); weryfikacja RS256 kluczami JWKS wydawcy.
 - Nazwy claimów, ról technicznych i adresy pozostają konfiguracją – do potwierdzenia z zespołem ID-users.
+
+
+## Kontrakt ID-users (03.11.2026) – wartości przyjęte w konfiguracji
+
+| Element | Wartość | Gdzie |
+| --- | --- | --- |
+| Issuer dev / test | `http://localhost:8180/realms/id-users` / `https://login.test.id-users.example.com/realms/id-users` (ostateczny po uruchomieniu TEST) | `eskarga.oidc.issuer` |
+| Discovery / JWKS | `<issuer>/.well-known/openid-configuration`, `<issuer>/protocol/openid-connect/certs` | `JwtRs256Verifier.fromSettings` |
+| Klient WWW | poufny, authorization code + PKCE S256, rejestracja w portalu integratora (PU-INT-01) | `OidcSecurityConfig` |
+| Role aplikacji | `resource_access.<client_id>.roles` (zakres `roles`); role realmu `realm_access.roles`; grupy nie trafiają do tokenów | `RoleMapper`, `eskarga.oidc.rolesClaim` |
+| MFA | `acr`: `haslo` (LoA 1), `mfa` (LoA 2), `wysoki` (LoA 3); `amr` nie jest wystawiany; żądanie `acr_values=mfa` | `MfaPolicy`, `eskarga.oidc.mfaRequiredValue=mfa,wysoki`, `extraParameters` |
+| Usługi techniczne | `client_credentials`, konto serwisowe; `client_secret` albo zalecane `private_key_jwt`; token 5 min, bez refresh | `ClientCredentialsTokenClient` (`.keyStore` → `private_key_jwt`) |
+| Back-channel logout | OIDC Back-Channel Logout 1.0, `sid` wymagane, adres podawany przy rejestracji | `BackChannelLogoutServlet`, `SessionRegistry` |
+| Walidacja tokenu | `iss`, podpis JWKS, `exp`, `aud`/`azp`; `sub` jako stały identyfikator | `JwtRs256Verifier` |
+
+Dev: Keycloak 26 z realmem `id-users` (`infra/docker/keycloak/id-users-realm.json`) odtwarza ten kontrakt lokalnie.

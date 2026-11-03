@@ -26,9 +26,11 @@ import jakarta.security.enterprise.authentication.mechanism.http.openid.PromptTy
         useNonce = true,
         useSession = true,
         redirectToOriginalResource = true,
+        extraParametersExpression = "#{oidcSettings.extraParameters}",
         claimsDefinition = @ClaimsDefinition(
                 callerNameClaim = "#{oidcSettings.nameClaim}",
                 callerGroupsClaim = "#{oidcSettings.rolesClaim}"),
+        // role aplikacji są dodatkowo odczytywane z tokenu dostępu przez RoleMapper (ścieżka resource_access.<client>.roles)
         logout = @LogoutDefinition(notifyProvider = true, redirectURI = "${baseURL}/"))
 @DeclareRoles({"TK_REFERENT", "TK_ASYSTENT", "TK_SEDZIA", "TK_PREZES", "TK_KIEROWNIK", "TK_BIURO_PODAWCZE",
         "TK_ARCHIWISTA", "TK_ADMIN"})
