@@ -83,7 +83,7 @@ public class JudgeAssignmentService {
     /** Sprawy oczekujące na wyznaczenie sędziego (S-17). */
     public List<CaseFile> awaiting() {
         return em.createQuery("select v.caseFile from CaseFileVersion v where v.status in (:s) and v.version = "
-                        + "(select max(x.version) from CaseFileVersion x where x.caseFile = v.caseFile and (x.correctionStatus is null or x.correctionStatus = 'ZATWIERDZONA'))"
+                        + "(select max(x.version) from CaseFileVersion x where x.caseFile = v.caseFile and (x.correction = false or exists (select d from CorrectionDecision d where d.version = x and d.decision = 'ZATWIERDZONA')))"
                         + " order by v.caseFile.enteredOn", CaseFile.class)
                 .setParameter("s", List.of(CaseStatus.ZAREJESTROWANA, CaseStatus.OCZEKUJE_NA_WYZNACZENIE_SEDZIEGO)).getResultList();
     }
@@ -91,7 +91,7 @@ public class JudgeAssignmentService {
     /** Liczba spraw we wstępnej kontroli na sędziego (obciążenie, FR-14, FR-32). */
     public List<JudgeLoad> loads() {
         return em.createQuery("select v.judgeUserId, count(v) from CaseFileVersion v where v.judgeUserId is not null and v.status in (:s) and v.version = "
-                        + "(select max(x.version) from CaseFileVersion x where x.caseFile = v.caseFile and (x.correctionStatus is null or x.correctionStatus = 'ZATWIERDZONA'))"
+                        + "(select max(x.version) from CaseFileVersion x where x.caseFile = v.caseFile and (x.correction = false or exists (select d from CorrectionDecision d where d.version = x and d.decision = 'ZATWIERDZONA')))"
                         + " group by v.judgeUserId order by v.judgeUserId", Object[].class)
                 .setParameter("s", List.of(CaseStatus.WE_WSTEPNEJ_KONTROLI, CaseStatus.WEZWANIE_DO_USUNIECIA_BRAKOW, CaseStatus.ODMOWA_TERMIN_NA_ZAZALENIE))
                 .getResultStream().map(r -> new JudgeLoad((String) r[0], (Long) r[1])).toList();

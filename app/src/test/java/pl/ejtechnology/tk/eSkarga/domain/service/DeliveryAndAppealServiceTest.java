@@ -72,6 +72,9 @@ class DeliveryAndAppealServiceTest extends ServiceTestSupport {
             return d;
         });
         engine.getTaskService().complete(task(cf).getId(), ProcessVariables.deadline(variable, date(TODAY.plusDays(30))));
+        // worker doręczeń kończy external task; w aplikacji ekspedycja rejestruje wysyłkę (dispatch)
+        var locked = engine.getExternalTaskService().fetchAndLock(1, "test-worker").topic("doreczenie-pisma", 60_000).execute();
+        engine.getExternalTaskService().complete(locked.get(0).getId(), "test-worker");
         return doc;
     }
 

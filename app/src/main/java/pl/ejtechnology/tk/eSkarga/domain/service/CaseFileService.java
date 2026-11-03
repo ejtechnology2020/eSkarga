@@ -23,6 +23,10 @@ import pl.ejtechnology.tk.eSkarga.domain.model.CaseAssignment;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFileVersion;
+import pl.ejtechnology.tk.eSkarga.domain.model.ClosingMode;
+import pl.ejtechnology.tk.eSkarga.domain.model.ActStatus;
+import pl.ejtechnology.tk.eSkarga.domain.model.ProceduralAct;
+import pl.ejtechnology.tk.eSkarga.domain.model.ProceduralActKind;
 import pl.ejtechnology.tk.eSkarga.domain.model.FinalRuling;
 import pl.ejtechnology.tk.eSkarga.domain.model.IncomingLetter;
 import pl.ejtechnology.tk.eSkarga.domain.model.Party;
@@ -137,6 +141,27 @@ public class CaseFileService {
         reNumber(cf, v);
         em.persist(cf.addVersion(v));
         audit.record(userId, null, "zmiana statusu: " + status, null, cf.getDocket().format(), null);
+        return v;
+    }
+
+    /**
+     * Zakończenie sprawy Ts/Tw po przekazaniu do repertorium SK/K/U (UC-12, FR-19): nowa wersja ze statusem
+     * „zakończona – nadano bieg”, sposobem zakończenia i sygnaturą powiązaną; dalsze zmiany blokuje BR-08.
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public CaseFileVersion markTransferred(long caseId, String relatedDocket, String userId) {
+        CaseFile cf = require(caseId);
+        if (cf.current().getStatus().isReadOnly()) {
+            return cf.current();
+        }
+        CaseFileVersion v = cf.current().next(CaseStatus.ZAKONCZONA_NADANO_BIEG, userId);
+        reNumber(cf, v);
+        v.setClosingMode(ClosingMode.NADANIE_BIEGU);
+        v.setClosedOn(clock.today());
+        v.setRelatedDocket(relatedDocket);
+        em.persist(cf.addVersion(v));
+        em.persist(new ProceduralAct(cf, ProceduralActKind.PRZEKAZANIE, "PRZEKAZANIE_SK_K_U", clock.instant(), userId, "art. 61 ust. 1 (nadanie dalszego biegu)", ActStatus.PODPISANA));
+        audit.record(userId, null, "przekazanie do rozpoznania merytorycznego: " + relatedDocket, null, cf.getDocket().format(), null);
         return v;
     }
 

@@ -21,10 +21,12 @@ public final class ProcessVariables {
     public static final String TERMIN_ZAZALENIA = "terminZazalenia";
     public static final String ZAZALENIE_W_TERMINIE = "zazalenieWTerminie";
     public static final String ZAZALENIE_ZASADNE = "zazalenieZasadne";
+    /** Sygnatura sprawy w repertorium SK/K/U nadana po przekazaniu (UC-12) – identyfikator, nie dane osobowe. */
+    public static final String SYGNATURA_POWIAZANA = "sygnaturaPowiazana";
 
     /** Dozwolone nazwy zmiennych. Każda inna jest odrzucana przez {@link #validate(Map)}. */
     public static final Set<String> ALLOWED = Set.of(CASE_ID, SYGNATURA, SEDZIA_ID, RODZAJ_PISMA, WYNIK_KONTROLI,
-            TERMIN_BRAKOW, TERMIN_ZAZALENIA, ZAZALENIE_W_TERMINIE, ZAZALENIE_ZASADNE);
+            TERMIN_BRAKOW, TERMIN_ZAZALENIA, ZAZALENIE_W_TERMINIE, ZAZALENIE_ZASADNE, SYGNATURA_POWIAZANA);
 
     /** Rodzaj pisma po kwalifikacji (bramka „Skarga lub wniosek?”). */
     public enum RodzajPisma { SKARGA, WNIOSEK, OGOLNE }
@@ -58,6 +60,10 @@ public final class ProcessVariables {
 
     public static Map<String, Object> appealTimeliness(boolean inTime) {
         return validate(Map.of(ZAZALENIE_W_TERMINIE, inTime));
+    }
+
+    public static Map<String, Object> transferred(String relatedDocket) {
+        return validate(Map.of(SYGNATURA_POWIAZANA, relatedDocket));
     }
 
     public static Map<String, Object> appealOutcome(boolean upheld) {

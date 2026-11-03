@@ -76,8 +76,11 @@ class ModelSchemaTest {
             CaseFileVersion v2 = cf.current().next(CaseStatus.ZAREJESTROWANA, "mprzykladowski");
             v2.setReviewSubject("art. 505¹ § 1 i art. 505⁸ k.p.c.");
             v2.setJustification("Skarga wskazuje także art. 505⁸ (k. 3).");
-            v2.setApprovedBy("eszablon");
+            v2.markCorrection();
             em.persist(cf.addVersion(v2));
+            CorrectionDecision ok = new CorrectionDecision(v2, CorrectionStatus.ZATWIERDZONA, "eszablon", Instant.now(), null);
+            em.persist(ok);
+            v2.getDecisions().add(ok);
         });
 
         db.run(em -> {

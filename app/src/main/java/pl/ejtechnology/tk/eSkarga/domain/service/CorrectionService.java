@@ -13,7 +13,9 @@ import jakarta.persistence.PersistenceContext;
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFileVersion;
+import pl.ejtechnology.tk.eSkarga.domain.model.CorrectionDecision;
 import pl.ejtechnology.tk.eSkarga.domain.model.CorrectionStatus;
+import pl.ejtechnology.tk.eSkarga.web.AppClock;
 import pl.ejtechnology.tk.eSkarga.security.AppRole;
 
 /**
@@ -31,6 +33,8 @@ public class CorrectionService {
     EntityManager em;
     @Inject
     AuditService audit;
+    @Inject
+    AppClock clock;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public CaseFileVersion request(long caseId, Changes changes, String justification, String userId) {
@@ -53,7 +57,7 @@ public class CorrectionService {
             v.setRelatedDocket(changes.relatedDocket());
         }
         v.setJustification(justification);
-        v.setCorrectionStatus(CorrectionStatus.OCZEKUJE);
+        v.markCorrection();
         em.persist(cf.addVersion(v));
         audit.record(userId, AppRole.TK_REFERENT.name(), "wniosek o korektę wpisu", "v" + v.getVersion(), cf.getDocket().format(), null);
         return v;
@@ -69,8 +73,7 @@ public class CorrectionService {
         if (approverId.equals(v.getCreatedBy())) {
             throw new IllegalArgumentException("Korekty nie może zatwierdzić jej autor");
         }
-        v.setApprovedBy(approverId);
-        v.setCorrectionStatus(CorrectionStatus.ZATWIERDZONA);
+        decide(v, CorrectionStatus.ZATWIERDZONA, approverId, null);
         audit.record(approverId, AppRole.TK_KIEROWNIK.name(), "zatwierdzenie korekty", "v" + v.getVersion(), v.getCaseFile().getDocket().format(), null);
     }
 
@@ -80,9 +83,7 @@ public class CorrectionService {
             throw new IllegalArgumentException("Odrzucenie wymaga uwag kierownika");
         }
         CaseFileVersion v = pending(versionId);
-        v.setApprovedBy(approverId);
-        v.setJustification(v.getJustification() + " | Odrzucono: " + remarks);
-        v.setCorrectionStatus(CorrectionStatus.ODRZUCONA);
+        decide(v, CorrectionStatus.ODRZUCONA, approverId, remarks);
         audit.record(approverId, AppRole.TK_KIEROWNIK.name(), "odrzucenie korekty", "v" + v.getVersion(), v.getCaseFile().getDocket().format(), null);
     }
 
@@ -92,8 +93,15 @@ public class CorrectionService {
     }
 
     public List<CaseFileVersion> pendingAll() {
-        return em.createQuery("select v from CaseFileVersion v where v.correctionStatus = :s order by v.createdAt", CaseFileVersion.class)
-                .setParameter("s", CorrectionStatus.OCZEKUJE).getResultList();
+        return em.createQuery("select v from CaseFileVersion v where v.correction = true and not exists (select d from CorrectionDecision d where d.version = v) order by v.createdAt",
+                CaseFileVersion.class).getResultList();
+    }
+
+    /** Decyzja = nowy wiersz; wersja wpisu pozostaje nietknięta (NFR-01). */
+    private void decide(CaseFileVersion v, CorrectionStatus decision, String by, String remarks) {
+        CorrectionDecision d = new CorrectionDecision(v, decision, by, clock.instant(), remarks);
+        em.persist(d);
+        v.getDecisions().add(d);
     }
 
     private boolean hasPending(CaseFile cf) {

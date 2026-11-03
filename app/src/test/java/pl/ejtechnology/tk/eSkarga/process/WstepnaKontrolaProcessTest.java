@@ -77,8 +77,32 @@ class WstepnaKontrolaProcessTest {
                 .topic("przekazanie-merytoryczne", 60_000).execute();
         Assertions.assertThat(locked).hasSize(1);
         Assertions.assertThat(locked.get(0).getBusinessKey()).isEqualTo(SYG.format());
-        extension.getExternalTaskService().complete(locked.get(0).getId(), "test-worker");
+        int before = RecordingTransferListener.CALLS.size();
+        extension.getExternalTaskService().complete(locked.get(0).getId(), "test-worker", ProcessVariables.transferred("SK 9/26"));
         assertThat(pi).isEnded().hasPassed("E_Przekaz");
+        // nasłuch końca przekazania dostaje identyfikator sprawy i sygnaturę powiązaną (UC-12)
+        Assertions.assertThat(RecordingTransferListener.CALLS).hasSize(before + 1);
+        Assertions.assertThat(RecordingTransferListener.CALLS.get(before)).containsEntry(ProcessVariables.CASE_ID, 312L)
+                .containsEntry(ProcessVariables.SYGNATURA_POWIAZANA, "SK 9/26");
+    }
+
+    /** External task doręczenia (T_DoreczBraki / T_DoreczOdmowa): worker wysyła pismo i kończy zadanie bez zmiennych. */
+    private void doreczenie(ProcessInstance pi) {
+        List<LockedExternalTask> locked = extension.getExternalTaskService().fetchAndLock(1, "test-worker")
+                .topic("doreczenie-pisma", 60_000).execute();
+        Assertions.assertThat(locked).as("proces czeka na doręczenie pisma przez workera").hasSize(1);
+        Assertions.assertThat(locked.get(0).getBusinessKey()).isEqualTo(SYG.format());
+        extension.getExternalTaskService().complete(locked.get(0).getId(), "test-worker");
+    }
+
+    @Test
+    void historiaMaCzasPrzechowywaniaZKonfiguracji() {
+        int updated = HistoryTimeToLive.apply(extension.getRepositoryService(), 90);
+        Assertions.assertThat(updated).isGreaterThanOrEqualTo(1);
+        Assertions.assertThat(extension.getRepositoryService().createProcessDefinitionQuery().processDefinitionKey(KEY).latestVersion().singleResult()
+                .getHistoryTimeToLive()).isEqualTo(90);
+        Assertions.assertThat(HistoryTimeToLive.apply(extension.getRepositoryService(), 90)).isZero();
+        Assertions.assertThat(HistoryTimeToLive.configuredDays()).isEqualTo(HistoryTimeToLive.DEFAULT_DAYS);
     }
 
     private void ustawTermin(ProcessInstance pi, String variable, LocalDate end) {
@@ -120,11 +144,12 @@ class WstepnaKontrolaProcessTest {
         assertThat(pi).isWaitingAt("T_Braki");
         // domena ustawia wstępny termin (wysyłka + okres oczekiwania); timer powstaje przy bramce zdarzeniowej
         complete(task(pi), ProcessVariables.deadline(ProcessVariables.TERMIN_BRAKOW, date(2026, 11, 20)));
+        doreczenie(pi);
         assertThat(pi).isWaitingAt("EG_Braki");
         // zarejestrowano doręczenie 02.11 → termin 09.11 (korekta przestawia timer)
         ustawTermin(pi, ProcessVariables.TERMIN_BRAKOW, LocalDate.of(2026, 11, 9));
         process.supplementReceived(SYG);
-        assertThat(pi).isWaitingAt("T_Kontrola").hasPassed("T_Braki", "EG_Braki", "M_Uzup", "G_Powrot", "G_Merge");
+        assertThat(pi).isWaitingAt("T_Kontrola").hasPassed("T_Braki", "T_DoreczBraki", "EG_Braki", "M_Uzup", "G_Powrot", "G_Merge");
         complete(task(pi), ProcessVariables.reviewResult(ProcessVariables.WynikKontroli.NADANIE_BIEGU));
         complete(task(pi));
         przekazanieZewnetrzne(pi);
@@ -135,15 +160,17 @@ class WstepnaKontrolaProcessTest {
         ProcessInstance pi = startSkarga();
         complete(task(pi), ProcessVariables.reviewResult(ProcessVariables.WynikKontroli.BRAKI));
         complete(task(pi), ProcessVariables.deadline(ProcessVariables.TERMIN_BRAKOW, date(2026, 11, 9)));
+        doreczenie(pi);
         odpalTimer(pi);
         assertThat(pi).isWaitingAt("T_Kontrola").hasPassed("TM_Braki", "G_Powrot", "G_Merge");
         complete(task(pi), ProcessVariables.reviewResult(ProcessVariables.WynikKontroli.ODMOWA));
         assertThat(pi).isWaitingAt("T_Odmowa");
         complete(task(pi), ProcessVariables.deadline(ProcessVariables.TERMIN_ZAZALENIA, date(2026, 11, 30)));
+        doreczenie(pi);
         assertThat(pi).isWaitingAt("EG_Zaz");
         ustawTermin(pi, ProcessVariables.TERMIN_ZAZALENIA, LocalDate.of(2026, 12, 4));
         odpalTimer(pi); // odmowa bez zażalenia
-        assertThat(pi).isEnded().hasPassed("T_Odmowa", "EG_Zaz", "TM_Zaz", "E_Odmowa");
+        assertThat(pi).isEnded().hasPassed("T_Odmowa", "T_DoreczOdmowa", "EG_Zaz", "TM_Zaz", "E_Odmowa");
     }
 
     @Test
@@ -187,6 +214,7 @@ class WstepnaKontrolaProcessTest {
         ProcessInstance pi = startSkarga();
         complete(task(pi), ProcessVariables.reviewResult(ProcessVariables.WynikKontroli.ODMOWA));
         complete(task(pi), ProcessVariables.deadline(ProcessVariables.TERMIN_ZAZALENIA, date(2026, 11, 4)));
+        doreczenie(pi);
         assertThat(pi).isWaitingAt("EG_Zaz");
         return pi;
     }

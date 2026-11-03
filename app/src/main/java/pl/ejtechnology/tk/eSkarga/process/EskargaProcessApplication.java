@@ -41,8 +41,9 @@ public class EskargaProcessApplication extends JakartaEjbProcessApplication {
         super.undeploy();
     }
 
+    /** HTTL z konfiguracji (T-020); historia na poziomie audit – pełny ślad czynności jest w dzienniku domenowym (NFR-02). */
     @PostDeploy
     public void afterDeploy(ProcessEngine engine) {
-        // historia na poziomie audit; pełny ślad czynności jest w dzienniku domenowym (NFR-02)
+        HistoryTimeToLive.apply(engine.getRepositoryService(), HistoryTimeToLive.configuredDays());
     }
 }

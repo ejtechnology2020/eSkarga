@@ -18,6 +18,7 @@
     <class>pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.CaseFile</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.CaseFileVersion</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.CorrectionDecision</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.Court</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.Deadline</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.Delegation</class>

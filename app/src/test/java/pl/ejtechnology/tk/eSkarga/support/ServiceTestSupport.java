@@ -108,7 +108,7 @@ public abstract class ServiceTestSupport {
             this.holidays = Wiring.inject(new HolidayService(), em, audit);
             this.incoming = Wiring.inject(new IncomingRegister(), em, audit, clock);
             this.cases = Wiring.inject(new CaseFileService(), em, docketNumbers, process, audit, clock);
-            this.corrections = Wiring.inject(new CorrectionService(), em, audit);
+            this.corrections = Wiring.inject(new CorrectionService(), em, audit, clock);
             this.deliveries = Wiring.inject(new DeliveryService(), em, holidays, process, audit);
             this.appeals = Wiring.inject(new AppealService(), em, cases, delegations, process, audit, clock);
             this.judges = Wiring.inject(new JudgeAssignmentService(), em, cases, delegations, engine.getTaskService(), audit, clock);

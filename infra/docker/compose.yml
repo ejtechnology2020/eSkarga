@@ -39,6 +39,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
       oidc:
         condition: service_started
       s3:
@@ -48,6 +50,24 @@ services:
       interval: 20s
       timeout: 5s
       retries: 15
+
+  flyway:
+    # Migracje schematu repertorium rolą migracji – przed startem aplikacji (T-003, ADR 0016). Rola aplikacji nie ma praw DDL.
+    image: flyway/flyway:11-alpine
+    command: -connectRetries=30 migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-eskarga}
+      FLYWAY_USER: ${DB_USER_MIGRATION:-eskarga_migration}
+      FLYWAY_PASSWORD: ${DB_PASSWORD_MIGRATION:?ustaw w .env}
+      FLYWAY_SCHEMAS: repertorium
+      FLYWAY_DEFAULT_SCHEMA: repertorium
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql/migration,filesystem:/flyway/sql/migration-postgresql
+      FLYWAY_PLACEHOLDERS_APP_ROLE: ${DB_USER_APP:-eskarga_app}
+    volumes:
+      - ../../app/src/main/resources/db:/flyway/sql:ro
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:17-alpine

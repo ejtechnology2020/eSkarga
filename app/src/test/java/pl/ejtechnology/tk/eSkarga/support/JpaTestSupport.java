@@ -26,15 +26,26 @@ public final class JpaTestSupport implements AutoCloseable {
     }
 
     public JpaTestSupport(String dbName) {
-        this.url = "jdbc:h2:mem:" + dbName + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=YEAR,DAY,VALUE,KEY;DB_CLOSE_DELAY=-1";
-        Flyway.configure().dataSource(url, "sa", "").schemas("repertorium").defaultSchema("repertorium")
-                .locations("classpath:db/migration").load().migrate();
+        this("jdbc:h2:mem:" + dbName + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=YEAR,DAY,VALUE,KEY;DB_CLOSE_DELAY=-1",
+                "org.h2.Driver", "sa", "", true);
+    }
+
+    /**
+     * Dowolna baza (np. PostgreSQL z Testcontainers). Gdy {@code migrate} jest false, schemat musi już istnieć –
+     * tak działa aplikacja na roli bez praw DDL (ADR 0016).
+     */
+    public JpaTestSupport(String url, String driver, String user, String password, boolean migrate) {
+        this.url = url;
+        if (migrate) {
+            Flyway.configure().dataSource(url, user, password).schemas("repertorium").defaultSchema("repertorium")
+                    .locations("classpath:db/migration").load().migrate();
+        }
         Map<String, Object> props = new HashMap<>();
         props.put("jakarta.persistence.transactionType", "RESOURCE_LOCAL");
-        props.put("jakarta.persistence.jdbc.driver", "org.h2.Driver");
+        props.put("jakarta.persistence.jdbc.driver", driver);
         props.put("jakarta.persistence.jdbc.url", url);
-        props.put("jakarta.persistence.jdbc.user", "sa");
-        props.put("jakarta.persistence.jdbc.password", "");
+        props.put("jakarta.persistence.jdbc.user", user);
+        props.put("jakarta.persistence.jdbc.password", password);
         props.put("hibernate.default_schema", "repertorium");
         props.put("hibernate.hbm2ddl.auto", "validate");
         props.put("hibernate.show_sql", "false");

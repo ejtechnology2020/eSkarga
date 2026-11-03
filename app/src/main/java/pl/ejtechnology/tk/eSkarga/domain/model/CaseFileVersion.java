@@ -3,6 +3,10 @@ package pl.ejtechnology.tk.eSkarga.domain.model;
 import java.time.Instant;
 import java.time.LocalDate;
 
+import java.util.ArrayList;
+import java.util.List;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -68,13 +72,15 @@ public class CaseFileVersion {
     @Column(name = "justification", length = 2000)
     private String justification;
 
-    @Column(name = "approved_by", length = 120)
-    private String approvedBy;
+    /** Wersja z wniosku o korektę – obowiązuje dopiero po decyzji ZATWIERDZONA w {@link CorrectionDecision}. */
+    @Column(name = "is_correction", nullable = false)
+    private boolean correction;
+
+    @OneToMany(mappedBy = "version", fetch = FetchType.EAGER)
+    @OrderBy("id")
+    private List<CorrectionDecision> decisions = new ArrayList<>();
 
     /** Stan korekty (UC-22); {@code null} dla wersji tworzonych przez system przy zmianie statusu. */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "correction_status", length = 20)
-    private CorrectionStatus correctionStatus;
 
     @Column(name = "created_by", nullable = false, length = 120)
     private String createdBy;
@@ -131,14 +137,24 @@ public class CaseFileVersion {
     public void setRelatedDocket(String relatedDocket) { this.relatedDocket = relatedDocket; }
     public String getJustification() { return justification; }
     public void setJustification(String justification) { this.justification = justification; }
-    public String getApprovedBy() { return approvedBy; }
-    public void setApprovedBy(String approvedBy) { this.approvedBy = approvedBy; }
-    public CorrectionStatus getCorrectionStatus() { return correctionStatus; }
-    public void setCorrectionStatus(CorrectionStatus correctionStatus) { this.correctionStatus = correctionStatus; }
+    public boolean isCorrection() { return correction; }
+    /** Oznacza wersję jako wniosek o korektę (UC-22); decyzja przychodzi osobnym wierszem. */
+    public void markCorrection() { this.correction = true; }
+    public List<CorrectionDecision> getDecisions() { return decisions; }
+    /** Kierownik, który zatwierdził albo odrzucił korektę. */
+    public String getApprovedBy() { return decisions.isEmpty() ? null : decisions.get(decisions.size() - 1).getDecidedBy(); }
+    /** {@code null} = wersja systemowa; OCZEKUJE = korekta bez decyzji; inaczej ostatnia decyzja. */
+    public CorrectionStatus getCorrectionStatus() {
+        if (!correction) {
+            return null;
+        }
+        return decisions.isEmpty() ? CorrectionStatus.OCZEKUJE : decisions.get(decisions.size() - 1).getDecision();
+    }
 
     /** Wersja obowiązująca: systemowa albo korekta zatwierdzona przez kierownika. */
     public boolean isEffective() {
-        return correctionStatus == null || correctionStatus == CorrectionStatus.ZATWIERDZONA;
+        CorrectionStatus st = getCorrectionStatus();
+        return st == null || st == CorrectionStatus.ZATWIERDZONA;
     }
 
     public String getCreatedBy() { return createdBy; }

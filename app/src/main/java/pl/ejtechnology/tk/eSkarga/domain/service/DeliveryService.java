@@ -65,6 +65,51 @@ public class DeliveryService {
         return d;
     }
 
+    /** Przygotowanie wysyłki elektronicznej: pismo czeka na workera (D7), który potwierdzi nadanie przez API. */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public Delivery prepare(long documentId, DeliveryChannel channel, String userId) {
+        CaseDocument doc = em.find(CaseDocument.class, documentId);
+        if (doc == null) {
+            throw new IllegalArgumentException("Brak dokumentu " + documentId);
+        }
+        Party addressee = addresseeFor(doc.getCaseFile()).orElseThrow(() -> new IllegalStateException("Sprawa nie ma strony do doręczeń"));
+        Delivery d = new Delivery(doc, addressee, channel, "DOR-" + UUID.randomUUID());
+        em.persist(d);
+        audit.record(userId, "TK_REFERENT", "skierowanie do wysyłki: " + channel, doc.getTitle() + " → " + addressee.getDisplayName(), doc.getCaseFile().getDocket().format(), null);
+        return d;
+    }
+
+    /** Potwierdzenie nadania przez workera (numer nadania / identyfikator przesyłki); ponowienie z tym samym numerem jest neutralne. */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public Delivery confirmDispatch(long deliveryId, String dispatchNo, LocalDate sentOn, String actor) {
+        Delivery d = require(deliveryId);
+        if (d.getSentOn() != null) {
+            if (dispatchNo != null && !dispatchNo.equals(d.getDispatchNo())) {
+                throw new IllegalStateException("Doręczenie " + deliveryId + " ma już inny numer nadania");
+            }
+            return d;
+        }
+        d.dispatched(dispatchNo, sentOn);
+        actFor(d.getDocument()).ifPresent(a -> a.setStatus(ActStatus.WYSLANA));
+        audit.record(actor, "WORKER", "potwierdzenie nadania: " + dispatchNo, d.getDocument().getTitle(), d.getDocument().getCaseFile().getDocket().format(), null);
+        return d;
+    }
+
+    /** Zwrot przesyłki bez skutku doręczenia – wymaga decyzji referenta o ponownej wysyłce; termin nie rusza. */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void returned(long deliveryId, LocalDate on, String reason, String actor) {
+        Delivery d = require(deliveryId);
+        audit.record(actor, "WORKER", "zwrot przesyłki: " + reason + " (" + on + ")", d.getDocument().getTitle(), d.getDocument().getCaseFile().getDocket().format(), null);
+    }
+
+    public Delivery require(long deliveryId) {
+        Delivery d = em.find(Delivery.class, deliveryId);
+        if (d == null) {
+            throw new IllegalArgumentException("Brak doręczenia " + deliveryId);
+        }
+        return d;
+    }
+
     /** BR-06: doręczenia kieruje się do pełnomocnika, jeżeli został ustanowiony; inaczej do skarżącego / wnioskodawcy. */
     public Optional<Party> addresseeFor(CaseFile cf) {
         List<Party> parties = em.createQuery("select p from Party p where p.caseFile = :c order by p.id", Party.class).setParameter("c", cf).getResultList();

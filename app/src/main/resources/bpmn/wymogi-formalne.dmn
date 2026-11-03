@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:operaton="http://operaton.org/schema/1.0/dmn"
+             id="Defs_WymogiFormalne" name="Wymogi formalne skargi i wniosku" namespace="http://trybunal.gov.pl/dmn/wymogi-formalne">
+  <!-- T-024 (UC-06, FR-11, FR-13, BR-05). Treść wymogów jest projektem do potwierdzenia przez Biuro Służby Prawnej (ADR 0015).
+       Zmiana listy = nowa wersja tej tabeli, bez zmian w kodzie. -->
+  <decision id="Dec_WymogiFormalne" name="Lista kontrolna wymogów formalnych" operaton:historyTimeToLive="P180D">
+    <decisionTable id="DT_WymogiFormalne" hitPolicy="COLLECT">
+      <input id="In_Rodzaj" label="Rodzaj pisma">
+        <inputExpression id="In_Rodzaj_Expr" typeRef="string"><text>rodzajPisma</text></inputExpression>
+      </input>
+      <input id="In_Pelnomocnik" label="Pismo sporządził adwokat lub radca prawny">
+        <inputExpression id="In_Pelnomocnik_Expr" typeRef="boolean"><text>pelnomocnikZawodowy</text></inputExpression>
+      </input>
+      <input id="In_Zwolniony" label="Skarżący zwolniony z zastępstwa (art. 44 ust. 1)">
+        <inputExpression id="In_Zwolniony_Expr" typeRef="boolean"><text>skarzacyZwolniony</text></inputExpression>
+      </input>
+      <output id="Out_Kod" label="Kod" name="kod" typeRef="string" />
+      <output id="Out_Wymog" label="Wymóg" name="wymog" typeRef="string" />
+      <output id="Out_Podstawa" label="Podstawa prawna" name="podstawa" typeRef="string" />
+
+      <rule id="R_S1"><inputEntry id="R_S1_a"><text>"SKARGA"</text></inputEntry><inputEntry id="R_S1_b"><text></text></inputEntry><inputEntry id="R_S1_c"><text></text></inputEntry>
+        <outputEntry id="R_S1_o1"><text>"S-01"</text></outputEntry><outputEntry id="R_S1_o2"><text>"Określenie kwestionowanego przepisu ustawy lub innego aktu normatywnego"</text></outputEntry><outputEntry id="R_S1_o3"><text>"art. 53 ust. 1 pkt 1"</text></outputEntry></rule>
+      <rule id="R_S2"><inputEntry id="R_S2_a"><text>"SKARGA"</text></inputEntry><inputEntry id="R_S2_b"><text></text></inputEntry><inputEntry id="R_S2_c"><text></text></inputEntry>
+        <outputEntry id="R_S2_o1"><text>"S-02"</text></outputEntry><outputEntry id="R_S2_o2"><text>"Wskazanie naruszonej konstytucyjnej wolności lub prawa i sposobu naruszenia"</text></outputEntry><outputEntry id="R_S2_o3"><text>"art. 53 ust. 1 pkt 2"</text></outputEntry></rule>
+      <rule id="R_S3"><inputEntry id="R_S3_a"><text>"SKARGA"</text></inputEntry><inputEntry id="R_S3_b"><text></text></inputEntry><inputEntry id="R_S3_c"><text></text></inputEntry>
+        <outputEntry id="R_S3_o1"><text>"S-03"</text></outputEntry><outputEntry id="R_S3_o2"><text>"Uzasadnienie zarzutu niezgodności z Konstytucją z powołaniem argumentów lub dowodów"</text></outputEntry><outputEntry id="R_S3_o3"><text>"art. 53 ust. 1 pkt 3"</text></outputEntry></rule>
+      <rule id="R_S4"><inputEntry id="R_S4_a"><text>"SKARGA"</text></inputEntry><inputEntry id="R_S4_b"><text></text></inputEntry><inputEntry id="R_S4_c"><text></text></inputEntry>
+        <outputEntry id="R_S4_o1"><text>"S-04"</text></outputEntry><outputEntry id="R_S4_o2"><text>"Przedstawienie stanu faktycznego"</text></outputEntry><outputEntry id="R_S4_o3"><text>"art. 53 ust. 1 pkt 4"</text></outputEntry></rule>
+      <rule id="R_S5"><inputEntry id="R_S5_a"><text>"SKARGA"</text></inputEntry><inputEntry id="R_S5_b"><text></text></inputEntry><inputEntry id="R_S5_c"><text></text></inputEntry>
+        <outputEntry id="R_S5_o1"><text>"S-05"</text></outputEntry><outputEntry id="R_S5_o2"><text>"Udokumentowanie daty doręczenia ostatecznego orzeczenia (wyroku, decyzji lub innego rozstrzygnięcia)"</text></outputEntry><outputEntry id="R_S5_o3"><text>"art. 53 ust. 1 pkt 5"</text></outputEntry></rule>
+      <rule id="R_S6"><inputEntry id="R_S6_a"><text>"SKARGA"</text></inputEntry><inputEntry id="R_S6_b"><text></text></inputEntry><inputEntry id="R_S6_c"><text></text></inputEntry>
+        <outputEntry id="R_S6_o1"><text>"S-06"</text></outputEntry><outputEntry id="R_S6_o2"><text>"Informacja, czy od orzeczenia został wniesiony nadzwyczajny środek zaskarżenia"</text></outputEntry><outputEntry id="R_S6_o3"><text>"art. 53 ust. 1 pkt 6"</text></outputEntry></rule>
+      <rule id="R_S7"><inputEntry id="R_S7_a"><text>"SKARGA"</text></inputEntry><inputEntry id="R_S7_b"><text></text></inputEntry><inputEntry id="R_S7_c"><text></text></inputEntry>
+        <outputEntry id="R_S7_o1"><text>"S-07"</text></outputEntry><outputEntry id="R_S7_o2"><text>"Załączniki: odpis orzeczenia z datą doręczenia oraz pełnomocnictwo szczególne do sporządzenia skargi"</text></outputEntry><outputEntry id="R_S7_o3"><text>"art. 53 ust. 2"</text></outputEntry></rule>
+      <rule id="R_S8"><inputEntry id="R_S8_a"><text>"SKARGA"</text></inputEntry><inputEntry id="R_S8_b"><text></text></inputEntry><inputEntry id="R_S8_c"><text></text></inputEntry>
+        <outputEntry id="R_S8_o1"><text>"S-08"</text></outputEntry><outputEntry id="R_S8_o2"><text>"Wniesienie w terminie 3 miesięcy od doręczenia ostatecznego orzeczenia (wyliczenie pomocnicze)"</text></outputEntry><outputEntry id="R_S8_o3"><text>"art. 77 ust. 1"</text></outputEntry></rule>
+      <rule id="R_S9"><inputEntry id="R_S9_a"><text>"SKARGA"</text></inputEntry><inputEntry id="R_S9_b"><text>false</text></inputEntry><inputEntry id="R_S9_c"><text>false</text></inputEntry>
+        <outputEntry id="R_S9_o1"><text>"S-09"</text></outputEntry><outputEntry id="R_S9_o2"><text>"Skargę sporządza adwokat lub radca prawny – brak zastępstwa procesowego (BR-05)"</text></outputEntry><outputEntry id="R_S9_o3"><text>"art. 44 ust. 1"</text></outputEntry></rule>
+
+      <rule id="R_W1"><inputEntry id="R_W1_a"><text>"WNIOSEK"</text></inputEntry><inputEntry id="R_W1_b"><text></text></inputEntry><inputEntry id="R_W1_c"><text></text></inputEntry>
+        <outputEntry id="R_W1_o1"><text>"W-01"</text></outputEntry><outputEntry id="R_W1_o2"><text>"Wskazanie organu, który wydał kwestionowany akt normatywny"</text></outputEntry><outputEntry id="R_W1_o3"><text>"art. 47 ust. 1 pkt 1"</text></outputEntry></rule>
+      <rule id="R_W2"><inputEntry id="R_W2_a"><text>"WNIOSEK"</text></inputEntry><inputEntry id="R_W2_b"><text></text></inputEntry><inputEntry id="R_W2_c"><text></text></inputEntry>
+        <outputEntry id="R_W2_o1"><text>"W-02"</text></outputEntry><outputEntry id="R_W2_o2"><text>"Określenie kwestionowanego aktu normatywnego lub jego części"</text></outputEntry><outputEntry id="R_W2_o3"><text>"art. 47 ust. 1 pkt 2"</text></outputEntry></rule>
+      <rule id="R_W3"><inputEntry id="R_W3_a"><text>"WNIOSEK"</text></inputEntry><inputEntry id="R_W3_b"><text></text></inputEntry><inputEntry id="R_W3_c"><text></text></inputEntry>
+        <outputEntry id="R_W3_o1"><text>"W-03"</text></outputEntry><outputEntry id="R_W3_o2"><text>"Wskazanie wzorca kontroli i sformułowanie zarzutu niezgodności"</text></outputEntry><outputEntry id="R_W3_o3"><text>"art. 47 ust. 1 pkt 3"</text></outputEntry></rule>
+      <rule id="R_W4"><inputEntry id="R_W4_a"><text>"WNIOSEK"</text></inputEntry><inputEntry id="R_W4_b"><text></text></inputEntry><inputEntry id="R_W4_c"><text></text></inputEntry>
+        <outputEntry id="R_W4_o1"><text>"W-04"</text></outputEntry><outputEntry id="R_W4_o2"><text>"Uzasadnienie zarzutu z powołaniem argumentów lub dowodów"</text></outputEntry><outputEntry id="R_W4_o3"><text>"art. 47 ust. 2"</text></outputEntry></rule>
+      <rule id="R_W5"><inputEntry id="R_W5_a"><text>"WNIOSEK"</text></inputEntry><inputEntry id="R_W5_b"><text></text></inputEntry><inputEntry id="R_W5_c"><text></text></inputEntry>
+        <outputEntry id="R_W5_o1"><text>"W-05"</text></outputEntry><outputEntry id="R_W5_o2"><text>"Uchwała lub inne rozstrzygnięcie organu podmiotu uprawnionego z art. 191 ust. 1 pkt 3–5 Konstytucji"</text></outputEntry><outputEntry id="R_W5_o3"><text>"art. 48 ust. 1"</text></outputEntry></rule>
+      <rule id="R_W6"><inputEntry id="R_W6_a"><text>"WNIOSEK"</text></inputEntry><inputEntry id="R_W6_b"><text></text></inputEntry><inputEntry id="R_W6_c"><text></text></inputEntry>
+        <outputEntry id="R_W6_o1"><text>"W-06"</text></outputEntry><outputEntry id="R_W6_o2"><text>"Wykazanie, że kwestionowany akt dotyczy spraw objętych zakresem działania wnioskodawcy"</text></outputEntry><outputEntry id="R_W6_o3"><text>"art. 48 ust. 2 w zw. z art. 191 ust. 2 Konstytucji"</text></outputEntry></rule>
+      <rule id="R_W7"><inputEntry id="R_W7_a"><text>"WNIOSEK"</text></inputEntry><inputEntry id="R_W7_b"><text>false</text></inputEntry><inputEntry id="R_W7_c"><text></text></inputEntry>
+        <outputEntry id="R_W7_o1"><text>"W-07"</text></outputEntry><outputEntry id="R_W7_o2"><text>"Pełnomocnictwo do sporządzenia wniosku (gdy wniosek sporządził pełnomocnik)"</text></outputEntry><outputEntry id="R_W7_o3"><text>"art. 44 ust. 2"</text></outputEntry></rule>
+    </decisionTable>
+  </decision>
+</definitions>

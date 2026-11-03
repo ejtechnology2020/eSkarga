@@ -57,10 +57,28 @@
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-database-postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgresql.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <!-- Repozytorium dokumentów (API S3, bez zależności od dostawcy) -->
@@ -128,6 +146,13 @@
     <dependency>
       <groupId>org.operaton.bpm</groupId>
       <artifactId>operaton-bpm-assert</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- implementacja Jakarta JSON-P do testów API (w WildFly dostarcza ją serwer) -->
+      <groupId>org.eclipse.parsson</groupId>
+      <artifactId>parsson</artifactId>
+      <version>1.1.7</version>
       <scope>test</scope>
     </dependency>
     <dependency>
