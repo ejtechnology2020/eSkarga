@@ -1,0 +1,196 @@
+package pl.ejtechnology.tk.eSkarga.domain.service;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
+import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.domain.CaseStatus;
+import pl.ejtechnology.tk.eSkarga.domain.DocketNumber;
+import pl.ejtechnology.tk.eSkarga.domain.DocketSymbol;
+import pl.ejtechnology.tk.eSkarga.domain.DocumentKind;
+import pl.ejtechnology.tk.eSkarga.domain.LetterQualification;
+import pl.ejtechnology.tk.eSkarga.domain.docket.DocketNumberService;
+import pl.ejtechnology.tk.eSkarga.domain.model.AssignmentRole;
+import pl.ejtechnology.tk.eSkarga.domain.model.CaseAssignment;
+import pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument;
+import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
+import pl.ejtechnology.tk.eSkarga.domain.model.CaseFileVersion;
+import pl.ejtechnology.tk.eSkarga.domain.model.FinalRuling;
+import pl.ejtechnology.tk.eSkarga.domain.model.IncomingLetter;
+import pl.ejtechnology.tk.eSkarga.domain.model.Party;
+import pl.ejtechnology.tk.eSkarga.domain.model.PartyRole;
+import pl.ejtechnology.tk.eSkarga.domain.model.PowerOfAttorney;
+import pl.ejtechnology.tk.eSkarga.domain.model.PowerOfAttorneyKind;
+import pl.ejtechnology.tk.eSkarga.domain.model.Profession;
+import pl.ejtechnology.tk.eSkarga.domain.model.ReviewSubject;
+import pl.ejtechnology.tk.eSkarga.process.PreliminaryReviewProcess;
+import pl.ejtechnology.tk.eSkarga.process.ProcessVariables;
+import pl.ejtechnology.tk.eSkarga.web.AppClock;
+
+/**
+ * Założenie sprawy i dołączanie pism (T-013, UC-03, UC-04). Zatwierdzenie wpisu to jedna transakcja JTA (D1):
+ * nadanie sygnatury (BR-01) → wpis z wersją 1 → strony, przedmiot, orzeczenie → karty akt → start procesu Operaton
+ * z kluczem biznesowym = sygnatura. Błąd startu procesu wycofuje wpis i nie zużywa numeru.
+ */
+@Stateless
+public class CaseFileService {
+
+    /** Strona z karty sprawy (krok 1 S-07). */
+    public record PartyData(PartyRole role, String displayName, String deliveryAddress, String eDeliveryAddress,
+                            PowerOfAttorneyKind poaKind, Profession profession, String registryNo, LocalDate poaGrantedOn) {
+    }
+
+    /** Karta sprawy (S-07). */
+    public record CreateCaseCommand(DocketSymbol symbol, long letterId, List<PartyData> parties, String reviewAct, String reviewUnit,
+                                    String reviewStandard, String rulingAuthority, String rulingRef, LocalDate rulingIssuedOn,
+                                    LocalDate rulingDeliveredOn, boolean extraordinaryRemedy, boolean urgent, boolean anonymise,
+                                    int letterPages, String userId) {
+    }
+
+    @PersistenceContext(unitName = "repertorium")
+    EntityManager em;
+    @Inject
+    DocketNumberService docketNumbers;
+    @Inject
+    PreliminaryReviewProcess process;
+    @Inject
+    AuditService audit;
+    @Inject
+    AppClock clock;
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public CaseFile createCase(CreateCaseCommand cmd) {
+        IncomingLetter letter = em.find(IncomingLetter.class, cmd.letterId());
+        if (letter == null) {
+            throw new IllegalArgumentException("Brak pisma " + cmd.letterId());
+        }
+        if (letter.getQualification() != null) {
+            throw new IllegalStateException("Pismo " + letter.getRegisterNo() + " jest już zakwalifikowane");
+        }
+        LocalDate today = clock.today();
+        DocketNumber docket = docketNumbers.nextNumber(cmd.symbol(), today);
+        CaseFile cf = new CaseFile(docket, today, cmd.userId());
+        CaseFileVersion v1 = cf.addVersion(new CaseFileVersion(cf, 1, CaseStatus.ZAREJESTROWANA, cmd.userId()));
+        v1.setReviewSubject(cmd.reviewAct() + (cmd.reviewUnit() == null ? "" : " " + cmd.reviewUnit()));
+        v1.setReviewStandard(cmd.reviewStandard());
+        v1.setFlagUrgent(cmd.urgent());
+        v1.setFlagAnonymise(cmd.anonymise());
+        em.persist(cf);
+        for (PartyData p : cmd.parties()) {
+            Party party = new Party(cf, p.role(), p.displayName(), p.deliveryAddress(), p.eDeliveryAddress());
+            em.persist(party);
+            if (p.poaKind() != null) {
+                em.persist(new PowerOfAttorney(party, p.poaKind(), p.profession(), p.registryNo(), p.poaGrantedOn(), null));
+            }
+        }
+        em.persist(new ReviewSubject(cf, cmd.reviewAct(), cmd.reviewUnit(), cmd.reviewStandard()));
+        if (cmd.rulingAuthority() != null) {
+            em.persist(new FinalRuling(cf, cmd.rulingAuthority(), cmd.rulingRef(), cmd.rulingIssuedOn(), cmd.rulingDeliveredOn(), cmd.extraordinaryRemedy()));
+        }
+        CaseDocument pismo = new CaseDocument(cf, cmd.symbol() == DocketSymbol.TS ? "Skarga konstytucyjna" : "Wniosek", DocumentKind.PISMO_PROCESOWE,
+                letter.getFiledOn() == null ? today : letter.getFiledOn(), cmd.userId());
+        pismo.paginate(1, 1, Math.max(1, cmd.letterPages()));
+        em.persist(pismo);
+        letter.qualify(cmd.symbol() == DocketSymbol.TS ? LetterQualification.NOWA_SKARGA_TS : LetterQualification.NOWY_WNIOSEK_TW, cf);
+        em.persist(new CaseAssignment(cf, cmd.userId(), AssignmentRole.CLERK, today));
+        // start procesu w tej samej transakcji (D1); wyjątek wycofuje wpis i licznik sygnatur
+        var pi = process.start(cf.getId() == null ? 0L : cf.getId(), docket,
+                cmd.symbol() == DocketSymbol.TS ? ProcessVariables.RodzajPisma.SKARGA : ProcessVariables.RodzajPisma.WNIOSEK);
+        cf.setProcessInstanceId(pi.getId());
+        audit.record(cmd.userId(), "TK_REFERENT", "założenie sprawy", letter.getRegisterNo(), docket.format(), null);
+        return cf;
+    }
+
+    /** Pismo do sprawy w toku (UC-04): kolejne karty akt i komunikat do procesu (uzupełnienie braków albo zażalenie). */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public CaseDocument attachLetter(long caseId, long letterId, String title, int pages, boolean appeal, String userId) {
+        CaseFile cf = require(caseId);
+        if (cf.current().getStatus().isReadOnly()) {
+            throw new IllegalStateException("Sprawa " + cf.getDocket().format() + " jest tylko do odczytu (BR-08)");
+        }
+        IncomingLetter letter = em.find(IncomingLetter.class, letterId);
+        CaseDocument doc = new CaseDocument(cf, title, DocumentKind.PISMO_PROCESOWE, letter.getFiledOn(), userId);
+        int lastPage = lastPage(cf);
+        doc.paginate(1, lastPage + 1, lastPage + Math.max(1, pages));
+        em.persist(doc);
+        letter.qualify(LetterQualification.PISMO_DO_SPRAWY, cf);
+        if (!appeal) {
+            process.supplementReceived(cf.getDocket());
+        }
+        audit.record(userId, "TK_REFERENT", appeal ? "dołączenie zażalenia" : "dołączenie pisma do akt", letter.getRegisterNo(), cf.getDocket().format(), null);
+        return doc;
+    }
+
+    /** Zmiana statusu = nowa wersja wpisu (NFR-01). */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public CaseFileVersion changeStatus(long caseId, CaseStatus status, String userId) {
+        CaseFile cf = require(caseId);
+        CaseFileVersion v = cf.current().next(status, userId);
+        reNumber(cf, v);
+        em.persist(cf.addVersion(v));
+        audit.record(userId, null, "zmiana statusu: " + status, null, cf.getDocket().format(), null);
+        return v;
+    }
+
+    static void reNumber(CaseFile cf, CaseFileVersion v) {
+        // next() nadaje version+1 od wersji bieżącej; po odrzuconych korektach numer musi być wyższy od wszystkich
+        int wanted = cf.nextVersionNo();
+        if (v.getVersion() != wanted) {
+            try {
+                var f = CaseFileVersion.class.getDeclaredField("version");
+                f.setAccessible(true);
+                f.setInt(v, wanted);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+
+    public CaseFile require(long caseId) {
+        CaseFile cf = em.find(CaseFile.class, caseId);
+        if (cf == null) {
+            throw new IllegalArgumentException("Brak sprawy " + caseId);
+        }
+        return cf;
+    }
+
+    public Optional<CaseFile> byDocket(DocketNumber docket) {
+        return em.createQuery("select c from CaseFile c where c.docketSymbol = :s and c.docketNumber = :n and c.docketYear = :y", CaseFile.class)
+                .setParameter("s", docket.symbol().code()).setParameter("n", docket.number()).setParameter("y", docket.year())
+                .getResultStream().findFirst();
+    }
+
+    public List<CaseFile> inDocket(DocketSymbol symbol, int year) {
+        return em.createQuery("select c from CaseFile c where c.docketSymbol = :s and c.docketYear = :y order by c.docketNumber desc", CaseFile.class)
+                .setParameter("s", symbol.code()).setParameter("y", year).getResultList();
+    }
+
+    public List<CaseDocument> documents(CaseFile cf) {
+        return em.createQuery("select d from CaseDocument d where d.caseFile = :c order by d.volumeNo, d.pageFrom, d.id", CaseDocument.class)
+                .setParameter("c", cf).getResultList();
+    }
+
+    public List<Party> parties(CaseFile cf) {
+        return em.createQuery("select p from Party p where p.caseFile = :c order by p.id", Party.class).setParameter("c", cf).getResultList();
+    }
+
+    int lastPage(CaseFile cf) {
+        Integer max = em.createQuery("select max(d.pageTo) from CaseDocument d where d.caseFile = :c and d.internalNote = false", Integer.class)
+                .setParameter("c", cf).getSingleResult();
+        return max == null ? 0 : max;
+    }
+
+    /** Podpowiedzi powiązań (FR-05): ten sam skarżący/pełnomocnik albo przepis. */
+    public List<CaseFile> related(String partyName, String reviewAct) {
+        return em.createQuery("select distinct p.caseFile from Party p where lower(p.displayName) = lower(:n)", CaseFile.class)
+                .setParameter("n", partyName).getResultList();
+    }
+}

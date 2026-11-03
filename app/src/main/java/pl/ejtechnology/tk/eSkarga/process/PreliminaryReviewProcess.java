@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 
 import org.operaton.bpm.engine.ManagementService;
 import org.operaton.bpm.engine.RuntimeService;
+import org.operaton.bpm.engine.TaskService;
 import org.operaton.bpm.engine.runtime.Job;
 import org.operaton.bpm.engine.runtime.ProcessInstance;
 
@@ -31,18 +32,37 @@ public class PreliminaryReviewProcess {
     private RuntimeService runtimeService;
     @Inject
     private ManagementService managementService;
+    @Inject
+    private TaskService taskService;
 
-    /** Kluczem biznesowym jest sygnatura (D8). */
+    /**
+     * Kluczem biznesowym jest sygnatura (D8). Proces startuje w chwili zatwierdzenia wpisu (D1), więc zadania
+     * „Zarejestruj wpływ” i „Wpisz sprawę” są już wykonane w aplikacji – adapter domyka je od razu (ADR 0013),
+     * a instancja czeka na wyznaczenie sędziego.
+     */
     @TransactionAttribute(TransactionAttributeType.MANDATORY)
     public ProcessInstance start(long caseId, DocketNumber sygnatura, ProcessVariables.RodzajPisma rodzaj) {
-        return runtimeService.startProcessInstanceByKey(PROCESS_KEY, sygnatura.format(),
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey(PROCESS_KEY, sygnatura.format(),
                 ProcessVariables.start(caseId, sygnatura.format(), rodzaj));
+        completeIfWaiting(pi, "T_Wplyw");
+        completeIfWaiting(pi, "T_Wpis");
+        return pi;
     }
 
-    /** Pismo uzupełniające braki (UC-09) – komunikat skorelowany po sygnaturze. */
+    private void completeIfWaiting(ProcessInstance pi, String taskDefinitionKey) {
+        var task = taskService.createTaskQuery().processInstanceId(pi.getId()).taskDefinitionKey(taskDefinitionKey).singleResult();
+        if (task != null) {
+            taskService.complete(task.getId());
+        }
+    }
+
+    /**
+     * Pismo uzupełniające braki (UC-09) – komunikat skorelowany po sygnaturze. Gdy proces nie czeka na uzupełnienie
+     * (zwykłe pismo do sprawy), nic się nie dzieje i metoda zwraca {@code false}.
+     */
     @TransactionAttribute(TransactionAttributeType.MANDATORY)
-    public void supplementReceived(DocketNumber sygnatura) {
-        runtimeService.createMessageCorrelation(MSG_UZUPELNIENIE).processInstanceBusinessKey(sygnatura.format()).correlate();
+    public boolean supplementReceived(DocketNumber sygnatura) {
+        return !runtimeService.createMessageCorrelation(MSG_UZUPELNIENIE).processInstanceBusinessKey(sygnatura.format()).correlateAllWithResult().isEmpty();
     }
 
     /** Zażalenie (UC-11) – komunikat z pomocniczą oceną terminowości wyliczoną w domenie. */
@@ -68,10 +88,11 @@ public class PreliminaryReviewProcess {
     }
 
     /** Konstruktor do testów procesowych bez CDI. */
-    public static PreliminaryReviewProcess forTests(RuntimeService runtimeService, ManagementService managementService) {
+    public static PreliminaryReviewProcess forTests(RuntimeService runtimeService, ManagementService managementService, TaskService taskService) {
         PreliminaryReviewProcess p = new PreliminaryReviewProcess();
         p.runtimeService = runtimeService;
         p.managementService = managementService;
+        p.taskService = taskService;
         return p;
     }
 }

@@ -32,6 +32,16 @@ public class AuditService {
         return event;
     }
 
+    /**
+     * Odmowa dostępu lub czynności (BR-10, D4) musi zostać w dzienniku także wtedy, gdy transakcja biznesowa
+     * zostaje wycofana wyjątkiem – dlatego własna transakcja ({@code REQUIRES_NEW}).
+     */
+    @Lock(LockType.WRITE)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public AuditEvent recordDenial(String userId, String userRole, String action, String objectRef, String caseRef, String remoteAddr) {
+        return record(userId, userRole, action, objectRef, caseRef, remoteAddr);
+    }
+
     @Lock(LockType.READ)
     public AuditChainVerifier.Result verifyChain() {
         List<AuditEvent> all = em.createQuery("select e from AuditEvent e order by e.id", AuditEvent.class).getResultList();

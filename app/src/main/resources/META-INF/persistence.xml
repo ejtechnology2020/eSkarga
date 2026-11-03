@@ -7,7 +7,37 @@
        Schemat tworzy Flyway, nie JPA. -->
   <persistence-unit name="repertorium" transaction-type="JTA">
     <jta-data-source>java:jboss/datasources/EskargaDS</jta-data-source>
-    <exclude-unlisted-classes>false</exclude-unlisted-classes>
+    <class>pl.ejtechnology.tk.eSkarga.audit.AuditEvent</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.docket.DocketCounter</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.AccessRequest</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.Appeal</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.ArchiveCategory</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.ArchiveTransfer</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.Authority</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.CaseAssignment</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.CaseFile</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.CaseFileVersion</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.Court</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.Deadline</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.Delegation</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.Delivery</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.FinalRuling</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.GeneralLetter</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.Highlight</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.Holiday</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.IncomingCounter</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.IncomingLetter</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.InternalNote</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.LetterTemplate</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.LetterType</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.Party</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.PowerOfAttorney</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.ProceduralAct</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.Publication</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.ReviewStandard</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.ReviewSubject</class>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <property name="hibernate.default_schema" value="repertorium" />
       <property name="hibernate.hbm2ddl.auto" value="validate" />

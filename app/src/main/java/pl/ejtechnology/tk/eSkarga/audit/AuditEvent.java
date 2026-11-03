@@ -43,10 +43,10 @@ public class AuditEvent {
     @Column(name = "remote_addr", length = 45)
     private String remoteAddr;
 
-    @Column(name = "prev_hash", nullable = false, length = 64)
+    @Column(name = "prev_hash", nullable = false, columnDefinition = "CHAR(64)")
     private String prevHash;
 
-    @Column(name = "hash", nullable = false, length = 64)
+    @Column(name = "hash", nullable = false, columnDefinition = "CHAR(64)")
     private String hash;
 
     protected AuditEvent() {

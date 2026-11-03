@@ -69,6 +69,39 @@
       <artifactId>s3</artifactId>
     </dependency>
 
+    <!-- Wyszukiwanie (T-032): klient OpenSearch, transport Apache HttpClient 5 -->
+    <dependency>
+      <groupId>org.opensearch.client</groupId>
+      <artifactId>opensearch-java</artifactId>
+      <exclusions>
+        <!-- API Jakarta dostarcza serwer (jakarta.jakartaee-api); stare javax.annotation 1.3.5 zasłaniało jakarta.annotation -->
+        <exclusion><groupId>jakarta.annotation</groupId><artifactId>jakarta.annotation-api</artifactId></exclusion>
+        <exclusion><groupId>jakarta.json.bind</groupId><artifactId>jakarta.json.bind-api</artifactId></exclusion>
+        <exclusion><groupId>jakarta.json</groupId><artifactId>jakarta.json-api</artifactId></exclusion>
+        <exclusion><groupId>org.eclipse</groupId><artifactId>yasson</artifactId></exclusion>
+        <exclusion><groupId>org.glassfish</groupId><artifactId>jakarta.json</artifactId></exclusion>
+        <exclusion><groupId>com.google.code.findbugs</groupId><artifactId>jsr305</artifactId></exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+
+    <!-- Widżet PDF (T-034, ADR 0007) i edytor szablonów (T-026a) jako webjary serwowane przez JSF -->
+    <dependency>
+      <groupId>org.webjars.npm</groupId>
+      <artifactId>pdfjs-dist</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.webjars.npm</groupId>
+      <artifactId>codemirror</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -76,6 +109,17 @@
     </dependency>
 
     <!-- Testy -->
+    <dependency>
+      <!-- JPA w testach jednostkowych na H2 (ADR 0011); na WildFly dostawcę JPA daje serwer -->
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.operaton.bpm</groupId>
       <artifactId>operaton-bpm-junit5</artifactId>

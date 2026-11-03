@@ -50,7 +50,7 @@ class WstepnaKontrolaProcessTest {
         runtime = extension.getRuntimeService();
         tasks = extension.getTaskService();
         management = extension.getManagementService();
-        process = PreliminaryReviewProcess.forTests(runtime, management);
+        process = PreliminaryReviewProcess.forTests(runtime, management, tasks);
         ClockUtil.setCurrentTime(Date.from(LocalDate.of(2026, 10, 14).atStartOfDay(AppClock.WARSAW).toInstant()));
     }
 
