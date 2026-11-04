@@ -29,6 +29,28 @@ sonda_http() {
 }
 sonda_http || exit 1
 
+# Surowe żądanie o token (jak kcadm: grant_type=password, client_id=admin-cli). Wypisuje status i nagłówki; treść tylko
+# gdy status ≠ 200 (odpowiedź 200 zawiera token). Hasła nie wypisuje.
+urlenc() { local s=$1 i c out=""; for ((i=0; i<${#s}; i++)); do c=${s:i:1}; case $c in [a-zA-Z0-9.~_-]) out+=$c;; *) out+=$(printf '%%%02X' "'$c");; esac; done; printf '%s' "$out"; }
+sonda_token() {
+  local hostport host port linia status="" body="" n=0 dane
+  hostport=${KC_URL#*://}; hostport=${hostport%%/*}
+  host=${hostport%%:*}; port=${hostport##*:}; [[ "$host" == "$port" ]] && port=80
+  dane="grant_type=password&client_id=admin-cli&username=$(urlenc "${KEYCLOAK_ADMIN_USER:-admin}")&password=$(urlenc "${KEYCLOAK_ADMIN_PASSWORD:?brak hasła administratora}")"
+  echo "Sprawdzam endpoint tokenów: POST $KC_URL/realms/master/protocol/openid-connect/token"
+  exec 3<>"/dev/tcp/$host/$port" || return 1
+  printf 'POST /realms/master/protocol/openid-connect/token HTTP/1.1\r\nHost: %s\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: %d\r\nAccept: application/json\r\nConnection: close\r\n\r\n%s' "$hostport" "${#dane}" "$dane" >&3
+  while IFS= read -r -t 15 linia <&3 || [[ -n "$linia" ]]; do
+    linia=${linia%$'\r'}
+    if [[ -z "$status" ]]; then status=$linia; printf '  | %s\n' "$linia"; continue; fi
+    if (( n == 0 )); then [[ -z "$linia" ]] && n=1 || printf '  | %s\n' "$linia"; continue; fi
+    body+="$linia"$'\n'; [[ -n "$linia" ]] || break
+  done
+  exec 3<&- 3>&-
+  if [[ "$status" != *" 200 "* ]]; then printf '  | treść odpowiedzi:\n%s\n' "${body:0:1500}"; fi
+}
+sonda_token || true
+
 if ! "$KCADM" config credentials --server "$KC_URL" --realm master \
   --user "${KEYCLOAK_ADMIN_USER:-admin}" --password "${KEYCLOAK_ADMIN_PASSWORD:?brak hasła administratora}"; then
   cat >&2 <<KONIEC
