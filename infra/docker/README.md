@@ -59,6 +59,10 @@ docker compose up -d --build
 Konta testowe ID-users z rolami eSkargi (hasło `DEV_USER_PASSWORD` z `dev/.env` projektu id): `marek.zielinski` referent,
 `anna.nowak` biuro podawcze, `agnieszka.duda` asystent, `adam.kowal` sędzia i Prezes, `beata.sowa` kierownik, `katarzyna.lis`
 archiwista, `marcin.kaminski` administrator; mapowanie zmienia zmienna `ESKARGA_UZYTKOWNICY`.
+Skrypt najpierw sonduje `KC_URL/realms/master` i wypisuje odpowiedź; „Cannot parse the JSON” z kcadm oznacza, że pod
+adresem nie odpowiada Keycloak. Alternatywa bez przechodzenia przez hosta (ta sama sieć co ID-users, jak w jego
+własnym `keycloak-uzytkownicy`): `OIDC_PROVIDER_URI_ADMIN=http://wildfly:8180` w `.env` i
+`docker compose -f infra/docker/compose.yml --profile id-users run --rm --network id-users_default id-users-rejestracja`.
 Bez ID-users: `docker compose --profile oidc-local up -d` z `OIDC_PROVIDER_URI=http://oidc:8180/realms/id-users` (Keycloak eSkargi na :8181 – wtedy issuer też trzeba zmienić na `http://localhost:8181/realms/id-users`).
 
 ## Windows

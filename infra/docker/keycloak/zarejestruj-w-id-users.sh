@@ -8,8 +8,38 @@ REALM=id-users
 PUBLICZNY="${ESKARGA_PUBLIC_URL:-http://localhost:8082/eskarga}"
 BACKCHANNEL="${ESKARGA_BACKCHANNEL_URL:-http://host.docker.internal:8082/eskarga/oidc/backchannel-logout}"
 
-"$KCADM" config credentials --server "${KEYCLOAK_URL:-http://host.docker.internal:8180}" --realm master \
-  --user "${KEYCLOAK_ADMIN_USER:-admin}" --password "${KEYCLOAK_ADMIN_PASSWORD:?brak hasła administratora}" >/dev/null
+KC_URL="${KEYCLOAK_URL:-http://host.docker.internal:8180}"
+
+# Sonda HTTP na wbudowanym /dev/tcp (obraz nie ma curl): co odpowiada pod KC_URL/realms/master? Keycloak zwraca
+# JSON {"realm":"master",...}; HTML, przekierowanie lub brak połączenia oznaczają zły adres albo wyłączony ID-users.
+sonda_http() {
+  local hostport host port linia n=0
+  hostport=${KC_URL#*://}; hostport=${hostport%%/*}
+  host=${hostport%%:*}; port=${hostport##*:}; [[ "$host" == "$port" ]] && port=80
+  echo "Sprawdzam Keycloak ID-users: $KC_URL/realms/master"
+  if ! exec 3<>"/dev/tcp/$host/$port"; then
+    echo "Brak połączenia z $host:$port – czy środowisko ID-users działa (projekt id: docker compose -f dev/docker-compose.yml ps)?" >&2
+    return 1
+  fi
+  printf 'GET /realms/master HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n' "$hostport" >&3
+  while IFS= read -r -t 15 linia <&3; do
+    printf '  | %s\n' "${linia%$'\r'}"; n=$((n+1)); (( n >= 12 )) && break
+  done
+  exec 3<&- 3>&-
+}
+sonda_http || exit 1
+
+if ! "$KCADM" config credentials --server "$KC_URL" --realm master \
+  --user "${KEYCLOAK_ADMIN_USER:-admin}" --password "${KEYCLOAK_ADMIN_PASSWORD:?brak hasła administratora}"; then
+  cat >&2 <<KONIEC
+Logowanie kcadm do $KC_URL nie powiodło się. Odpowiedź sondy powyżej pokazuje, kto odpowiada pod tym adresem.
+- Keycloak ID-users słucha na porcie 8180 kontenera wildfly (projekt Compose id-users). Zamiast przez hosta można
+  podłączyć się do jego sieci: w .env ustaw OIDC_PROVIDER_URI_ADMIN=http://wildfly:8180 i uruchom
+  docker compose --profile id-users run --rm --network id-users_default id-users-rejestracja
+- Hasło administratora: KEYCLOAK_ADMIN_USER/KEYCLOAK_ADMIN_PASSWORD z dev/.env projektu id.
+KONIEC
+  exit 1
+fi
 
 # Tylko wbudowane polecenia Basha – obraz Keycloaka (ubi-micro) nie gwarantuje coreutils ani grep.
 pierwsza_linia() { local l=""; IFS= read -r l || true; printf '%s\n' "$l"; }
