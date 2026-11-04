@@ -27,7 +27,7 @@ jobs:
           cp -r workers/target/lib dist/workers-lib
           (cd dist && sha256sum eskarga.war eskarga-docs-service.war eskarga-workers.jar > SHA256SUMS)
       - uses: actions/upload-artifact@v4
-        with: { name: eskarga-${{ github.sha }}, path: dist, retention-days: 14 }
+        with: { name: "eskarga-${{ github.sha }}", path: dist, retention-days: 14 }
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: raporty-testow, path: "**/target/surefire-reports/*.xml", retention-days: 7 }

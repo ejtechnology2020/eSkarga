@@ -7,7 +7,6 @@ name: ${COMPOSE_PROJECT_NAME:-eskarga}
 
 # Środowisko deweloperskie eSkarga (T-002, D11). Jedno polecenie: docker compose -f infra/docker/compose.yml up -d
 # Sekrety i hasła w .env (skopiuj .env.example). Produkcja działa na VM (Ansible), nie na tych obrazach.
-name: eskarga
 
 services:
   app:
@@ -238,8 +237,6 @@ services:
       ESKARGA_DOCS_API: http://app:8080/eskarga-docs/api
       ESKARGA_EXTERNAL_BASE_URL: http://wiremock:8080
       ESKARGA_WORKER_ID: eskarga-worker-dev
-      ESKARGA_EXTERNAL_BASE_URL: http://wiremock:8080
-      ESKARGA_OIDC_TOKEN_URL: ""
     depends_on:
       app:
         condition: service_healthy

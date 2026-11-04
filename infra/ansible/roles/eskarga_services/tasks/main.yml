@@ -28,7 +28,7 @@
 - name: Workery jako usługa systemd (ADR 0010)
   ansible.builtin.template: { src: eskarga-workers.service.j2, dest: /etc/systemd/system/eskarga-workers.service }
   notify: restart workers
-- name: Konfiguracja SoftHSM2 / PKCS#11 (dev/preprod; prod: HSM sieciowy)
+- name: "Konfiguracja SoftHSM2 / PKCS#11 (dev/preprod; prod: HSM sieciowy)"
   ansible.builtin.template: { src: pkcs11.cfg.j2, dest: /etc/eskarga/pkcs11.cfg, owner: "{{ eskarga_user }}", mode: "0640" }
 - name: Włącz workery
   ansible.builtin.systemd: { name: eskarga-workers, enabled: true, state: started, daemon_reload: true }
