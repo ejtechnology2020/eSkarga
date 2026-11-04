@@ -39,7 +39,8 @@ sonda_token() {
   dane="grant_type=password&client_id=admin-cli&username=$(urlenc "${KEYCLOAK_ADMIN_USER:-admin}")&password=$(urlenc "${KEYCLOAK_ADMIN_PASSWORD:?brak hasła administratora}")"
   echo "Sprawdzam endpoint tokenów: POST $KC_URL/realms/master/protocol/openid-connect/token"
   exec 3<>"/dev/tcp/$host/$port" || return 1
-  printf 'POST /realms/master/protocol/openid-connect/token HTTP/1.1\r\nHost: %s\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: %d\r\nAccept: application/json\r\nConnection: close\r\n\r\n%s' "$hostport" "${#dane}" "$dane" >&3
+  # User-Agent jak w kcadm (Apache HttpClient) – Keycloak zapisuje z niego opis urządzenia sesji jako JSON.
+  printf 'POST /realms/master/protocol/openid-connect/token HTTP/1.1\r\nHost: %s\r\nUser-Agent: Apache-HttpClient/4.5.14 (Java/21.0.4)\r\nContent-Type: application/x-www-form-urlencoded; charset=UTF-8\r\nContent-Length: %d\r\nAccept: application/json\r\nConnection: close\r\n\r\n%s' "$hostport" "${#dane}" "$dane" >&3
   while IFS= read -r -t 15 linia <&3 || [[ -n "$linia" ]]; do
     linia=${linia%$'\r'}
     if [[ -z "$status" ]]; then status=$linia; printf '  | %s\n' "$linia"; continue; fi
@@ -51,7 +52,7 @@ sonda_token() {
 }
 sonda_token || true
 
-if ! "$KCADM" config credentials --server "$KC_URL" --realm master \
+if ! "$KCADM" -x config credentials --server "$KC_URL" --realm master \
   --user "${KEYCLOAK_ADMIN_USER:-admin}" --password "${KEYCLOAK_ADMIN_PASSWORD:?brak hasła administratora}"; then
   cat >&2 <<KONIEC
 Logowanie kcadm do $KC_URL nie powiodło się. Odpowiedź sondy powyżej pokazuje, kto odpowiada pod tym adresem.
