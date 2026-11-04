@@ -127,6 +127,8 @@ done
 # zakresy `roles` (resource_access.eskarga.roles), `acr`, `profile`, `email` jako domyślne zakresy klienta
 admin GET /client-scopes
 RESZTA=$ODP_TRESC
+# mappery wewnątrz zakresów też mają pary "id"/"name" (np. mapper `email` w zakresie `email`) – usuń tablice protocolMappers
+while [[ "$RESZTA" == *'"protocolMappers":['* ]]; do RESZTA="${RESZTA%%'"protocolMappers":['*}${RESZTA#*'"protocolMappers":['*]}"; done
 while [[ "$RESZTA" =~ \"id\":\"([^\"]+)\",\"name\":\"([^\"]+)\" ]]; do
   SID=${BASH_REMATCH[1]}; NAZWA=${BASH_REMATCH[2]}; RESZTA=${RESZTA#*"${BASH_REMATCH[0]}"}
   case $NAZWA in roles|acr|profile|email) admin PUT "/clients/$ID/default-client-scopes/$SID";; esac
