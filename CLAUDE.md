@@ -10,7 +10,8 @@ mvn -B verify                                        # build + testy jednostkowe
 mvn -B verify -Pit                                   # testy integracyjne na PostgreSQL 17 (Testcontainers)
 mvn -B verify -Psecurity                             # skan zależności OWASP Dependency-Check (CVSS ≥ 7 przerywa build)
 cp infra/docker/.env.example infra/docker/.env       # uzupełnij hasła
-docker compose -f infra/docker/compose.yml up -d --build
+docker compose -f infra/docker/compose.yml --profile id-users run --rm id-users-rejestracja   # klienci eSkargi w Keycloaku ID-users (:8180)
+docker compose -f infra/docker/compose.yml up -d --build   # aplikacja http://localhost:8082/eskarga (porty obok ID-users: PORT_* w .env)
 docker compose -f infra/docker/compose.yml logs -f app
 docker compose -f infra/docker/compose.yml --profile monitoring up -d   # Prometheus/Grafana
 cd ui-tests && npm ci && npm test                    # Playwright + axe (ESKARGA_URL)

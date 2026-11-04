@@ -9,11 +9,11 @@ docker compose -f infra/docker/compose.yml logs -f app
 
 | Usługa | Adres | Logowanie testowe |
 | --- | --- | --- |
-| Aplikacja | http://localhost:8080/eskarga/ | przez mock OIDC (poniżej) |
+| Aplikacja | http://localhost:8082/eskarga/ | logowanie przez Keycloak ID-users (:8180) |
 | Cockpit Operaton | http://localhost:8080/operaton/ | `demo` / `demo` (dystrybucja) |
 | Konsola WildFly | http://localhost:9990/ | `add-user.sh` w kontenerze |
-| ID-users dev (Keycloak, realm `id-users`) | http://localhost:8180 | konsola `admin` / `KEYCLOAK_ADMIN_PASSWORD`; użytkownicy testowi `jtestowy` (referent), `kprzykladowa` (biuro podawcze), `pfikcyjny` (sędzia, Prezes), `atestowy` (asystent), `mprzykladowska` (kierownik), `aarchiwalna`, `admin.techniczny` – hasło dev `Test1234!` |
-| S3 (MinIO) | http://localhost:9000 (API), http://localhost:9001 (konsola) | `S3_ACCESS_KEY` / `S3_SECRET_KEY`; kubełek `eskarga-akta` z Object Lock |
+| ID-users (Keycloak, realm `id-users`) | http://localhost:8180 | z projektu `id` (`dev/docker-compose.yml`); użytkownicy testowi ID-users z rolami eSkargi nadanymi przez `id-users-rejestracja` |
+| S3 (MinIO) | http://localhost:9100 (API), http://localhost:9101 (konsola) | `S3_ACCESS_KEY` / `S3_SECRET_KEY`; kubełek `eskarga-akta` z Object Lock |
 | TSA dev (RFC 3161) | http://localhost:3180 | certyfikat do magazynu zaufania: `/tsa.crt` |
 | PostgreSQL | localhost:5432 | role z `.env` |
 | OpenSearch | http://localhost:9200 | bez TLS (tylko dev) |
@@ -41,3 +41,22 @@ Demon Dockera nie był dostępny w sesji, w której powstał ten plik – konfig
   z tego Compose (uruchomionego z `--hostname-backchannel-dynamic=true`) albo `http://host.docker.internal:8180/...`, gdy ID-users
   działa na hoście (`OIDC_PROVIDER_URI` w `.env`, usługa `oidc` wtedy zbędna: `docker compose up -d --scale oidc=0`).
 - W Keycloaku na hoście realm `id-users` musi mieć klientów jak w `keycloak/id-users-realm.json` (`eskarga`, `eskarga-workers`).
+
+## Uruchomienie obok ID-users (bez konfliktów)
+
+Środowisko ID-users (repozytorium `id`, `dev/docker-compose.yml`, projekt `id-users`) zajmuje porty 8080, 9990, 8180, 9000, 5432,
+8025, 1025, 1389, 1636, 8200. eSkarga używa projektu `eskarga` i portów 8082 (aplikacja, Cockpit), 9992 (konsola WildFly), 5433
+(PostgreSQL), 9100/9101 (MinIO), 9200, 3180, 8089, 9090, 3000 – wszystkie do zmiany w `.env` (`PORT_*`).
+
+```bash
+# 1. ID-users (w katalogu projektu id)
+docker compose -f dev/docker-compose.yml --env-file dev/.env up -d --build
+# 2. eSkarga (w tym katalogu) – rejestracja klientów w Keycloaku ID-users, potem start
+docker compose --profile id-users run --rm id-users-rejestracja
+docker compose up -d --build
+```
+
+Konta testowe ID-users z rolami eSkargi (hasło `DEV_USER_PASSWORD` z `dev/.env` projektu id): `marek.zielinski` referent,
+`anna.nowak` biuro podawcze, `agnieszka.duda` asystent, `adam.kowal` sędzia i Prezes, `beata.sowa` kierownik, `katarzyna.lis`
+archiwista, `marcin.kaminski` administrator; mapowanie zmienia zmienna `ESKARGA_UZYTKOWNICY`.
+Bez ID-users: `docker compose --profile oidc-local up -d` z `OIDC_PROVIDER_URI=http://oidc:8180/realms/id-users` (Keycloak eSkargi na :8181 – wtedy issuer też trzeba zmienić na `http://localhost:8181/realms/id-users`).

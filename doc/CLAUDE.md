@@ -82,7 +82,8 @@ mvn -B verify                                   # build + testy jednostkowe i pr
 mvn -B verify -Pit                              # testy integracyjne na PostgreSQL 17 (Testcontainers): uprawnienia roli, sygnatury
 mvn -B verify -Psecurity                        # skan zależności OWASP Dependency-Check (CVSS ≥ 7 przerywa build)
 cp infra/docker/.env.example infra/docker/.env  # uzupełnij hasła przed pierwszym startem
-docker compose -f infra/docker/compose.yml up -d --build   # środowisko dev
+docker compose -f infra/docker/compose.yml --profile id-users run --rm id-users-rejestracja   # rejestracja klientów w ID-users
+docker compose -f infra/docker/compose.yml up -d --build   # środowisko dev obok ID-users: http://localhost:8082/eskarga
 docker compose -f infra/docker/compose.yml logs -f app
 docker compose -f infra/docker/compose.yml --profile monitoring up -d   # Prometheus :9090, Grafana :3000
 python3 infra/scripts/er-diagram.py             # diagram ER z encji → docs/model-er.md

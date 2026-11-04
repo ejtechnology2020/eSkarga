@@ -27,14 +27,14 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
       "fullScopeAllowed": false,
-      "redirectUris": ["http://localhost:8080/eskarga/callback", "http://app:8080/eskarga/callback"],
-      "webOrigins": ["http://localhost:8080"],
+      "redirectUris": ["http://localhost:8082/eskarga/callback", "http://app:8080/eskarga/callback"],
+      "webOrigins": ["http://localhost:8082"],
       "defaultClientScopes": ["openid", "profile", "email", "roles", "acr"],
       "attributes": {
         "pkce.code.challenge.method": "S256",
         "backchannel.logout.url": "http://app:8080/eskarga/oidc/backchannel-logout",
         "backchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "http://localhost:8080/eskarga/+",
+        "post.logout.redirect.uris": "http://localhost:8082/eskarga/+",
         "acr.loa.map": "{\"haslo\":1,\"mfa\":2,\"wysoki\":3}"
       },
       "protocolMappers": [

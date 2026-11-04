@@ -1,3 +1,10 @@
+# Środowisko deweloperskie eSkarga obok ID-users (dev/docker-compose.yml projektu „id”, projekt Compose `id-users`):
+# osobna nazwa projektu (brak kolizji nazw kontenerów, sieci i wolumenów) i porty hosta przesunięte względem ID-users
+# (ID-users zajmuje 8080, 9990, 8180, 9000, 5432, 8025, 1025, 1389, 1636, 8200). Logowanie przez Keycloak ID-users
+# (http://localhost:8180/realms/id-users); własny Keycloak tylko w profilu `oidc-local`. Rejestracja klientów eSkargi
+# w ID-users: usługa `id-users-rejestracja` (profil `id-users`). Porty do zmiany w .env (PORT_*).
+name: ${COMPOSE_PROJECT_NAME:-eskarga}
+
 # Środowisko deweloperskie eSkarga (T-002, D11). Jedno polecenie: docker compose -f infra/docker/compose.yml up -d
 # Sekrety i hasła w .env (skopiuj .env.example). Produkcja działa na VM (Ansible), nie na tych obrazach.
 name: eskarga
@@ -19,13 +26,13 @@ services:
       ESKARGA_FACES_STAGE: Development
       ESKARGA_SECURITY_MODE: ${ESKARGA_SECURITY_MODE:-oidc}
       ESKARGA_OIDC_ISSUER: http://localhost:8180/realms/id-users            # iss w tokenach = adres używany w przeglądarce
-      ESKARGA_OIDC_PROVIDERURI: ${OIDC_PROVIDER_URI:-http://oidc:8180/realms/id-users}   # discovery z kontenera; dla Keycloaka na hoście: http://host.docker.internal:8180/realms/id-users
+      ESKARGA_OIDC_PROVIDERURI: ${OIDC_PROVIDER_URI:-http://host.docker.internal:8180/realms/id-users}   # discovery z kontenera do Keycloaka ID-users na hoście; profil oidc-local: http://oidc:8180/realms/id-users
       ESKARGA_OIDC_CLIENTID: eskarga
       ESKARGA_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
       ESKARGA_OIDC_ROLESCLAIM: ${OIDC_ROLES_CLAIM:-resource_access.eskarga.roles}
       ESKARGA_OIDC_MFACLAIM: ${OIDC_MFA_CLAIM:-acr}
       ESKARGA_OIDC_MFAREQUIREDVALUE: ${OIDC_MFA_VALUE:-mfa,wysoki}
-      ESKARGA_WORKERS_JWKSURI: ${OIDC_PROVIDER_URI:-http://oidc:8180/realms/id-users}/protocol/openid-connect/certs
+      ESKARGA_WORKERS_JWKSURI: ${OIDC_PROVIDER_URI:-http://host.docker.internal:8180/realms/id-users}/protocol/openid-connect/certs
       ESKARGA_DOCS_TSAURL: http://tsa:3180/
       ESKARGA_DOCS_TRUSTSTORE: ${ESKARGA_DOCS_TRUSTSTORE:-}
       ESKARGA_S3_ENDPOINT: http://s3:9000
@@ -35,7 +42,7 @@ services:
       ESKARGA_DEMO_TODAY: ${ESKARGA_DEMO_TODAY:-}
       ESKARGA_SEARCH_URL: http://opensearch:9200
       ESKARGA_DOCS_URL: http://localhost:8080/eskarga-docs/api
-      ESKARGA_DOCS_OIDC_TOKENURL: ${OIDC_PROVIDER_URI:-http://oidc:8180/realms/id-users}/protocol/openid-connect/token
+      ESKARGA_DOCS_OIDC_TOKENURL: ${OIDC_PROVIDER_URI:-http://host.docker.internal:8180/realms/id-users}/protocol/openid-connect/token
       ESKARGA_DOCS_OIDC_CLIENTID: eskarga
       ESKARGA_DOCS_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
       ESKARGA_HSM_MODE: ${ESKARGA_HSM_MODE:-off}
@@ -44,8 +51,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "8080:8080"   # aplikacja /eskarga, Cockpit /operaton
-      - "9990:9990"   # konsola WildFly (tylko dev)
+      - "${PORT_APP:-8082}:8080"          # aplikacja /eskarga, Cockpit /operaton (ID-users zajmuje 8080)
+      - "${PORT_APP_ADMIN:-9992}:9990"    # konsola WildFly (tylko dev; ID-users zajmuje 9990)
     volumes:
       - ../../app/target/eskarga.war:/opt/operaton/standalone/deployments/eskarga.war:ro
       - ../../docs-service/target/eskarga-docs-service.war:/opt/operaton/standalone/deployments/eskarga-docs-service.war:ro
@@ -55,8 +62,6 @@ services:
         condition: service_healthy
       flyway:
         condition: service_completed_successfully
-      oidc:
-        condition: service_started
       s3-init:
         condition: service_completed_successfully
       tsa:
@@ -99,7 +104,7 @@ services:
       - db-data:/var/lib/postgresql/data
       - ./postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-init-roles.sh:ro
     ports:
-      - "5432:5432"
+      - "${PORT_DB:-5433}:5432"           # ID-users zajmuje 5432
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -114,8 +119,8 @@ services:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY:?ustaw w .env}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?ustaw w .env}
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # konsola (tylko dev)
+      - "${PORT_S3:-9100}:9000"           # S3 API (9000 zajmuje panel zdrowia Keycloaka ID-users)
+      - "${PORT_S3_CONSOLE:-9101}:9001"   # konsola MinIO (tylko dev)
     volumes:
       - s3-data:/data
     healthcheck:
@@ -147,7 +152,7 @@ services:
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     ports:
-      - "9200:9200"
+      - "${PORT_OPENSEARCH:-9200}:9200"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
       interval: 15s
@@ -167,10 +172,10 @@ services:
   oidc:
     # Keycloak zgodny z kontraktem ID-users (realm id-users, klient eskarga code+PKCE, role pod resource_access, acr haslo/mfa/wysoki,
     # back-channel logout z sid, konto serwisowe workerów). Port 8180 jak w kontrakcie dev.
-    image: quay.io/keycloak/keycloak:26.3
+    image: ${KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.7.2}
     # hostname = adres z przeglądarki (issuer); backchannel-dynamic = token/JWKS pod adresem, z którego pyta kontener (oidc:8180)
     command: ["start-dev", "--http-port=8180", "--import-realm", "--hostname=http://localhost:8180", "--hostname-backchannel-dynamic=true"]
-    profiles: ["", "oidc-local"]
+    profiles: ["oidc-local"]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?ustaw w .env}
@@ -178,15 +183,36 @@ services:
     volumes:
       - ./keycloak/id-users-realm.json:/opt/keycloak/data/import/id-users-realm.json:ro
     ports:
-      - "8180:8180"
+      - "${PORT_OIDC_LOCAL:-8181}:8180"   # tylko profil oidc-local; ID-users ma Keycloak na 8180
 
   tsa:
     # Deweloperski serwer znaczników czasu RFC 3161 (ADR 0023); prod: kwalifikowany TSA (ESKARGA_DOCS_TSAURL).
     build: ./tsa
     ports:
-      - "3180:3180"
+      - "${PORT_TSA:-3180}:3180"
     volumes:
       - tsa-data:/tsa/data
+
+  id-users-rejestracja:
+    # Rejestruje klientów eSkargi (eskarga, eskarga-workers) w Keycloaku ID-users działającym na hoście i nadaje role
+    # użytkownikom testowym ID-users (tylko dev; docelowo portal integratora PU-INT-01). Uruchomienie:
+    #   docker compose --profile id-users run --rm id-users-rejestracja
+    image: ${KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.7.2}
+    profiles: ["id-users"]
+    entrypoint: ["bash", "/skrypty/zarejestruj-w-id-users.sh"]
+    environment:
+      KEYCLOAK_URL: ${OIDC_PROVIDER_URI_ADMIN:-http://host.docker.internal:8180}
+      KEYCLOAK_ADMIN_USER: ${KEYCLOAK_ADMIN_USER:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?hasło administratora Keycloaka ID-users (dev/.env projektu id)}
+      ESKARGA_PUBLIC_URL: ${ESKARGA_PUBLIC_URL:-http://localhost:8082/eskarga}
+      ESKARGA_BACKCHANNEL_URL: ${ESKARGA_BACKCHANNEL_URL:-http://host.docker.internal:8082/eskarga/oidc/backchannel-logout}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
+      OIDC_WORKERS_SECRET: ${OIDC_WORKERS_SECRET:?ustaw w .env}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./keycloak/zarejestruj-w-id-users.sh:/skrypty/zarejestruj-w-id-users.sh:ro
+    restart: "no"
 
   wiremock:
     # Zaślepki systemów zewnętrznych: e-Doręczenia, operator pocztowy, repertoria SK/K/U (D7)
@@ -195,15 +221,17 @@ services:
     volumes:
       - ./wiremock:/home/wiremock:ro
     ports:
-      - "8089:8080"
+      - "${PORT_WIREMOCK:-8089}:8080"
 
   workers:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     build:
       context: ../..
       dockerfile: infra/docker/workers/Dockerfile
     environment:
       ESKARGA_ENGINE_REST: http://app:8080/engine-rest
-      ESKARGA_OIDC_TOKEN_URL: ${OIDC_PROVIDER_URI:-http://oidc:8180/realms/id-users}/protocol/openid-connect/token
+      ESKARGA_OIDC_TOKEN_URL: ${OIDC_PROVIDER_URI:-http://host.docker.internal:8180/realms/id-users}/protocol/openid-connect/token
       ESKARGA_OIDC_CLIENT_ID: eskarga-workers
       ESKARGA_OIDC_CLIENT_SECRET: ${OIDC_WORKERS_SECRET:?ustaw w .env}
       ESKARGA_APP_API: http://app:8080/eskarga/api
@@ -224,7 +252,7 @@ services:
       - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ../monitoring/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
     ports:
-      - "9090:9090"
+      - "${PORT_PROMETHEUS:-9090}:9090"
   grafana:
     image: grafana/grafana:11.3.0
     profiles: ["monitoring"]
@@ -233,7 +261,7 @@ services:
     volumes:
       - ../monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/eskarga.json:ro
     ports:
-      - "3000:3000"
+      - "${PORT_GRAFANA:-3000}:3000"
 
 volumes:
   db-data:
