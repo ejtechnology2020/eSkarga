@@ -11,7 +11,10 @@ BACKCHANNEL="${ESKARGA_BACKCHANNEL_URL:-http://host.docker.internal:8082/eskarga
 "$KCADM" config credentials --server "${KEYCLOAK_URL:-http://host.docker.internal:8180}" --realm master \
   --user "${KEYCLOAK_ADMIN_USER:-admin}" --password "${KEYCLOAK_ADMIN_PASSWORD:?brak hasła administratora}" >/dev/null
 
-client_id() { "$KCADM" get clients -r "$REALM" -q "clientId=$1" --fields id --format csv --noquotes | head -n1; }
+# Tylko wbudowane polecenia Basha – obraz Keycloaka (ubi-micro) nie gwarantuje coreutils ani grep.
+pierwsza_linia() { local l=""; IFS= read -r l || true; printf '%s\n' "$l"; }
+zawiera_linie() { local l; while IFS= read -r l; do [[ "$l" == "$1" ]] && return 0; done; return 1; }
+client_id() { "$KCADM" get clients -r "$REALM" -q "clientId=$1" --fields id --format csv --noquotes | pierwsza_linia; }
 
 # --- klient WWW: eskarga ---------------------------------------------------------------------------------------------
 ID=$(client_id eskarga)
@@ -47,7 +50,7 @@ fi
 "$KCADM" update "clients/$WID" -r "$REALM" -s publicClient=false -s standardFlowEnabled=false -s directAccessGrantsEnabled=false \
   -s serviceAccountsEnabled=true -s fullScopeAllowed=false -s "secret=${OIDC_WORKERS_SECRET:?brak OIDC_WORKERS_SECRET}"
 # token workerów ma aud=eskarga (aplikacja i usługa dokumentów walidują aud/azp)
-if ! "$KCADM" get "clients/$WID/protocol-mappers/models" -r "$REALM" --fields name --format csv --noquotes | grep -q "^audience eskarga$"; then
+if ! "$KCADM" get "clients/$WID/protocol-mappers/models" -r "$REALM" --fields name --format csv --noquotes | zawiera_linie "audience eskarga"; then
   "$KCADM" create "clients/$WID/protocol-mappers/models" -r "$REALM" -s "name=audience eskarga" -s protocol=openid-connect \
     -s protocolMapper=oidc-audience-mapper -s 'config."included.client.audience"=eskarga' -s 'config."access.token.claim"=true' >/dev/null
 fi
@@ -58,7 +61,7 @@ MAPA="${ESKARGA_UZYTKOWNICY:-anna.nowak:TK_BIURO_PODAWCZE;marek.zielinski:TK_REF
 IFS=';' read -ra WPISY <<<"$MAPA"
 for wpis in "${WPISY[@]}"; do
   login="${wpis%%:*}"; role="${wpis#*:}"
-  if [[ -z "$("$KCADM" get users -r "$REALM" -q "username=$login" -q exact=true --fields id --format csv --noquotes | head -n1)" ]]; then
+  if [[ -z "$("$KCADM" get users -r "$REALM" -q "username=$login" -q exact=true --fields id --format csv --noquotes | pierwsza_linia)" ]]; then
     echo "pomijam $login – brak użytkownika w ID-users"; continue
   fi
   args=(); IFS=',' read -ra lista <<<"$role"; for r in "${lista[@]}"; do args+=(--rolename "$r"); done

@@ -1,0 +1,31 @@
+# Końcówki linii: pliki uruchamiane w kontenerach Linux (skrypty montowane przez Compose, CLI WildFly, migracje)
+# zawsze z LF – Git na Windows z core.autocrlf=true zamieniałby je na CRLF ("set: pipefail\r: invalid option name").
+# Po pobraniu tej zmiany na Windows odśwież kopię roboczą: git rm --cached -r . && git reset --hard
+* text=auto
+*.sh text eol=lf
+*.cli text eol=lf
+*.sql text eol=lf
+*.j2 text eol=lf
+*.cnf text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.properties text eol=lf
+*.env.example text eol=lf
+.env.example text eol=lf
+Dockerfile text eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.pdf binary
+*.p12 binary
+*.jks binary
+*.jar binary

@@ -60,3 +60,10 @@ Konta testowe ID-users z rolami eSkargi (hasło `DEV_USER_PASSWORD` z `dev/.env`
 `anna.nowak` biuro podawcze, `agnieszka.duda` asystent, `adam.kowal` sędzia i Prezes, `beata.sowa` kierownik, `katarzyna.lis`
 archiwista, `marcin.kaminski` administrator; mapowanie zmienia zmienna `ESKARGA_UZYTKOWNICY`.
 Bez ID-users: `docker compose --profile oidc-local up -d` z `OIDC_PROVIDER_URI=http://oidc:8180/realms/id-users` (Keycloak eSkargi na :8181 – wtedy issuer też trzeba zmienić na `http://localhost:8181/realms/id-users`).
+
+## Windows
+
+Skrypty montowane do kontenerów (`infra/docker/**/*.sh`, `*.cli`) muszą mieć końcówki linii LF – wymusza to `.gitattributes`.
+Jeśli repozytorium było sklonowane wcześniej z `core.autocrlf=true` (objaw: `set: pipefail\r: invalid option name`),
+odśwież kopię roboczą: `git rm --cached -r . && git reset --hard`. Docker Desktop: włączony `host.docker.internal`
+(domyślnie) – przez ten adres aplikacja i workery łączą się z Keycloakiem ID-users na hoście (:8180).
