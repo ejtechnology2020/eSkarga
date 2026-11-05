@@ -552,6 +552,14 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
 
 ---
 
+
+### [ ] T-057 Migracja do PrimeFaces 16 (ADR 0024)
+- **Zakres:** `primefaces.version` → 16.x bez klasyfikatora `jakarta` (parent i `app/pom.xml`), PrimeFaces Extensions w wersji
+  zgodnej z 16 (potwierdzić dostępność), przejście po przewodniku migracji 15 → 16 (usunięte/przemianowane atrybuty, CSP,
+  motyw `saga`, `p:fileUpload`/`p:validateFile`, `p:dataTable`), `mvn -B verify`, `ui-tests` (Playwright + axe) na S-01…S-26,
+  ręczny test logowania, wylogowania i wysyłki plików na dev; aktualizacja ADR 0001 (D2) i `doc/CLAUDE.md`.
+- **Warunek startu:** zamknięte problemy środowiska dev z ID-users (T-004 `[~]` i pozostałe `[~]`).
+- **Zależności:** T-001, T-004. **Odwołania:** ADR 0024, D2.
 ## Notatki z realizacji
 
 Po każdym zadaniu dopisz tu jedną linię w formacie: `T-xxx – data – co zrobiono, co zostało, link do ADR`.
