@@ -156,6 +156,11 @@
   </error-page>
 
   <!-- Zasoby WEB-INF i szablony nie są dostępne bezpośrednio -->
+  <!-- Mechanizm Elytron OIDC (WEB-INF/oidc.json, ADR 0002 wariant 2): podsystem elytron-oidc-client aktywuje OIDC tylko dla wdrożenia
+       z auth-method OIDC. Strony nie mają ograniczeń bezpieczeństwa – logowanie wymusza LoginFilter (w trybie demo nieaktywny). -->
+  <login-config>
+    <auth-method>OIDC</auth-method>
+  </login-config>
   <security-constraint>
     <display-name>Szablony i dołączenia</display-name>
     <web-resource-collection>
