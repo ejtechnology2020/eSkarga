@@ -160,3 +160,8 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   `script-src` nie było (skrypty spadały na `default-src 'self'`), przeglądarka blokowała `PrimeFaces.csp.init(nonce)`
   i `core.js` wysyłał żądania bez `primefaces.nonce`. Polityka kończy się teraz `script-src 'self'` (web.xml). Wylogowanie
   odnośnikiem GET zostaje (niezależne od nonce).
+- **Uzupełnienie 05.11.2026 – rola aktywna (D4)**: użytkownik z kilkoma rolami ID-users wybiera w pasku rolę aktywną
+  (`CurrentUser.ACTIVE_ROLE_ATTR` w sesji, tylko spośród ról z tokenu); menu (`MenuBean`) i warianty ekranów idą za rolą aktywną,
+  a `ScreenAccessFilter` i `CaseAccessPolicy` sprawdzają uprawnienia po wszystkich posiadanych rolach. Przełącznik to
+  `p:selectOneMenu` z `p:ajax` (zdarzenie z nonce CSP) i przeładowaniem ekranu; wcześniej inline `onchange` był blokowany przez CSP,
+  a wybór zapisywał się tylko w demo.

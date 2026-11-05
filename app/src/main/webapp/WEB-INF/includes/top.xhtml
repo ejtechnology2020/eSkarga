@@ -33,9 +33,11 @@
     <h:panelGroup rendered="#{currentUser.multiRole}" styleClass="fld" layout="block" style="flex-direction: row; align-items: center; gap: 8px;">
       <h:outputLabel for="tb-rola" styleClass="mut" value="#{msg['app.role']}" style="font-weight: 600;" />
       <h:form id="rolaForm" prependId="false" style="display: contents;">
-        <h:selectOneMenu id="tb-rola" styleClass="e-role" value="#{currentUser.role}" onchange="this.form.submit()">
+        <!-- p:selectOneMenu + p:ajax: zdarzenie rejestrowane z nonce CSP (inline onchange był blokowany); po wyborze przeładowanie ekranu -->
+        <p:selectOneMenu id="tb-rola" styleClass="e-role" value="#{currentUser.role}">
           <f:selectItems value="#{currentUser.roles}" var="r" itemLabel="#{msg['role.'.concat(r)]}" itemValue="#{r}" />
-        </h:selectOneMenu>
+          <p:ajax listener="#{currentUser.applyRole}" />
+        </p:selectOneMenu>
       </h:form>
     </h:panelGroup>
     <h:panelGroup rendered="#{currentUser.authenticated}" layout="block" styleClass="e-user">

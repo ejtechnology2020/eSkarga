@@ -25,6 +25,8 @@ import pl.ejtechnology.tk.eSkarga.web.model.Person;
 public class CurrentUser implements Serializable {
 
     public static final String DEMO_ROLE_ATTR = "eskarga.demo.role";
+    /** Rola aktywna wybrana w górnym pasku (użytkownik z kilkoma rolami ID-users) – kontekst menu i wariantów ekranów; uprawnienia liczą się ze wszystkich ról. */
+    public static final String ACTIVE_ROLE_ATTR = "eskarga.active.role";
 
     @Inject
     private SecurityContext securityContext;
@@ -99,19 +101,41 @@ public class CurrentUser implements Serializable {
         return demoPerson().map(Person::roleLabel).orElseGet(() -> fmt.msg("role." + getRole().name()));
     }
 
-    /** Rola wiodąca do budowy menu i wariantów ekranów. */
+    /**
+     * Rola wiodąca do budowy menu i wariantów ekranów: w demo rola osoby przykładowej, w trybie ID-users rola wybrana w pasku
+     * ({@link #ACTIVE_ROLE_ATTR}, jeśli użytkownik nadal ją ma), inaczej pierwsza z posiadanych w kolejności {@link AppRole}.
+     */
     public AppRole getRole() {
         Optional<Person> p = demoPerson();
         if (p.isPresent()) {
             return p.get().role();
         }
-        for (AppRole r : AppRole.values()) {
-            if (inContainerRole(r)) {
-                return r;
-            }
+        Set<AppRole> held = getRoles();
+        Object active = request.getSession(false) == null ? null : request.getSession(false).getAttribute(ACTIVE_ROLE_ATTR);
+        if (active instanceof AppRole r && held.contains(r)) {
+            return r;
         }
-        Set<AppRole> fromToken = tokenRoles();
-        return fromToken.isEmpty() ? AppRole.TK_REFERENT : fromToken.iterator().next();
+        return held.isEmpty() ? AppRole.TK_REFERENT : held.iterator().next();
+    }
+
+    /** Wybór roli aktywnej z paska (demo: wariant ekranu; ID-users: tylko rola, którą użytkownik ma w tokenie). */
+    public void setRole(AppRole role) {
+        if (role == null) {
+            return;
+        }
+        if (settings.isDemo()) {
+            setSelectedRole(role);
+        } else if (getRoles().contains(role)) {
+            request.getSession(true).setAttribute(ACTIVE_ROLE_ATTR, role);
+        }
+    }
+
+    /** Po zmianie roli w pasku (p:ajax) – przeładowanie bieżącego ekranu, żeby menu i wariant ekranu odpowiadały nowej roli. */
+    public void applyRole(jakarta.faces.event.AjaxBehaviorEvent event) throws java.io.IOException {
+        jakarta.faces.context.FacesContext fc = jakarta.faces.context.FacesContext.getCurrentInstance();
+        String viewId = fc.getViewRoot() == null ? "/pulpit.xhtml" : fc.getViewRoot().getViewId();
+        fc.getExternalContext().redirect(fc.getExternalContext().getRequestContextPath() + viewId);
+        fc.responseComplete();
     }
 
     public Set<AppRole> getRoles() {

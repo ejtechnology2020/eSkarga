@@ -13,7 +13,11 @@
   <ui:define name="title">Użytkownicy, role i przydziały</ui:define>
   <ui:define name="eyebrow">S-22</ui:define>
   <ui:define name="subtitle">Dane osobowe i role ogólne pochodzą z ID-users i są tylko do odczytu. Tutaj zmieniasz tylko przydziały w aplikacji.</ui:define>
-  <ui:define name="actions"><button type="button" class="btn">Synchronizuj z ID-users</button></ui:define>
+  <ui:define name="actions">
+    <!-- użytkownicy pochodzą z ID-users (D4): lista pokazuje osoby z przydziałami do spraw w eSkardze; osobna synchronizacja nie istnieje -->
+    <button type="button" class="btn" jsf:rendered="#{currentUser.demo}" xmlns:jsf="jakarta.faces">Synchronizuj z ID-users</button>
+    <span class="mut" jsf:rendered="#{not currentUser.demo}" xmlns:jsf="jakarta.faces">Konta i role prowadzi ID-users; tu widać osoby z przydziałami do spraw w eSkardze.</span>
+  </ui:define>
   <ui:define name="content">
     <div class="legend"><span><tk:icon name="lock" small="true" /><b>zarządzane w ID-users</b> — szare tło, kłódka, bez edycji</span><span><tk:icon name="pen" small="true" color="#233A6B" /><b>przydział w aplikacji</b> — białe pole, edytowalne</span></div>
     <h:form id="uf">

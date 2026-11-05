@@ -52,7 +52,8 @@ public class MenuBean implements Serializable {
         AppRole role = currentUser.getRole();
         Map<Screen.Group, List<Item>> byGroup = new EnumMap<>(Screen.Group.class);
         for (Screen s : Screen.values()) {
-            if (currentUser.getRoles().stream().noneMatch(s::visibleFor)) {
+            // menu według roli aktywnej (przełącznik w pasku); dostęp do ekranu sprawdza ScreenAccessFilter po wszystkich rolach
+            if (!s.visibleFor(role)) {
                 continue;
             }
             Integer cnt = data.menuCounter(s, role);
