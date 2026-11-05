@@ -33,6 +33,7 @@ public class OperatonAuthenticationFilter implements Filter {
         try {
             if (identityService != null && isAuthenticated((HttpServletRequest) request)) {
                 List<String> groups = new ArrayList<>(TaskBoardService.groupsFor(currentUser.getRoles()));
+                groups.add(pl.ejtechnology.tk.eSkarga.process.EngineAuthorizations.APP_GROUP);   // nadania silnika dla aplikacji (EngineAuthorizations)
                 identityService.setAuthentication(currentUser.getLogin(), groups);
                 set = true;
             }

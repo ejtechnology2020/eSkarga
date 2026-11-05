@@ -165,3 +165,9 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   a `ScreenAccessFilter` i `CaseAccessPolicy` sprawdzają uprawnienia po wszystkich posiadanych rolach. Przełącznik to
   `p:selectOneMenu` z `p:ajax` (zdarzenie z nonce CSP) i przeładowaniem ekranu; wcześniej inline `onchange` był blokowany przez CSP,
   a wybór zapisywał się tylko w demo.
+- **Uzupełnienie 05.11.2026 – nadania w silniku Operaton**: przy włączonej autoryzacji silnika (`authorizationEnabled=true`,
+  potrzebnej dla Cockpitu i REST) i tożsamości ID-users ustawianej na czas żądania start procesu kończył się odmową
+  („does not have 'CREATE' permission on resource 'ProcessInstance'”). Dostęp do spraw egzekwuje domena (D4), więc każdy
+  zalogowany użytkownik eSkargi dostaje w silniku grupę `tk-eskarga` (`OperatonAuthenticationFilter`), a `EngineAuthorizations`
+  po wdrożeniu aplikacji idempotentnie nadaje tej grupie pełne uprawnienia do definicji i instancji procesów, zadań, wdrożeń,
+  historii i filtrów. Konta administracyjne Cockpitu pozostają osobnym tematem.

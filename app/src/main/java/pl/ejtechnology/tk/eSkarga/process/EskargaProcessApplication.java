@@ -45,5 +45,6 @@ public class EskargaProcessApplication extends JakartaEjbProcessApplication {
     @PostDeploy
     public void afterDeploy(ProcessEngine engine) {
         HistoryTimeToLive.apply(engine.getRepositoryService(), HistoryTimeToLive.configuredDays());
+        EngineAuthorizations.ensure(engine);
     }
 }
