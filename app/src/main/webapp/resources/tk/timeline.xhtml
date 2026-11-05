@@ -16,7 +16,7 @@
           <span class="when">#{fmt.date(e.when.toLocalDate())}<h:panelGroup rendered="#{e.showTime}"><br />#{fmt.time(e.when)}</h:panelGroup></span>
           <span class="rail" aria-hidden="true"><i class="#{e.current ? 'cur' : ''}"></i><h:panelGroup rendered="#{not st.last}"><s></s></h:panelGroup></span>
           <h:panelGroup rendered="#{empty e.href}" styleClass="what"><b>#{e.who}</b> <h:outputText value="#{e.what}" escape="false" /></h:panelGroup>
-          <a class="what" href="#{e.href}" jsf:rendered="#{not empty e.href}" xmlns:jsf="jakarta.faces"><b>#{e.who}</b> <h:outputText value="#{e.what}" escape="false" /></a>
+          <h:outputLink value="#{e.href}" styleClass="what" rendered="#{not empty e.href}"><b>#{e.who}</b> <h:outputText value="#{e.what}" escape="false" /></h:outputLink>
         </li>
       </ui:repeat>
     </ol>

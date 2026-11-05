@@ -74,8 +74,11 @@
             <div class="fld full">
               <span class="lbl">Skany</span>
               <h:panelGroup rendered="#{not rejestracja.hasFiles}">
-                <p:fileUpload mode="advanced" multiple="true" dragDropSupport="true" allowTypes="/(\.|\/)(pdf|tiff?)$/" sizeLimit="52428800"
-                              label="Wybierz pliki" uploadLabel="Prześlij" cancelLabel="#{msg['common.cancel']}" />
+                <p:fileUpload mode="advanced" multiple="true" dragDropSupport="true"
+                              label="Wybierz pliki" uploadLabel="Prześlij" cancelLabel="#{msg['common.cancel']}">
+                  <!-- PrimeFaces 15: ograniczenia typu i rozmiaru tylko przez p:validateFile (atrybuty allowTypes/sizeLimit usunięte z p:fileUpload) -->
+                  <p:validateFile allowTypes="/(\.|\/)(pdf|tiff?)$/" sizeLimit="52428800" />
+                </p:fileUpload>
                 <span class="hint">PDF lub TIFF, do 50 MB. Pismo i koperta osobno.</span>
               </h:panelGroup>
               <h:panelGroup rendered="#{rejestracja.hasFiles}" layout="block" styleClass="thumbs">

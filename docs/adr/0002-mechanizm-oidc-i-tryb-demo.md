@@ -149,3 +149,8 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   `ClientCredentialsTokenClient` (dokumenty, workery) ma `.assertionAudience` / `ESKARGA_OIDC_ASSERTION_AUDIENCE` z tego samego
   powodu. Narzędzie ID-users używa w `aud` issuera z discovery pobranego pod `localhost:8180` – stąd u niego działało.
 
+- **Uzupełnienie 05.11.2026 – wylogowanie odnośnikiem GET**: przycisk „Wyloguj” jako `h:commandLink` kończył się
+  `CSP nonce mismatch` – PrimeFaces 15 w trybie CSP dołącza `primefaces.nonce` tylko do własnych żądań (`core.js`), zwykły
+  postback Mojarry go nie niesie. Wylogowanie to teraz odnośnik GET `/wylogowanie` (`LogoutServlet`): w oidc ciasteczko
+  `ESKARGA_WYLOGOWANO` i przekierowanie na `/wyloguj` (logout-path Elytrona, zasób chroniony), w demo koniec sesji lokalnej.
+  `LogoutBean` tylko przekierowuje tam z akcji JSF.

@@ -296,11 +296,18 @@ public class JpaViewData implements ViewData {
     }
 
     @Override
+    /** „Nowe w moich sprawach”: zdarzenia audytu przypięte do sprawy; odmowy dostępu i zdarzenia techniczne (logowanie, back-channel) zostają w dzienniku audytu. */
     public List<TimelineEntry> notificationsFor(AppRole role) {
         List<TimelineEntry> out = new ArrayList<>();
-        for (AuditEvent e : audit.recent(12)) {
-            out.add(new TimelineEntry(at(e.getOccurredAt()), e.getUserId(), e.getAction() + (e.getCaseRef() == null ? "" : " · " + e.getCaseRef()),
-                    e.getCaseRef() == null ? null : Screen.S14.path() + "?sygnatura=" + e.getCaseRef().replace(" ", "%20"), false, true));
+        for (AuditEvent e : audit.recent(60)) {
+            if (e.getCaseRef() == null || e.getAction() == null || e.getAction().startsWith("odmowa")) {
+                continue;
+            }
+            out.add(new TimelineEntry(at(e.getOccurredAt()), e.getUserId(), e.getAction() + " · " + e.getCaseRef(),
+                    Screen.S14.path() + "?sygnatura=" + e.getCaseRef().replace(" ", "%20"), false, true));
+            if (out.size() == 12) {
+                break;
+            }
         }
         return out;
     }

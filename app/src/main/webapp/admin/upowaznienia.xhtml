@@ -36,7 +36,7 @@
             <div class="fld"><p:outputLabel for="u-zk" value="Zakres" indicateRequired="true" /><p:selectOneMenu id="u-zk" value="#{administracja.zakres}"><f:selectItem itemLabel="wykonywanie obowiązków Prezesa TK" itemValue="prezes" /><f:selectItem itemLabel="podpisywanie zarządzeń o wyznaczeniu sędziego" itemValue="wyznaczenie" /><f:selectItem itemLabel="kierowanie zażaleń do składu" itemValue="sklad" /></p:selectOneMenu></div>
             <div class="fld"><p:outputLabel for="u-od" value="Od" indicateRequired="true" /><p:datePicker id="u-od" value="#{administracja.od}" pattern="dd.MM.yyyy" showIcon="false" placeholder="DD.MM.RRRR" /></div>
             <div class="fld"><p:outputLabel for="u-do" value="Do" indicateRequired="true" /><p:datePicker id="u-do" value="#{administracja.doDnia}" pattern="dd.MM.yyyy" showIcon="false" placeholder="DD.MM.RRRR" /></div>
-            <div class="fld full"><span class="lbl">Akt podstawowy <span class="req" aria-hidden="true">*</span></span><p:fileUpload mode="advanced" dragDropSupport="true" allowTypes="/(\.|\/)(pdf)$/" label="Wybierz plik" uploadLabel="Prześlij" cancelLabel="#{msg['common.cancel']}" /></div>
+            <div class="fld full"><span class="lbl">Akt podstawowy <span class="req" aria-hidden="true">*</span></span><p:fileUpload mode="advanced" dragDropSupport="true" label="Wybierz plik" uploadLabel="Prześlij" cancelLabel="#{msg['common.cancel']}"><p:validateFile allowTypes="/(\.|\/)(pdf)$/" /></p:fileUpload></div>
           </div>
           <div class="row"><p:commandButton value="Zapisz upoważnienie" styleClass="p" action="#{administracja.addDelegation}" update="@form" /><button type="button" class="btn q">Wyczyść</button></div>
         </section>

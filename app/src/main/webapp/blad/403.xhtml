@@ -16,10 +16,10 @@
     <h:panelGroup rendered="#{empty param.sygnatura}">
       <h1 id="sys-h" class="h1-26">#{msg['sys.403.generalTitle']}</h1>
       <p>#{msg['sys.403.generalText']}</p>
-      <p class="hint" jsf:rendered="#{currentUser.authenticated and empty currentUser.roles}" xmlns:jsf="jakarta.faces">#{fmt.msg('sys.403.noRoles', currentUser.login)}</p>
+      <h:panelGroup layout="block" styleClass="hint" rendered="#{currentUser.authenticated and empty currentUser.roles}">#{fmt.msg('sys.403.noRoles', currentUser.login)}</h:panelGroup>
       <div class="row">
         <h:link outcome="/pulpit" styleClass="btn p" value="#{msg['sys.backToDesk']}" />
-        <h:form rendered="#{currentUser.authenticated}" style="display: contents;"><h:commandLink action="#{logoutBean.logout}" styleClass="btn" value="#{msg['app.logout']}" /></h:form>
+        <h:outputLink value="#{request.contextPath}/wylogowanie" styleClass="btn" rendered="#{currentUser.authenticated}">#{msg['app.logout']}</h:outputLink>
       </div>
     </h:panelGroup>
   </ui:define>
