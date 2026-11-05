@@ -68,7 +68,7 @@ i `eskarga-workers` rejestruje w realmie `id-users` skrypt `infra/docker/keycloa
 `id-users-rejestracja`), który nadaje też role eSkargi fikcyjnym użytkownikom testowym ID-users. Adres back-channel
 rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchannel-logout` (Keycloak ID-users ma wpis host.docker.internal).
 
-## Uzupełnienie 05.11.2026 – pierwsze logowanie na WildFly 41 (decyzja do podjęcia)
+## Uzupełnienie 05.11.2026 – pierwsze logowanie na WildFly 41 (decyzja: wariant 1, 05.11.2026)
 
 - `@OpenIdAuthenticationMechanismDefinition` realizuje Soteria (Jakarta Security), nie podsystem `elytron-oidc-client`; logowanie
   na stronach wymusza `LoginFilter` przez `HttpServletRequest.authenticate` (strony bez `security-constraint`, bo tryb demo działa
@@ -83,5 +83,7 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   2. **Mechanizm Elytron OIDC** (`oidc.json`/`auth-method OIDC`, podsystem `elytron-oidc-client`, PKCE S256 wspierane) zamiast
      Jakarta Security – zmiana odczytu tokenów (`CurrentUser`, `MfaFilter`: `OpenIdContext` → `OidcSecurityContext`), wylogowania
      i konfiguracji przez EL.
-- Do czasu decyzji rejestracja zostaje przy S256 (domyślna wartość `ESKARGA_PKCE`), więc logowanie w dev nie przechodzi;
+- **Decyzja (05.11.2026): wariant 1 w dev** – `ESKARGA_PKCE=` w `infra/docker/.env` i ponowna rejestracja; wariant 2 (Elytron OIDC
+  z PKCE S256) do zaplanowania przed środowiskiem TEST, gdzie kontrakt ID-users będzie egzekwowany. Domyślna wartość w
+  `.env.example` pozostaje `S256`;
   `/callback` z błędem dostawcy pokazuje stronę „Logowanie nie powiodło się” zamiast 404 (`OidcCallbackServlet`).

@@ -115,6 +115,7 @@ user_uid() { admin GET "/users?username=$(urlenc "$1")&exact=true"; json_pole id
 # PKCE: domyślnie wymagane S256 (kontrakt ID-users). Mechanizm OIDC Jakarta Security (Soteria) nie wysyła code_challenge
 # („Missing parameter: code_challenge_method”) – wyłączenie wymogu tylko jawną decyzją: ESKARGA_PKCE= (pusty = usunięcie atrybutu). ADR 0002.
 ID=$(utworz_klienta eskarga "eSkarga – Repertorium Ts/Tw")
+if [[ -n "${ESKARGA_PKCE-S256}" ]]; then echo "PKCE klienta eskarga: wymagane ${ESKARGA_PKCE-S256}"; else echo "PKCE klienta eskarga: bez wymogu (ESKARGA_PKCE puste – decyzja z 05.11.2026, ADR 0002)"; fi
 admin PUT "/clients/$ID" "{
   \"clientId\":\"eskarga\",\"enabled\":true,\"publicClient\":false,\"standardFlowEnabled\":true,\"directAccessGrantsEnabled\":false,
   \"serviceAccountsEnabled\":true,\"fullScopeAllowed\":false,\"secret\":$(json_str "${OIDC_CLIENT_SECRET:?brak OIDC_CLIENT_SECRET}"),
