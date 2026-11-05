@@ -95,8 +95,9 @@ Wait-Usluga 'flyway' 300 -Jednorazowa
 Wait-Usluga 's3' 180
 Wait-Usluga 's3-init' 180 -Jednorazowa
 Wait-Usluga 'opensearch' 300
-Wait-Usluga 'app' 900
-Wait-Http 'Aplikacja eSkarga' ("http://localhost:{0}/eskarga/health" -f (Get-Ustawienie 'PORT_APP' '8082')) 300
+Wait-Usluga 'app' 900 -Uruchomiona
+Write-Host '    (start WildFly z Operatonem i wdrożenie WAR-ów trwa zwykle 1–2 minuty)'
+Wait-Http 'Aplikacja eSkarga' ("http://localhost:{0}/eskarga/health" -f (Get-Ustawienie 'PORT_APP' '8082')) 600
 Wait-Usluga 'workers' 120 -Uruchomiona
 
 Show-Adresy

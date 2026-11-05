@@ -20,7 +20,7 @@ curl -fsSL "$NEXUS/operaton/operaton-bpm-wildfly-${version}.tar.gz.sha256" -o "$
 mkdir -p "$tmp/dist" && tar -xzf "$tmp/dist.tar.gz" -C "$tmp/dist"
 [[ -e "$target" ]] && { echo "katalog $target już istnieje"; exit 1; }
 mv "$tmp/dist"/server/wildfly-* "$target"
-rm -f "$target"/standalone/deployments/operaton-example-invoice-*.war
+rm -rf "$target"/standalone/deployments/operaton-example-invoice-*.war "$target"/standalone/deployments/operaton-welcome.war*
 # skrypty upgrade schematu operaton (między kolejnymi wersjami) – właścicielem schematu jest rola aplikacji
 current=$(readlink -f "$HOME_DIR" | sed 's#.*operaton-##')
 for f in "$tmp/dist"/sql/upgrade/postgres_engine_${current}_to_*.sql "$tmp/dist"/sql/upgrade/postgres_identity_${current}_to_*.sql; do

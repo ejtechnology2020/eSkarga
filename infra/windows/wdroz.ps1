@@ -22,7 +22,7 @@ if (-not $TylkoApp) {
   Write-Krok 'Przebudowuję i uruchamiam workery'
   if ((Invoke-Compose 'up', '-d', '--build', 'workers') -ne 0) { exit 1 }
 }
-Wait-Usluga 'app' 900
-Wait-Http 'Aplikacja eSkarga' ("http://localhost:{0}/eskarga/health" -f (Get-Ustawienie 'PORT_APP' '8082')) 300
+Write-Host '    (start WildFly z Operatonem i wdrożenie WAR-ów trwa zwykle 1–2 minuty)'
+Wait-Http 'Aplikacja eSkarga' ("http://localhost:{0}/eskarga/health" -f (Get-Ustawienie 'PORT_APP' '8082')) 600
 if (-not $TylkoApp) { Wait-Usluga 'workers' 120 -Uruchomiona }
 Show-Adresy

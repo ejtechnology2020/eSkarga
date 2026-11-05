@@ -52,7 +52,7 @@
     <param-value>native</param-value>
   </context-param>
 
-  <!-- Filtry w ustalonej kolejności: nagłówki bezpieczeństwa → wybór roli demo → autoryzacja ekranu -->
+  <!-- Filtry w ustalonej kolejności: nagłówki bezpieczeństwa → wybór roli demo → logowanie ID-users (oidc) → MFA → autoryzacja ekranu -->
   <filter>
     <filter-name>securityHeaders</filter-name>
     <filter-class>pl.ejtechnology.tk.eSkarga.security.SecurityHeadersFilter</filter-class>
@@ -60,6 +60,10 @@
   <filter>
     <filter-name>demoRole</filter-name>
     <filter-class>pl.ejtechnology.tk.eSkarga.security.DemoRoleFilter</filter-class>
+  </filter>
+  <filter>
+    <filter-name>login</filter-name>
+    <filter-class>pl.ejtechnology.tk.eSkarga.security.LoginFilter</filter-class>
   </filter>
   <filter>
     <filter-name>mfa</filter-name>
@@ -79,6 +83,10 @@
   </filter-mapping>
   <filter-mapping>
     <filter-name>demoRole</filter-name>
+    <url-pattern>*.xhtml</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>login</filter-name>
     <url-pattern>*.xhtml</url-pattern>
   </filter-mapping>
   <filter-mapping>

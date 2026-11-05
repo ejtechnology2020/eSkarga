@@ -66,7 +66,8 @@ public class CurrentUser implements Serializable {
     }
 
     public Principal getPrincipal() {
-        return securityContext == null ? null : securityContext.getCallerPrincipal();
+        Principal p = securityContext == null ? null : securityContext.getCallerPrincipal();
+        return LoginFilter.authenticated(p) ? p : null;   // anonimowy podmiot kontenera (Elytron „anonymous”) to brak logowania
     }
 
     public String getLogin() {

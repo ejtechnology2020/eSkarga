@@ -19,8 +19,8 @@
 - name: Serwer WildFly z dystrybucji jako wildfly_home
   ansible.builtin.shell: "mv /opt/operaton-dist-{{ operaton_version }}/server/wildfly-* {{ wildfly_home }}"
   args: { creates: "{{ wildfly_home }}/bin/standalone.sh" }
-- name: Bez przykładowej aplikacji procesowej (użytkownicy demo)
-  ansible.builtin.shell: "rm -f {{ wildfly_home }}/standalone/deployments/operaton-example-invoice-*.war"
+- name: Bez przykładowej aplikacji procesowej (użytkownicy demo) i aplikacji powitalnej pod "/"
+  ansible.builtin.shell: "rm -rf {{ wildfly_home }}/standalone/deployments/operaton-example-invoice-*.war {{ wildfly_home }}/standalone/deployments/operaton-welcome.war*"
   changed_when: false
 - name: Sterownik PostgreSQL jako moduł
   ansible.builtin.template: { src: module-postgresql.xml.j2, dest: "{{ wildfly_home }}/modules/org/postgresql/main/module.xml", owner: "{{ eskarga_user }}" }

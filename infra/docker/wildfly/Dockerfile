@@ -14,8 +14,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
  && mkdir -p /tmp/operaton && tar -xzf /tmp/operaton.tar.gz -C /tmp/operaton \
  && mv /tmp/operaton/server/wildfly-* ${OPERATON_HOME} \
  && rm -rf /tmp/operaton /tmp/operaton.tar.gz \
- # przykładowa aplikacja procesowa (użytkownicy demo, dane testowe) nie ma czego szukać w środowisku eSkargi
+ # bez przykładowej aplikacji procesowej (użytkownicy demo, dane testowe) i aplikacji powitalnej pod kontekstem głównym "/"
  && rm -f ${OPERATON_HOME}/standalone/deployments/operaton-example-invoice-*.war \
+ && rm -rf ${OPERATON_HOME}/standalone/deployments/operaton-welcome.war ${OPERATON_HOME}/standalone/deployments/operaton-welcome.war.dodeploy \
  # sterownik PostgreSQL jako moduł WildFly (eskarga-datasource.cli: jdbc-driver=postgresql, moduł org.postgresql)
  && mkdir -p ${OPERATON_HOME}/modules/system/layers/base/org/postgresql/main \
  && curl -fsSL -o ${OPERATON_HOME}/modules/system/layers/base/org/postgresql/main/postgresql.jar \
