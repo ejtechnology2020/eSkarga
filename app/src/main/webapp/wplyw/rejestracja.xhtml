@@ -86,7 +86,7 @@
                   <ui:repeat value="#{rejestracja.pliki}" var="pl" varStatus="st">
                     <div class="thumb"><span class="pv" aria-hidden="true"><i class="w6" style="align-self: flex-end;"></i><i class="h"></i><i></i><i></i><i class="w8"></i><i></i></span>
                       <b>#{pl.nazwa}</b><span class="mut">#{pl.rozmiarTekst()}</span>
-                      <p:commandButton value="Usuń" action="#{rejestracja.usunPlik(st.index)}" update="skany" process="@this" styleClass="s q" rendered="#{not rejestracja.zarejestrowano}" />
+                      <p:commandButton value="Usuń" action="#{rejestracja.usunPlik(st.index)}" update="@form:skany" process="@this" styleClass="s q" rendered="#{not rejestracja.zarejestrowano}" />
                     </div>
                   </ui:repeat>
                 </h:panelGroup>

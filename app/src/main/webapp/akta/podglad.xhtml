@@ -91,7 +91,7 @@
                   <span class="when">#{empty pg.data ? '—' : fmt.date(pg.data)}</span>
                   <span class="rail" aria-hidden="true"><h:panelGroup rendered="#{not pg.niejawny}"><i class="#{pg.nowy ? 'cur' : ''}"></i><s jsf:rendered="#{not st.last}"></s></h:panelGroup><h:panelGroup rendered="#{pg.niejawny}"><tk:icon name="lock" small="true" color="#3E4553" /></h:panelGroup></span>
                   <span class="what">
-                    <p:commandLink action="#{akta.open(pg)}" update="akta-body" styleClass="case link #{pg eq akta.dokument ? 'on' : ''} #{pg.niejawny ? 'secret' : ''}" pt:aria-current="#{pg eq akta.dokument}" process="@this">
+                    <p:commandLink action="#{akta.open(pg)}" update="@form:akta-body" styleClass="case link #{pg eq akta.dokument ? 'on' : ''} #{pg.niejawny ? 'secret' : ''}" pt:aria-current="#{pg eq akta.dokument}" process="@this">
                       <span class="h"><b>#{pg.tytul} <h:outputText rendered="#{pg.nowy}" styleClass="tag new" value="nowy" /></b><b>#{pg.karty}</b></span>
                       <span class="mut">#{pg.opis}</span>
                     </p:commandLink>

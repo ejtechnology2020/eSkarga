@@ -47,7 +47,7 @@
                        rowStyleClass="#{dziennik.rowClass(r)}" styleClass="#{dziennik.comfy ? 'comfy' : ''}" summary="Dziennik wpływu 28.10–03.11.2026"
                        paginator="true" rows="10" paginatorPosition="bottom" paginatorTemplate="{CurrentPageReport} {PageLinks}"
                        currentPageReportTemplate="#{fmt.msg('common.rows', '{startRecord}', '{endRecord}', '{totalRecords}')}">
-            <p:ajax event="rowSelect" update="pv dz:tbl" />
+            <p:ajax event="rowSelect" update=":dz:pv :dz:tbl" />
             <p:column headerText="Nr dziennika ▼" sortBy="#{r.nr}"><span class="mono"><b jsf:rendered="#{r.wybrany}" xmlns:jsf="jakarta.faces">#{r.nr}</b><h:outputText rendered="#{not r.wybrany}" value="#{r.nr}" /></span></p:column>
             <p:column headerText="Wpływ" sortBy="#{r.wplyw}">#{fmt.dateTime(r.wplyw)}</p:column>
             <p:column headerText="Wniesienie">#{fmt.date(r.wniesienie)}</p:column>

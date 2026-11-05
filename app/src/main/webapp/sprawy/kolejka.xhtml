@@ -24,7 +24,7 @@
             <ul role="listbox" aria-label="Pisma do kwalifikacji" class="list-cards">
               <ui:repeat value="#{kolejka.items}" var="it">
                 <li role="option" aria-selected="#{it eq kolejka.selected}" class="#{it eq kolejka.selected ? 'case on' : it.cssClass()}">
-                  <p:commandLink action="#{kolejka.select(it)}" update="kw" styleClass="col gap4" style="text-decoration: none; color: inherit;">
+                  <p:commandLink action="#{kolejka.select(it)}" update="@form" styleClass="col gap4" style="text-decoration: none; color: inherit;">
                     <span class="h"><b class="mono">#{it.nr}</b><tk:tag value="#{it.etykieta}" tone="#{it.etykietaTone}" /></span>
                     <span>#{it.nadawca} · #{msg['channel.'.concat(it.kanal)]}</span>
                     <span class="#{it.mocnaPodpowiedz ? '' : 'mut'}"><b jsf:rendered="#{it.mocnaPodpowiedz}" xmlns:jsf="jakarta.faces">#{it.podpowiedz}</b><h:outputText rendered="#{not it.mocnaPodpowiedz}" value="#{it.podpowiedz}" /></span>
