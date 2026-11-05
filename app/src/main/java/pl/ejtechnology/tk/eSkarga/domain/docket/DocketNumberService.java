@@ -39,9 +39,8 @@ public class DocketNumberService implements DocketCounterRepository {
         DocketCounter counter = em.find(DocketCounter.class, new DocketCounter.Key(symbol.code(), year),
                 LockModeType.PESSIMISTIC_WRITE);
         if (counter == null) {
-            counter = new DocketCounter(symbol.code(), year, 0);
-            em.persist(counter);
-            em.flush();
+            // pierwszy numer w roku: wstawienie odporne na wyścig równoległych transakcji (CounterRows), potem blokada wiersza
+            CounterRows.ensureDocketCounter(em, symbol.code(), year);
             counter = em.find(DocketCounter.class, new DocketCounter.Key(symbol.code(), year), LockModeType.PESSIMISTIC_WRITE);
         }
         return counter.getLastValue();

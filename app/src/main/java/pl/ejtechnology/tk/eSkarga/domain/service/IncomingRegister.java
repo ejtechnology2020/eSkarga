@@ -155,9 +155,8 @@ public class IncomingRegister {
     String nextRegisterNo(int year) {
         IncomingCounter counter = em.find(IncomingCounter.class, year, LockModeType.PESSIMISTIC_WRITE);
         if (counter == null) {
-            counter = new IncomingCounter(year, 0);
-            em.persist(counter);
-            em.flush();
+            // pierwsze pismo w roku: wstawienie odporne na wyścig równoległych rejestracji, potem blokada wiersza
+            pl.ejtechnology.tk.eSkarga.domain.docket.CounterRows.ensureIncomingCounter(em, year);
             counter = em.find(IncomingCounter.class, year, LockModeType.PESSIMISTIC_WRITE);
         }
         int next = counter.getLastValue() + 1;

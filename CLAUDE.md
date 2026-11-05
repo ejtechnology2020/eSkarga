@@ -8,6 +8,7 @@ Lista zadań z notatkami z realizacji: [`doc/TASKS.md`](doc/TASKS.md). Decyzje: 
 ```bash
 mvn -B verify                                        # build + testy jednostkowe i procesowe (JUnit 5, operaton-bpm-assert, H2)
 mvn -B verify -Pit                                   # testy integracyjne na PostgreSQL 17 (Testcontainers)
+mvn -pl app test -Deskarga.test.jdbcUrl=jdbc:postgresql://localhost:5432/eskarga_it?currentSchema=repertorium -Deskarga.test.user=eskarga_app -Deskarga.test.password=… -Deskarga.test.migrationUser=eskarga_migration -Deskarga.test.migrationPassword=…   # testy serwisów na PostgreSQL z rolą aplikacji (bez UPDATE/DELETE) + testy współbieżności liczników
 mvn -B verify -Psecurity                             # skan zależności OWASP Dependency-Check (CVSS ≥ 7 przerywa build)
 cp infra/docker/.env.example infra/docker/.env       # uzupełnij hasła
 docker compose -f infra/docker/compose.yml --profile id-users run --rm id-users-rejestracja   # klienci eSkargi w Keycloaku ID-users (:8180)
