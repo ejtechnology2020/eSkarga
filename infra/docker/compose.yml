@@ -15,6 +15,7 @@ services:
       context: ./wildfly          # Dockerfile kopiuje entrypoint.sh i module-postgresql.xml względem tego katalogu
       args:
         OPERATON_VERSION: ${OPERATON_VERSION:-2.2.0}
+        OPERATON_SHA256: ${OPERATON_SHA256:-6bc09729936ccf735c6352fe2d0f89cf3ca89d4d1aee9ad973d4d909d4297a0e}   # operaton-bpm-wildfly-<wersja>.tar.gz
     environment:
       DB_HOST: db
       DB_NAME: ${POSTGRES_DB:-eskarga}

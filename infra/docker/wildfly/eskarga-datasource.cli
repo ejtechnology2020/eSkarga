@@ -1,5 +1,6 @@
-# Źródło danych aplikacji (T-003): jedna baza PostgreSQL, schematy repertorium (Flyway) i operaton (skrypty dystrybucji).
+# Źródło danych aplikacji (T-003): jedna baza PostgreSQL, schematy repertorium (Flyway) i operaton (silnik, isAutoSchemaUpdate).
 # Wywołanie: jboss-cli.sh --file=eskarga-datasource.cli -Ddb.host=... -Ddb.name=... -Ddb.user=... -Ddb.password=...
+# Nazwy zgodne z dystrybucją Operaton 2.2.0 (podsystem operaton-bpm-platform, silnik "default"); sprawdzone w trybie embed-server.
 embed-server --server-config=standalone.xml --std-out=echo
 if (outcome != success) of /subsystem=datasources/jdbc-driver=postgresql:read-resource
   /subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql, driver-module-name=org.postgresql, driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)
@@ -10,10 +11,21 @@ if (outcome != success) of /subsystem=datasources/xa-data-source=EskargaDS:read-
     --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker \
     --xa-datasource-properties={"ServerName"=>"${db.host}","PortNumber"=>"5432","DatabaseName"=>"${db.name}","CurrentSchema"=>"repertorium,operaton"}
 end-if
-# Silnik Operaton korzysta z tego samego źródła danych (schemat operaton)
+# Silnik Operaton korzysta z tego samego źródła danych (schemat operaton, tabele z prefiksem), historia na poziomie audit.
 /subsystem=operaton-bpm-platform/process-engines=default:write-attribute(name=datasource, value=java:jboss/datasources/EskargaDS)
-/subsystem=operaton-bpm-platform/process-engines=default/properties=historyLevel:add(value=audit) 
-/subsystem=operaton-bpm-platform/process-engines=default/properties=databaseTablePrefix:add(value=operaton.)
-/subsystem=operaton-bpm-platform/process-engines=default/properties=jobExecutorDeploymentAware:add(value=false)
-/subsystem=operaton-bpm-platform/process-engines=default/properties=scriptEnabled:add(value=false)
+/subsystem=operaton-bpm-platform/process-engines=default:write-attribute(name=history-level, value=audit)
+/subsystem=operaton-bpm-platform/process-engines=default/properties=jobExecutorDeploymentAware:write-attribute(name=value, value=false)
+if (outcome != success) of /subsystem=operaton-bpm-platform/process-engines=default/properties=databaseTablePrefix:read-resource
+  /subsystem=operaton-bpm-platform/process-engines=default/properties=databaseTablePrefix:add(value=operaton.)
+end-if
+if (outcome != success) of /subsystem=operaton-bpm-platform/process-engines=default/properties=databaseSchema:read-resource
+  /subsystem=operaton-bpm-platform/process-engines=default/properties=databaseSchema:add(value=operaton)
+end-if
+# Skrypty w procesach bez dostępu do klas hosta i zasobów zewnętrznych (eSkarga nie używa skryptów w BPMN; D8)
+if (outcome != success) of /subsystem=operaton-bpm-platform/process-engines=default/properties=configureScriptEngineHostAccess:read-resource
+  /subsystem=operaton-bpm-platform/process-engines=default/properties=configureScriptEngineHostAccess:add(value=false)
+end-if
+if (outcome != success) of /subsystem=operaton-bpm-platform/process-engines=default/properties=enableScriptEngineLoadExternalResources:read-resource
+  /subsystem=operaton-bpm-platform/process-engines=default/properties=enableScriptEngineLoadExternalResources:add(value=false)
+end-if
 stop-embedded-server

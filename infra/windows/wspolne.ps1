@@ -79,7 +79,7 @@ function Initialize-Env {
 # Wersje obrazów (klucze *_IMAGE) i Operatona (OPERATON_VERSION) są zarządzane przez repozytorium:
 # istniejący .env dostaje wartości z .env.example; porty, hasła i pozostałe ustawienia zostają bez zmian.
 function Sync-WersjeObrazow {
-  $wzor = '^\s*([A-Z0-9_]+_IMAGE|OPERATON_VERSION)\s*=\s*(.*?)\s*$'
+  $wzor = '^\s*([A-Z0-9_]+_IMAGE|OPERATON_VERSION|OPERATON_SHA256)\s*=\s*(.*?)\s*$'
   $oczekiwane = @{}
   foreach ($linia in Get-Content $Script:PlikEnvPrzyklad -Encoding UTF8) {
     if ($linia -match $wzor) { $oczekiwane[$Matches[1]] = $Matches[2] }
