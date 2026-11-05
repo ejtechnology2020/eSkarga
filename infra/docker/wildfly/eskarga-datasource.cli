@@ -1,4 +1,5 @@
 # Źródło danych aplikacji (T-003): jedna baza PostgreSQL, schematy repertorium (Flyway) i operaton (silnik, isAutoSchemaUpdate).
+# Skrypt jest idempotentny – entrypoint uruchamia go przy każdym starcie kontenera.
 # Wywołanie: jboss-cli.sh --file=eskarga-datasource.cli -Ddb.host=... -Ddb.name=... -Ddb.user=... -Ddb.password=...
 # Nazwy zgodne z dystrybucją Operaton 2.2.0 (podsystem operaton-bpm-platform, silnik "default").
 embed-server --server-config=standalone.xml --std-out=echo
@@ -9,7 +10,12 @@ if (outcome != success) of /subsystem=datasources/xa-data-source=EskargaDS:read-
   xa-data-source add --name=EskargaDS --jndi-name=java:jboss/datasources/EskargaDS --driver-name=postgresql \
     --user-name=${db.user} --password=${db.password} --use-ccm=true --min-pool-size=5 --max-pool-size=40 \
     --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker \
-    --xa-datasource-properties={"ServerName"=>"${db.host}","PortNumber"=>"5432","DatabaseName"=>"${db.name}","CurrentSchema"=>"repertorium,operaton"}
+    --xa-datasource-properties={"ServerName"=>"${db.host}","PortNumber"=>"5432","DatabaseName"=>"${db.name}","CurrentSchema"=>"operaton,repertorium"}
+end-if
+# search_path zaczyna się od operaton: skrypty DDL silnika (isAutoSchemaUpdate) nie kwalifikują tabel schematem, a rola aplikacji
+# nie ma CREATE w repertorium („permission denied for schema repertorium”); JPA aplikacji ma hibernate.default_schema=repertorium.
+if (result != "operaton,repertorium") of /subsystem=datasources/xa-data-source=EskargaDS/xa-datasource-properties=CurrentSchema:read-attribute(name=value)
+  /subsystem=datasources/xa-data-source=EskargaDS/xa-datasource-properties=CurrentSchema:write-attribute(name=value, value="operaton,repertorium")
 end-if
 # Silnik Operaton na tym samym źródle danych (schemat operaton, tabele z prefiksem), historia audit, skrypty bez dostępu do hosta
 # i zasobów zewnętrznych (D8). Atrybuty silnika w podsystemie są tylko do odczytu („WFLYCTL0048: Attribute datasource is not

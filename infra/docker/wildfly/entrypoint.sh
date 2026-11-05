@@ -2,11 +2,10 @@
 # Konfiguruje źródło danych EskargaDS (schematy repertorium + operaton w jednej bazie, D1) i startuje WildFly.
 set -e
 cd "$OPERATON_HOME"
-if [ ! -f standalone/configuration/.eskarga-configured ]; then
-  bin/jboss-cli.sh --file=/opt/operaton/eskarga-datasource.cli \
-    -Ddb.host="${DB_HOST}" -Ddb.name="${DB_NAME}" -Ddb.user="${DB_USER_APP}" -Ddb.password="${DB_PASSWORD_APP}"
-  touch standalone/configuration/.eskarga-configured
-fi
+# Konfiguracja przez CLI przy każdym starcie (skrypt idempotentny, embed-server ~5 s) – zmiany w eskarga-datasource.cli
+# (wolumen) działają bez odtwarzania kontenera; błąd CLI zatrzymuje start (set -e).
+bin/jboss-cli.sh --file=/opt/operaton/eskarga-datasource.cli \
+  -Ddb.host="${DB_HOST}" -Ddb.name="${DB_NAME}" -Ddb.user="${DB_USER_APP}" -Ddb.password="${DB_PASSWORD_APP}"
 # ${db.*} w standalone.xml to wyrażenia rozwiązywane przy starcie z właściwości systemowych (hasło nie leży w pliku konfiguracji)
 exec bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 \
   -Ddb.host="${DB_HOST}" -Ddb.name="${DB_NAME}" -Ddb.user="${DB_USER_APP}" -Ddb.password="${DB_PASSWORD_APP}" \
