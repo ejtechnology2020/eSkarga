@@ -6,6 +6,9 @@
   prometheus, grafana. Bez nazwy – wszystkie usługi.
 .PARAMETER Sledz
   Śledzi nowe wpisy (Ctrl+C kończy).
+.PARAMETER Linie
+  Liczba ostatnich linii (domyślnie 2000 – start WildFly z Operatonem to kilkaset linii, początek logu
+  z „Wdrażam eskarga.war” byłby ucięty przy mniejszej wartości).
 .EXAMPLE
   .\infra\windows\logi.ps1 app -Sledz
 #>
@@ -13,7 +16,7 @@
 param(
   [Parameter(Position = 0)][string]$Usluga,
   [switch]$Sledz,
-  [int]$Linie = 200
+  [int]$Linie = 2000
 )
 . "$PSScriptRoot\wspolne.ps1"
 Assert-Docker
