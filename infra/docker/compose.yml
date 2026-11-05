@@ -12,8 +12,7 @@ services:
   app:
     # Dystrybucja Operaton dla WildFly 41 (silnik współdzielony) + WAR aplikacji montowany do deployments/
     build:
-      context: .
-      dockerfile: wildfly/Dockerfile
+      context: ./wildfly          # Dockerfile kopiuje entrypoint.sh i module-postgresql.xml względem tego katalogu
       args:
         OPERATON_VERSION: ${OPERATON_VERSION:-2.2.0}
     environment:
