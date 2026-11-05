@@ -5,7 +5,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.security.enterprise.authentication.mechanism.http.OpenIdAuthenticationMechanismDefinition;
 import jakarta.security.enterprise.authentication.mechanism.http.openid.ClaimsDefinition;
 import jakarta.security.enterprise.authentication.mechanism.http.openid.LogoutDefinition;
-import jakarta.security.enterprise.authentication.mechanism.http.openid.PromptType;
 
 /**
  * Logowanie przez ID-users jako dostawcę OIDC (Authorization Code + PKCE, klient poufny; D3, T-004).
@@ -16,20 +15,22 @@ import jakarta.security.enterprise.authentication.mechanism.http.openid.PromptTy
  * uzasadnienie w ADR 0002. W trybie {@code eskarga.security.mode=demo} typ jest wyłączany przez
  * {@link SecurityModeExtension}, żeby serwer nie próbował odpytać nieistniejącego dostawcy.
  */
+// Składnia EL: atrybuty zwykłe Soteria ewaluuje tylko jako wyrażenia natychmiastowe ${…} (odroczone #{…} trafiały dosłownie do
+// klienta HTTP – „RESTEASY003720: path param oidcSettings.providerUri”); #{…} tylko w atrybutach *Expression.
+// Bez prompt=none: przy braku sesji SSO w Keycloaku użytkownik ma zobaczyć formularz logowania (prompt=none → login_required).
 @OpenIdAuthenticationMechanismDefinition(
-        providerURI = "#{oidcSettings.providerUri}",
-        clientId = "#{oidcSettings.clientId}",
-        clientSecret = "#{oidcSettings.clientSecret}",
+        providerURI = "${oidcSettings.providerUri}",
+        clientId = "${oidcSettings.clientId}",
+        clientSecret = "${oidcSettings.clientSecret}",
         redirectURI = "${baseURL}/callback",
         scope = {"openid", "profile", "email"},
-        prompt = PromptType.NONE,
         useNonce = true,
         useSession = true,
         redirectToOriginalResource = true,
         extraParametersExpression = "#{oidcSettings.extraParameters}",
         claimsDefinition = @ClaimsDefinition(
-                callerNameClaim = "#{oidcSettings.nameClaim}",
-                callerGroupsClaim = "#{oidcSettings.rolesClaim}"),
+                callerNameClaim = "${oidcSettings.nameClaim}",
+                callerGroupsClaim = "${oidcSettings.rolesClaim}"),
         // role aplikacji są dodatkowo odczytywane z tokenu dostępu przez RoleMapper (ścieżka resource_access.<client>.roles)
         logout = @LogoutDefinition(notifyProvider = true, redirectURI = "${baseURL}/"))
 @DeclareRoles({"TK_REFERENT", "TK_ASYSTENT", "TK_SEDZIA", "TK_PREZES", "TK_KIEROWNIK", "TK_BIURO_PODAWCZE",
