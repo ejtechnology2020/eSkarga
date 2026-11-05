@@ -560,6 +560,15 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
   ręczny test logowania, wylogowania i wysyłki plików na dev; aktualizacja ADR 0001 (D2) i `doc/CLAUDE.md`.
 - **Warunek startu:** zamknięte problemy środowiska dev z ID-users (T-004 `[~]` i pozostałe `[~]`).
 - **Zależności:** T-001, T-004. **Odwołania:** ADR 0024, D2.
+### [~] T-058 Testy procesów na PostgreSQL i GUI od końca do końca (ADR 0011, ADR 0020)
+- **Zakres:** testy serwisów `app` na PostgreSQL z rolą aplikacji bez UPDATE/DELETE (`JpaTestSupport.create()`, `-Deskarga.test.jdbcUrl…`,
+  w CI zadanie `it` z usługą PostgreSQL 17), testy współbieżności liczników (sygnatury 50/10, dziennik 30) na PostgreSQL, testy GUI
+  Playwright w trybie OIDC (`ui-tests/tests/e2e`: logowanie przez ID-users z TOTP, rejestracja ze skanem, kolejka, założenie sprawy,
+  akta, repertorium, dziennik, rola, wylogowanie) uruchamiane na środowisku dev (`infra\windows\testy-gui.cmd`).
+- **Zostało:** uruchomienie projektu `oidc` na środowisku dev przez użytkownika (w sesji nie ma WildFly ani Dockera), rozszerzenie na
+  wyznaczenie sędziego, podpis (S-16, local-signer) i doręczenia; włączenie `ui-tests` do CI po wdrożeniu na środowisko testowe.
+- **Zależności:** T-004, T-011, T-012, T-013. **Odwołania:** ADR 0011, ADR 0020.
+
 ## Notatki z realizacji
 
 Po każdym zadaniu dopisz tu jedną linię w formacie: `T-xxx – data – co zrobiono, co zostało, link do ADR`.
@@ -635,3 +644,8 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   bez parametru komunikat i odnośnik do kolejki; z pisma tylko nadawca i data wniesienia – reszta ręcznie; krok 1 domyślnie; art. 77 tylko
   po podaniu doręczenia); S-14 bez sprawy → repertorium z komunikatem, podgląd tylko z dokumentem; S-04/S-08/S-24 bez liczb z makiety
   (liczniki słowników z bazy, `Załaduj szablony domyślne`); wspólna przyczyna błędów AJAX: nonce CSP (ADR 0002).
+- T-058 – 05.11.2026 – testy serwisów na PostgreSQL z rolą aplikacji (`JpaTestSupport.create()`; ujawniły brak kolejności wersji i UPDATE na
+  append-only `case_file` – poprawione: `@OrderBy`, `changeStatus(…, init)`, `@DynamicUpdate`, V7_2), wyścig o pierwszy wiersz licznika w roku
+  (`CounterRows`, `INSERT … ON CONFLICT DO NOTHING`; padał `DocketConcurrencyPostgresIT` w CI), scenariusz współbieżności wspólny dla IT
+  i testów lokalnych, CI: `security` bez sekretu `NVD_API_KEY` jako ostrzeżenie, `it` z pełnym zestawem na PostgreSQL. Testy GUI Playwright
+  w trybie OIDC (`ui-tests/tests/e2e`, `infra\windows\testy-gui.cmd`) – do uruchomienia na dev przez użytkownika. ADR 0020 (dopisek).

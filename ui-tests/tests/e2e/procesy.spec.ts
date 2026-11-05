@@ -1,0 +1,143 @@
+import { expect, test, type Page } from '@playwright/test';
+import { ESKARGA, HASLO, LOGIN, WLACZONE, ZAKLADA_KONTO, dzis, jsf, kontoTestowe, pdfTestowy, zaloguj } from './srodowisko';
+
+/**
+ * Procesy eSkargi od końca do końca w trybie OIDC (ID-users + Operaton + PostgreSQL + S3) – T-058, ADR 0020:
+ * logowanie z kodem jednorazowym, rejestracja pisma ze skanem (S-03, UC-01), kolejka kwalifikacji z podglądem
+ * skanu (S-06), założenie sprawy z sygnaturą bez luk (S-07, BR-01), akta (S-14), repertorium (S-08),
+ * dziennik wpływu (S-04), przełącznik roli, wylogowanie (koniec sesji SSO). Jeden kontekst przeglądarki,
+ * kroki po kolei – każdy korzysta z danych poprzedniego (numer DW, sygnatura).
+ *
+ * Uruchomienie: ESKARGA_E2E=1 ESKARGA_E2E_HASLO=… [ESKARGA_E2E_TOTP=…|ESKARGA_E2E_KC_ADMIN_HASLO=…] npx playwright test --project oidc
+ */
+test.describe.serial('Procesy eSkargi (OIDC)', () => {
+  test.skip(!WLACZONE, 'ESKARGA_E2E=1 włącza testy w trybie OIDC (aplikacja na WildFly obok ID-users)');
+  test.describe.configure({ timeout: 120_000 });
+
+  let page: Page;
+  let numerDw = '';
+  let sygnatura = '';
+  const skarzacy = 'Jan Przykładowy';
+
+  test.beforeAll(async ({ browser }) => {
+    if (ZAKLADA_KONTO) await kontoTestowe();
+    page = await (await browser.newContext({ locale: 'pl-PL', viewport: { width: 1366, height: 768 } })).newPage();
+  });
+
+  test.afterAll(async () => {
+    await page?.context().close();
+  });
+
+  test('UC-00 logowanie przez ID-users z kodem jednorazowym; żaden token nie trafia do przeglądarki', async () => {
+    await zaloguj(page, '/pulpit.xhtml', LOGIN, HASLO);
+    await expect(page).toHaveURL(/pulpit\.xhtml/);
+    await expect(page.locator('.e-user .who b')).not.toHaveText(/anonim/i);
+    await expect(page.getByRole('link', { name: /wyloguj/i })).toBeVisible();
+    // T-004: tylko ciasteczka HttpOnly, bez JWT w ciasteczkach i magazynach przeglądarki
+    for (const c of (await page.context().cookies()).filter((c) => c.domain.includes(new URL(ESKARGA).hostname) && c.path.startsWith(new URL(ESKARGA).pathname))) {
+      expect(c.httpOnly, `ciasteczko ${c.name} musi być HttpOnly`).toBeTruthy();
+      expect(c.value).not.toMatch(/^eyJ/);
+    }
+    const magazyn = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
+    expect(magazyn).not.toMatch(/eyJ[A-Za-z0-9_-]{10,}/);
+  });
+
+  test('UC-01 S-03 rejestracja pisma ze skanem PDF nadaje numer dziennika', async () => {
+    await page.goto('/wplyw/rejestracja.xhtml');
+    await page.locator('#f-kanal-fs label', { hasText: 'poczta' }).click();
+    await page.fill(jsf('rej:f-wp'), `${dzis()} 09:15`);
+    await page.fill(jsf('rej:f-wn'), dzis());
+    await page.fill(jsf('rej:f-nad'), skarzacy);
+    await page.fill(jsf('rej:f-zal'), '2');
+    await page.locator('#rej input[type=file]').setInputFiles({ name: 'skarga.pdf', mimeType: 'application/pdf', buffer: pdfTestowy() });
+    await expect(page.locator('#rej .thumbs, #rej [id$="skany"]').first()).toContainText('skarga.pdf', { timeout: 30_000 });
+    await page.getByRole('button', { name: /zarejestruj i drukuj/i }).click();
+    const numer = page.locator('.fs28');
+    await expect(numer).toHaveText(/DW \d{4}\/\d{5}/);
+    numerDw = (await numer.textContent())!.trim();
+    await expect(page.locator('#rej')).toContainText(skarzacy);
+  });
+
+  test('UC-02 S-06 kolejka: podgląd faktycznego skanu i kwalifikacja jako nowa skarga Ts', async () => {
+    expect(numerDw, 'numer DW z rejestracji').toMatch(/DW/);
+    await page.goto('/sprawy/kolejka.xhtml');
+    await page.locator('li[role=option]', { hasText: numerDw }).first().locator('a').click();
+    await expect(page.locator('#h-skan')).toContainText(numerDw);
+    const viewer = page.locator('.pdfv');
+    await expect(viewer, 'podgląd PDF (pdf.js) zarejestrowanego skanu').toBeVisible();
+    await expect(viewer.locator('.pdfv-count'), 'pdf.js policzył strony skanu').toHaveText(/^\s*1\s*$/, { timeout: 30_000 });
+    await page.locator('label.opt', { hasText: 'Nowa skarga konstytucyjna (Ts)' }).click();
+    await page.getByRole('button', { name: /zakwalifikuj/i }).click();
+    await expect(page).toHaveURL(/sprawy\/zalozenie\.xhtml\?.*pismo=/);
+  });
+
+  test('UC-03 S-07 założenie sprawy: kreator, okno potwierdzenia, sygnatura i przejście do akt', async () => {
+    const nowa = page.getByRole('button', { name: /to nowa skarga/i });
+    if (await nowa.isVisible().catch(() => false)) await nowa.click();
+    await expect(page.locator(jsf('zf:s-sk'))).toBeVisible();
+    await page.fill(jsf('zf:s-sk'), skarzacy);
+    await page.fill(jsf('zf:s-adr'), 'ul. Przykładowa 1, 00-001 Przykładów');
+    await page.getByRole('button', { name: /^dalej$/i }).click();
+    await expect(page.locator(jsf('zf:p-prz'))).toBeVisible();
+    await page.fill(jsf('zf:p-prz'), 'art. 1 ust. 1 ustawy przykładowej');
+    await page.fill(jsf('zf:p-wz'), 'art. 2 i art. 45 ust. 1 Konstytucji');
+    await page.fill(jsf('zf:p-dor_input'), '20.07.2026');
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: /^dalej$/i }).click();
+    await page.getByRole('button', { name: /zatwierdź wpis/i }).click();
+    const zatwierdz = page.getByRole('button', { name: /zatwierdź i nadaj (Ts \d+\/\d{2})/i });
+    await expect(zatwierdz).toBeVisible();
+    sygnatura = /Ts \d+\/\d{2}/.exec((await zatwierdz.textContent())!)![0];
+    expect(sygnatura, 'licznik repertorium nadaje numer > 0').not.toMatch(/Ts 0\//);
+    await zatwierdz.click();
+    await expect(page).toHaveURL(/akta\/podglad\.xhtml\?.*sygnatura=/, { timeout: 60_000 });
+    await expect(page.locator('h1')).toHaveText(sygnatura);
+    await expect(page.locator('#rej, .growl, body')).not.toContainText('Nie udało się założyć sprawy');
+  });
+
+  test('UC-04 S-14 akta sprawy: spis dokumentów ze skanem pisma i podgląd PDF', async () => {
+    expect(sygnatura).toMatch(/Ts/);
+    await page.goto(`/akta/podglad.xhtml?sygnatura=${encodeURIComponent(sygnatura)}`);
+    await expect(page.locator('h1')).toHaveText(sygnatura);
+    const dokumenty = page.locator('ol.tl.doc li');
+    await expect(dokumenty.first()).toBeVisible();
+    await dokumenty.first().locator('a.case.link').click();
+    await expect(page.locator('.pdfv')).toBeVisible();
+    await expect(page.locator('.pdfv .pdfv-count')).toHaveText(/^\s*1\s*$/, { timeout: 30_000 });
+  });
+
+  test('UC-05 S-08 repertorium Ts zawiera nową sprawę', async () => {
+    await page.goto('/sprawy/repertorium.xhtml');
+    await expect(page.locator(jsf('rf:tbl'))).toContainText(sygnatura);
+    await expect(page.locator(jsf('rf:tbl'))).toContainText(skarzacy);
+  });
+
+  test('UC-06 S-04 dziennik wpływu: wpis i podgląd skanu zarejestrowanego pisma', async () => {
+    await page.goto('/wplyw/dziennik.xhtml');
+    const tabela = page.locator(jsf('dz:tbl'));
+    await expect(tabela).toContainText(numerDw);
+    await tabela.locator('tr', { hasText: numerDw }).first().click();
+    await expect(page.locator('#h-pv')).toHaveText(numerDw);
+    await expect(page.locator(jsf('dz:pv')).locator('.pdfv')).toBeVisible();
+  });
+
+  test('UC-07 przełącznik roli zmienia kontekst menu (gdy konto ma kilka ról)', async () => {
+    await page.goto('/pulpit.xhtml');
+    const rola = page.locator('#tb-rola');
+    test.skip(!(await rola.isVisible().catch(() => false)), 'konto ma jedną rolę – brak przełącznika');
+    await rola.click();
+    const opcja = page.locator('#tb-rola_panel li', { hasText: 'biuro podawcze' });
+    test.skip(!(await opcja.isVisible().catch(() => false)), 'konto nie ma roli biura podawczego');
+    await opcja.click();
+    await expect(page.locator('.e-user .who small')).toHaveText(/biuro podawcze/, { timeout: 15_000 });
+    await expect(page.getByRole('navigation').getByRole('link', { name: /rejestracja/i }).first()).toBeVisible();
+  });
+
+  test('UC-08 wylogowanie kończy sesję w eSkardze i w ID-users', async () => {
+    await page.goto('/pulpit.xhtml');
+    await page.getByRole('link', { name: /wyloguj/i }).click();
+    await page.waitForLoadState('domcontentloaded');
+    await page.goto('/pulpit.xhtml');
+    await expect(page.locator('#username'), 'po wylogowaniu wejście wymaga ponownego logowania w ID-users').toBeVisible({ timeout: 30_000 });
+  });
+});

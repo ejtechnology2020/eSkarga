@@ -4,11 +4,15 @@
   "description": "Testy UI (Playwright) i dostępności (axe-core) dla ekranów krytycznych eSkarga (T-005, T-033, T-034) – ADR 0020",
   "scripts": {
     "test": "playwright test",
-    "test:a11y": "playwright test --grep @a11y"
+    "test:demo": "playwright test --project demo",
+    "test:oidc": "playwright test --project oidc",
+    "test:a11y": "playwright test --project demo --grep @a11y",
+    "typecheck": "tsc -p ."
   },
   "devDependencies": {
-    "@playwright/test": "1.49.1",
-    "@axe-core/playwright": "4.10.1",
-    "typescript": "5.7.2"
+    "@playwright/test": "1.65.0",
+    "@axe-core/playwright": "4.14.0",
+    "typescript": "5.7.2",
+    "@types/node": "22.10.2"
   }
 }

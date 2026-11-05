@@ -87,7 +87,8 @@ docker compose -f infra/docker/compose.yml up -d --build   # środowisko dev obo
 docker compose -f infra/docker/compose.yml logs -f app
 docker compose -f infra/docker/compose.yml --profile monitoring up -d   # Prometheus :9090, Grafana :3000
 python3 infra/scripts/er-diagram.py             # diagram ER z encji → docs/model-er.md
-cd ui-tests && npm ci && npm test               # Playwright + axe na działającej aplikacji (ESKARGA_URL)
+cd ui-tests && npm ci && npm run test:demo      # Playwright + axe na działającej aplikacji w trybie demo (ESKARGA_URL)
+ESKARGA_E2E=1 ESKARGA_E2E_KC_ADMIN_HASLO=… npm --prefix ui-tests run test:oidc   # procesy przez ID-users (TOTP, S-03→S-06→S-07→S-14→S-08→S-04, wylogowanie); Windows: infra\windows\testy-gui.cmd
 ```
 
 Tryb pracy nad interfejsem bez ID-users (tylko stacja deweloperska): `-Deskarga.security.mode=demo -Deskarga.demo.today=2026-11-03`;
