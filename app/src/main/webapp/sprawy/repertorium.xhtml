@@ -9,18 +9,18 @@
                 xmlns:pt="jakarta.faces.passthrough"
                 xmlns:tk="jakarta.faces.composite/tk">
   <!-- S-08 Repertorium Ts/Tw: tabela jak księga, eksport roczny do PDF, wpis skorygowany z historią wersji (NFR-01). -->
-  <ui:define name="title">Repertorium #{repertorium.symbol.code()} · #{repertorium.rok}</ui:define>
-  <ui:define name="crumbCurrent">Repertorium #{repertorium.symbol.code()} #{repertorium.rok}</ui:define>
+  <ui:define name="title">Repertorium #{repertoriumWidok.symbol.code()} · #{repertoriumWidok.rok}</ui:define>
+  <ui:define name="crumbCurrent">Repertorium #{repertoriumWidok.symbol.code()} #{repertoriumWidok.rok}</ui:define>
   <ui:define name="eyebrow">S-08</ui:define>
   <ui:define name="subtitle">Księga wpisów. Kolejność według sygnatury. Wpisów nie usuwa się — korekta ma historię wersji.</ui:define>
   <ui:define name="actions">
     <h:form id="ra" styleClass="row">
       <div class="dens" role="group" aria-label="Repertorium">
-        <p:commandButton value="Ts" action="#{repertorium.switchSymbol('TS')}" update="@all" styleClass="q" pt:aria-pressed="#{repertorium.symbol eq 'TS'}" />
-        <p:commandButton value="Tw" action="#{repertorium.switchSymbol('TW')}" update="@all" styleClass="q" pt:aria-pressed="#{repertorium.symbol eq 'TW'}" />
+        <p:commandButton value="Ts" action="#{repertoriumWidok.switchSymbol('TS')}" update="@all" styleClass="q" pt:aria-pressed="#{repertoriumWidok.symbol eq 'TS'}" />
+        <p:commandButton value="Tw" action="#{repertoriumWidok.switchSymbol('TW')}" update="@all" styleClass="q" pt:aria-pressed="#{repertoriumWidok.symbol eq 'TW'}" />
       </div>
       <div class="fld" style="flex-direction: row; align-items: center; gap: 8px;"><p:outputLabel for="rok" value="Rok" />
-        <p:selectOneMenu id="rok" value="#{repertorium.rok}" styleClass="w120"><f:selectItem itemLabel="2026" itemValue="2026" /><f:selectItem itemLabel="2025" itemValue="2025" /><p:ajax update="@all" /></p:selectOneMenu></div>
+        <p:selectOneMenu id="rok" value="#{repertoriumWidok.rok}" styleClass="w120"><f:selectItem itemLabel="2026" itemValue="2026" /><f:selectItem itemLabel="2025" itemValue="2025" /><p:ajax update="@all" /></p:selectOneMenu></div>
       <button type="button" class="btn">Eksport roczny do PDF</button>
       <h:link outcome="/sprawy/zalozenie" styleClass="btn p" value="Załóż sprawę" rendered="#{currentUser.hasRole('ref')}" />
     </h:form>
@@ -29,14 +29,14 @@
   <ui:define name="content">
     <h:form id="rf">
       <section class="tw" aria-labelledby="h-rep">
-        <div class="tt"><h2 id="h-rep" class="h2-17">Wpisy</h2><span class="count">#{repertorium.total} wpisów · pokazano #{repertorium.rows.size()}</span><span class="sp"></span>
+        <div class="tt"><h2 id="h-rep" class="h2-17">Wpisy</h2><span class="count">#{repertoriumWidok.total} wpisów · pokazano #{repertoriumWidok.rows.size()}</span><span class="sp"></span>
           <div class="dens" role="group" aria-label="#{msg['common.density']}">
-            <p:commandButton value="#{msg['common.compact']}" action="#{repertorium.setComfy(false)}" update="rf" styleClass="q" pt:aria-pressed="#{not repertorium.comfy}" />
-            <p:commandButton value="#{msg['common.comfy']}" action="#{repertorium.setComfy(true)}" update="rf" styleClass="q" pt:aria-pressed="#{repertorium.comfy}" />
+            <p:commandButton value="#{msg['common.compact']}" action="#{repertoriumWidok.setComfy(false)}" update="rf" styleClass="q" pt:aria-pressed="#{not repertorium.comfy}" />
+            <p:commandButton value="#{msg['common.comfy']}" action="#{repertoriumWidok.setComfy(true)}" update="rf" styleClass="q" pt:aria-pressed="#{repertoriumWidok.comfy}" />
           </div>
           <button type="button" class="btn s">#{msg['common.columns']}</button><button type="button" class="btn s">#{msg['common.exportXlsx']}</button></div>
-        <p:dataTable id="tbl" value="#{repertorium.rows}" var="c" rowKey="#{c.sygnaturaText()}" rowStyleClass="#{repertorium.rowClass(c)}"
-                     styleClass="#{repertorium.comfy ? 'comfy' : ''}" summary="Repertorium #{repertorium.symbol.code()} #{repertorium.rok}" sortMode="single">
+        <p:dataTable id="tbl" value="#{repertoriumWidok.rows}" var="c" rowKey="#{c.sygnaturaText()}" rowStyleClass="#{repertoriumWidok.rowClass(c)}"
+                     styleClass="#{repertoriumWidok.comfy ? 'comfy' : ''}" summary="Repertorium #{repertoriumWidok.symbol.code()} #{repertoriumWidok.rok}" sortMode="single">
           <p:column headerText="Sygnatura ▼" sortBy="#{c.sygnatura.number()}" filterBy="#{c.sygnaturaText()}" filterMatchMode="contains">
             <tk:sig value="#{c.sygnatura}" />
             <h:outputText rendered="#{c.wersja ne 'v1'}" styleClass="tag info" value="#{c.wersja}" title="Wpis skorygowany 29.10.2026, wersja 2" />
@@ -52,19 +52,19 @@
           </p:column>
           <p:column headerText="Status" filterBy="#{msg['status.'.concat(c.status)]}" filterMatchMode="exact">
             <f:facet name="filter"><p:selectOneMenu onchange="PF('tblW').filter()" styleClass="flt"><f:selectItem itemLabel="#{msg['common.all']}" itemValue="#{null}" noSelectionOption="true" />
-              <f:selectItems value="#{repertorium.rows}" var="s" itemLabel="#{msg['status.'.concat(s.status)]}" itemValue="#{msg['status.'.concat(s.status)]}" /></p:selectOneMenu></f:facet>
+              <f:selectItems value="#{repertoriumWidok.rows}" var="s" itemLabel="#{msg['status.'.concat(s.status)]}" itemValue="#{msg['status.'.concat(s.status)]}" /></p:selectOneMenu></f:facet>
             <tk:statusTag status="#{c.status}" icon="false" />
           </p:column>
           <p:column headerText="Sposób zakończenia">#{empty c.sposobZakonczenia ? '—' : c.sposobZakonczenia}</p:column>
           <p:column headerText="Data">#{fmt.date(c.dataZakonczenia)}</p:column>
           <p:column headerText="Sygn. merytoryczna"><h:panelGroup rendered="#{not empty c.powiazana}"><tk:sig value="#{c.powiazana}" /></h:panelGroup><h:outputText rendered="#{empty c.powiazana}" value="—" /></p:column>
         </p:dataTable>
-        <div class="pager"><span class="mut">Wpisy 312–318 z #{repertorium.total} · #{repertorium.rows.size()} na stronę z filtrem „sprawy z danych przykładowych”</span><span class="sp"></span><button type="button" class="pg">1</button><button type="button" class="pg">…</button><button type="button" class="pg" aria-current="page">46</button></div>
+        <div class="pager"><span class="mut">Wpisy 312–318 z #{repertoriumWidok.total} · #{repertoriumWidok.rows.size()} na stronę z filtrem „sprawy z danych przykładowych”</span><span class="sp"></span><button type="button" class="pg">1</button><button type="button" class="pg">…</button><button type="button" class="pg" aria-current="page">46</button></div>
       </section>
 
       <section class="card mw900" aria-labelledby="h-hist" style="margin-top: 16px;">
         <div class="card-h"><h2 id="h-hist">Historia wpisu Ts 315/26</h2><span class="tag info">2 wersje</span></div>
-        <tk:timeline value="#{repertorium.historia}" />
+        <tk:timeline value="#{repertoriumWidok.historia}" />
       </section>
     </h:form>
   </ui:define>

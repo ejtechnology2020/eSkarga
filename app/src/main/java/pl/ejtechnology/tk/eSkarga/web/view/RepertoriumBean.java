@@ -15,7 +15,7 @@ import pl.ejtechnology.tk.eSkarga.web.model.CaseSummary;
 import pl.ejtechnology.tk.eSkarga.web.model.TimelineEntry;
 
 /** S-08 Repertorium Ts/Tw (UC-03, UC-20): księga wpisów, przełącznik Ts/Tw i rok, historia wersji wpisu skorygowanego. */
-@Named("repertorium")
+@Named("repertoriumWidok")   // nie „repertorium”: WildFly rejestruje EntityManagerFactory jednostki persystencji jako bean CDI o tej nazwie (WELD-001414)
 @ViewScoped
 public class RepertoriumBean implements Serializable {
 
