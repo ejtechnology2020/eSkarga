@@ -7,10 +7,11 @@ import java.util.stream.Collectors;
 /**
  * Konfiguracja ze zmiennych środowiskowych (ADR 0010); sekrety nigdy w repozytorium. Uwierzytelnienie klienta
  * {@code eskarga-workers}: {@code ESKARGA_OIDC_PRIVATE_KEY_PEM} (klucz PKCS#8 z rejestracji w ID-users, {@code private_key_jwt}, gdy plik
- * istnieje) albo {@code ESKARGA_OIDC_CLIENT_SECRET}.
+ * istnieje) albo {@code ESKARGA_OIDC_CLIENT_SECRET}; {@code ESKARGA_OIDC_ASSERTION_AUDIENCE} – {@code aud} asercji (publiczny adres
+ * tokenu ID-users; z kontenera adres pobierania różni się od adresu, z którym Keycloak porównuje {@code aud}).
  */
 public record WorkerConfig(String engineRestUrl, String workerId, int maxTasks, long lockDurationMs, Set<String> topics,
-                           String oidcTokenUrl, String oidcClientId, String oidcClientSecret, String oidcScope, String oidcPrivateKeyPem,
+                           String oidcTokenUrl, String oidcClientId, String oidcClientSecret, String oidcScope, String oidcPrivateKeyPem, String oidcAssertionAudience,
                            String appApiUrl, String docsApiUrl, String externalBaseUrl, long documentPollSeconds) {
 
     public static WorkerConfig fromEnvironment() {
@@ -26,6 +27,7 @@ public record WorkerConfig(String engineRestUrl, String workerId, int maxTasks, 
                 env("ESKARGA_OIDC_CLIENT_SECRET", ""),
                 env("ESKARGA_OIDC_SCOPE", ""),
                 env("ESKARGA_OIDC_PRIVATE_KEY_PEM", ""),
+                env("ESKARGA_OIDC_ASSERTION_AUDIENCE", ""),
                 env("ESKARGA_APP_API", "http://localhost:8080/eskarga/api"),
                 env("ESKARGA_DOCS_API", "http://localhost:8080/eskarga-docs/api"),
                 env("ESKARGA_EXTERNAL_BASE_URL", "http://localhost:8089"),

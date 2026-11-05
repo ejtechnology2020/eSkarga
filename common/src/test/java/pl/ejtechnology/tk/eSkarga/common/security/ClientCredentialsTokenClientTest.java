@@ -108,4 +108,23 @@ class ClientCredentialsTokenClientTest {
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> ClientCredentialsTokenClient.privateKeyFromPem(dir.resolve("eskarga-workers.kid")))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("PKCS#8");
     }
+
+    @Test
+    void asercjaZPublicznymAudienceIKid() throws Exception {
+        java.security.KeyPair kp = java.security.KeyPairGenerator.getInstance("RSA").generateKeyPair();
+        String jwt = ClientCredentialsTokenClient.signedAssertion("eskarga", "http://localhost:8180/realms/id-users/protocol/openid-connect/token", kp.getPrivate(), "eskarga-2026-11-04");
+        String[] czesci = jwt.split("\\.");
+        String naglowek = new String(java.util.Base64.getUrlDecoder().decode(czesci[0]), java.nio.charset.StandardCharsets.UTF_8);
+        String tresc = new String(java.util.Base64.getUrlDecoder().decode(czesci[1]), java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(naglowek).contains("\"kid\":\"eskarga-2026-11-04\"").contains("\"alg\":\"RS256\"");
+        assertThat(tresc).contains("\"aud\":\"http://localhost:8180/realms/id-users/protocol/openid-connect/token\"").contains("\"iss\":\"eskarga\"");
+        java.security.Signature weryfikacja = java.security.Signature.getInstance("SHA256withRSA");
+        weryfikacja.initVerify(kp.getPublic());
+        weryfikacja.update((czesci[0] + "." + czesci[1]).getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        assertThat(weryfikacja.verify(java.util.Base64.getUrlDecoder().decode(czesci[2]))).isTrue();
+        ClientCredentialsTokenClient c = new ClientCredentialsTokenClient("http://host.docker.internal:8180/t", "eskarga", null, null, kp.getPrivate(), null,
+                "http://localhost:8180/realms/id-users");
+        String tresc2 = new String(java.util.Base64.getUrlDecoder().decode(c.clientAssertion().split("\\.")[1]), java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(tresc2).contains("\"aud\":\"http://localhost:8180/realms/id-users\"");
+    }
 }

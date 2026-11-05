@@ -121,7 +121,9 @@ id (`npm --prefix frontend run aplikacje:eskarga`, T-037), klient ma `private_ke
 `eskarga.key.pem` (oraz `eskarga-workers.key.pem` dla workerów) z katalogu wyników tego narzędzia – wskaż go w `.env`
 (`ID_USERS_KLUCZE_DIR`, domyślnie `../../../id/frontend/narzedzia/wyniki/eskarga`). `entrypoint.sh` loguje przy starcie
 `Uwierzytelnienie klienta eskarga: private_key_jwt …` albo `client_secret`; `rejestracja.cmd` pokazuje typ ustawiony w Keycloaku.
-Błąd `invalid_client: Parameter client_assertion_type is missing` w logu oznacza klienta `client-jwt` bez klucza po stronie eSkargi.
+Błąd `invalid_client: Parameter client_assertion_type is missing` w logu oznacza klienta `client-jwt` bez klucza po stronie eSkargi;
+`invalid_client: Invalid token audience` – `aud` asercji inny niż publiczny adres realmu (`ESKARGA_OIDC_ASSERTIONAUDIENCE`,
+domyślnie `<ESKARGA_OIDC_ISSUER>/protocol/openid-connect/token`; Keycloak porównuje z adresem frontowym, nie `host.docker.internal`).
 
 Diagnostyka: `infra\windows\logi.cmd app`, filtr `Select-String "oidc|OIDC|bez ról|ELY"` – w dev logger
 `org.wildfly.security.http.oidc` ma poziom DEBUG (CLI przy starcie kontenera), więc widać każdy krok mechanizmu.

@@ -8,8 +8,7 @@ ARG OPERATON_SHA256=6bc09729936ccf735c6352fe2d0f89cf3ca89d4d1aee9ad973d4d909d429
 ARG OPERATON_DIST_URL=https://github.com/operaton/operaton/releases/download/v${OPERATON_VERSION}/operaton-bpm-wildfly-${OPERATON_VERSION}.tar.gz
 ARG POSTGRESQL_JDBC_VERSION=42.7.14
 ENV OPERATON_HOME=/opt/operaton
-# openssl: PKCS#12 dla Elytron OIDC z klucza PEM rejestracji ID-users (entrypoint.sh)
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates openssl && rm -rf /var/lib/apt/lists/* \
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/* \
  && curl -fsSL -o /tmp/operaton.tar.gz "${OPERATON_DIST_URL}" \
  && echo "${OPERATON_SHA256}  /tmp/operaton.tar.gz" | sha256sum -c - \
  && mkdir -p /tmp/operaton && tar -xzf /tmp/operaton.tar.gz -C /tmp/operaton \

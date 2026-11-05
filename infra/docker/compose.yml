@@ -30,6 +30,7 @@ services:
       ESKARGA_PUBLIC_URL: ${ESKARGA_PUBLIC_URL:-http://localhost:8082/eskarga}   # post-logout-redirect-uri (oidc.json)
       ESKARGA_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
       ESKARGA_OIDC_CLIENTAUTH: ${OIDC_CLIENT_AUTH:-auto}      # auto: private_key_jwt, gdy w ID_USERS_KLUCZE_DIR jest eskarga.key.pem (rejestracja T-037 projektu id); jwt | secret
+      # aud asercji private_key_jwt = publiczny adres tokenu (Keycloak porównuje z adresem frontowym realmu); entrypoint wyprowadza z ESKARGA_OIDC_ISSUER
       ESKARGA_OIDC_ROLESCLAIM: ${OIDC_ROLES_CLAIM:-resource_access.eskarga.roles}
       ESKARGA_OIDC_MFACLAIM: ${OIDC_MFA_CLAIM:-acr}
       ESKARGA_OIDC_MFAREQUIREDVALUE: ${OIDC_MFA_VALUE:-mfa,wysoki}
@@ -253,6 +254,7 @@ services:
       ESKARGA_OIDC_CLIENT_ID: eskarga-workers
       ESKARGA_OIDC_CLIENT_SECRET: ${OIDC_WORKERS_SECRET:?ustaw w .env}
       ESKARGA_OIDC_PRIVATE_KEY_PEM: /opt/eskarga/klucze/eskarga-workers.key.pem   # private_key_jwt, gdy plik istnieje (rejestracja T-037)
+      ESKARGA_OIDC_ASSERTION_AUDIENCE: http://localhost:8180/realms/id-users/protocol/openid-connect/token   # aud asercji = publiczny adres tokenu ID-users
       ESKARGA_APP_API: http://app:8080/eskarga/api
       ESKARGA_DOCS_API: http://app:8080/eskarga-docs/api
       ESKARGA_EXTERNAL_BASE_URL: http://wiremock:8080

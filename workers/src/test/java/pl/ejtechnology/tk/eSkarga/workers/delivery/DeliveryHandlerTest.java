@@ -44,7 +44,7 @@ class DeliveryHandlerTest {
         wm = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         wm.start();
         String base = "http://localhost:" + wm.port();
-        cfg = new WorkerConfig("http://silnik", "w1", 1, 1000, Set.of(Topics.DORECZENIE_PISMA), "", "", "", "", "", base + "/app", base + "/docs", base + "/ext", 30);
+        cfg = new WorkerConfig("http://silnik", "w1", 1, 1000, Set.of(Topics.DORECZENIE_PISMA), "", "", "", "", "", "", base + "/app", base + "/docs", base + "/ext", 30);
     }
 
     @AfterAll

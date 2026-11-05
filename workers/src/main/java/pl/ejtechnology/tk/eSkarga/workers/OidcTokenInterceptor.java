@@ -23,7 +23,7 @@ public final class OidcTokenInterceptor implements ClientRequestInterceptor {
         if (pem != null && !pem.isBlank() && java.nio.file.Files.isRegularFile(java.nio.file.Path.of(pem))) {
             java.nio.file.Path plik = java.nio.file.Path.of(pem);
             return new ClientCredentialsTokenClient(cfg.oidcTokenUrl(), cfg.oidcClientId(), null, cfg.oidcScope(),
-                    ClientCredentialsTokenClient.privateKeyFromPem(plik), ClientCredentialsTokenClient.keyIdNextTo(plik));
+                    ClientCredentialsTokenClient.privateKeyFromPem(plik), ClientCredentialsTokenClient.keyIdNextTo(plik), cfg.oidcAssertionAudience());
         }
         return new ClientCredentialsTokenClient(cfg.oidcTokenUrl(), cfg.oidcClientId(), cfg.oidcClientSecret(), cfg.oidcScope());
     }

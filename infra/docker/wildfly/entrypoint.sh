@@ -15,25 +15,21 @@ for war in /opt/eskarga/wary/app/eskarga.war /opt/eskarga/wary/docs/eskarga-docs
   fi
 done
 # Uwierzytelnienie klienta eskarga w ID-users: rejestracja narzędziem projektu id (aplikacje:eskarga, T-037) daje private_key_jwt –
-# klucz PKCS#8 <katalog wyników>/eskarga.key.pem (wolumen /opt/eskarga/klucze). Elytron OIDC potrzebuje PKCS#12, więc budujemy go
-# tutaj (openssl) z hasłem losowanym na czas życia kontenera. ESKARGA_OIDC_CLIENTAUTH: auto (klucz, jeśli jest) | jwt | secret.
+# klucz PKCS#8 <katalog wyników>/eskarga.key.pem (wolumen /opt/eskarga/klucze, ID_USERS_KLUCZE_DIR). Własny dostawca Elytrona
+# jwt-eskarga (WAR) podpisuje asercję tym kluczem z aud = publiczny adres tokenu ID-users (Keycloak porównuje aud z adresem
+# frontowym realmu, nie z host.docker.internal). ESKARGA_OIDC_CLIENTAUTH: auto (klucz, jeśli jest) | jwt | secret.
 KLUCZ_PEM=/opt/eskarga/klucze/eskarga.key.pem
 TRYB_KLIENTA="${ESKARGA_OIDC_CLIENTAUTH:-auto}"
 if [ "$TRYB_KLIENTA" = auto ]; then
   if [ -f "$KLUCZ_PEM" ]; then TRYB_KLIENTA=jwt; else TRYB_KLIENTA=secret; fi
 fi
+PUBLICZNY_TOKEN="${ESKARGA_OIDC_ASSERTIONAUDIENCE:-${ESKARGA_OIDC_ISSUER:-http://localhost:8180/realms/id-users}/protocol/openid-connect/token}"
 if [ "$TRYB_KLIENTA" = jwt ]; then
   [ -f "$KLUCZ_PEM" ] || { echo "ESKARGA_OIDC_CLIENTAUTH=jwt, ale brak $KLUCZ_PEM (ID_USERS_KLUCZE_DIR w .env → katalog wyników aplikacje:eskarga projektu id)" >&2; exit 1; }
-  export ESKARGA_OIDC_KEYSTOREPASSWORD
-  ESKARGA_OIDC_KEYSTOREPASSWORD=$(head -c 24 /dev/urandom | base64 | tr -d '/+=')
-  openssl req -new -x509 -key "$KLUCZ_PEM" -subj "/CN=eskarga" -days 3650 -out /opt/eskarga/eskarga-klient.crt.pem 2>/dev/null
-  openssl pkcs12 -export -inkey "$KLUCZ_PEM" -in /opt/eskarga/eskarga-klient.crt.pem -name eskarga \
-    -out /opt/eskarga/eskarga-klient.p12 -passout env:ESKARGA_OIDC_KEYSTOREPASSWORD
-  chmod 600 /opt/eskarga/eskarga-klient.p12
-  export ESKARGA_OIDC_CLIENTAUTH=jwt ESKARGA_OIDC_KEYSTORE=/opt/eskarga/eskarga-klient.p12 ESKARGA_OIDC_KEYALIAS=eskarga
-  # ten sam klucz dla client credentials aplikacja → usługa dokumentów (ClientCredentialsTokenClient.fromSettings)
-  export ESKARGA_DOCS_OIDC_PRIVATEKEYPEM="$KLUCZ_PEM"
-  echo "Uwierzytelnienie klienta eskarga: private_key_jwt (klucz $KLUCZ_PEM$( [ -f /opt/eskarga/klucze/eskarga.kid ] && printf ', kid %s' "$(cat /opt/eskarga/klucze/eskarga.kid)"))"
+  export ESKARGA_OIDC_CLIENTAUTH=jwt-eskarga ESKARGA_OIDC_PRIVATEKEYPEM="$KLUCZ_PEM" ESKARGA_OIDC_ASSERTIONAUDIENCE="$PUBLICZNY_TOKEN"
+  # ten sam klucz i aud dla client credentials aplikacja → usługa dokumentów (ClientCredentialsTokenClient.fromSettings)
+  export ESKARGA_DOCS_OIDC_PRIVATEKEYPEM="$KLUCZ_PEM" ESKARGA_DOCS_OIDC_ASSERTIONAUDIENCE="$PUBLICZNY_TOKEN"
+  echo "Uwierzytelnienie klienta eskarga: private_key_jwt (klucz $KLUCZ_PEM$( [ -f /opt/eskarga/klucze/eskarga.kid ] && printf ', kid %s' "$(cat /opt/eskarga/klucze/eskarga.kid)"), aud $PUBLICZNY_TOKEN)"
 else
   export ESKARGA_OIDC_CLIENTAUTH=secret
   echo "Uwierzytelnienie klienta eskarga: client_secret (ESKARGA_OIDC_CLIENTSECRET)"

@@ -139,4 +139,13 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   wyzwalaczem logowania i adresem zwrotnym jest `/callback` (`LoginTriggerServlet`, dawny `OidcCallbackServlet` scalony),
   `post-logout-redirect-uri` = `<baza>/`, a `LogoutBean` ustawia ciasteczko `ESKARGA_WYLOGOWANO`, po którym `LoginFilter`
   pokazuje stronę „sesja zakończona” zamiast od razu logować ponownie. Skrypt dev rejestruje te same adresy (plus `/*` i `/+`).
+- **Uzupełnienie 05.11.2026 – `aud` asercji i własny dostawca `jwt-eskarga`**: z poprawnym kluczem Keycloak odpowiadał
+  `invalid_client: Invalid token audience`. Wbudowany dostawca `jwt` Elytrona wpisuje w `aud` adres tokenu z metadanych
+  (z kontenera `http://host.docker.internal:8180/…`), a Keycloak (`JWTClientValidator.getExpectedAudiences`) porównuje `aud`
+  z adresem frontowym realmu (`http://localhost:8180/realms/id-users` i jego `…/protocol/openid-connect/token`), bo
+  `KeycloakContext.getUri()` zwraca URI typu FRONTEND. W WAR-ze jest własny `ClientCredentialsProvider` (`jwt-eskarga`,
+  `META-INF/services`): klucz PEM i `kid` z plików rejestracji ID-users, `aud` z `ESKARGA_OIDC_ASSERTIONAUDIENCE` (entrypoint:
+  `<ESKARGA_OIDC_ISSUER>/protocol/openid-connect/token`). PKCS#12 i openssl w obrazie nie są już potrzebne.
+  `ClientCredentialsTokenClient` (dokumenty, workery) ma `.assertionAudience` / `ESKARGA_OIDC_ASSERTION_AUDIENCE` z tego samego
+  powodu. Narzędzie ID-users używa w `aud` issuera z discovery pobranego pod `localhost:8180` – stąd u niego działało.
 

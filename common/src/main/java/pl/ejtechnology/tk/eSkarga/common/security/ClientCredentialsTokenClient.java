@@ -27,6 +27,7 @@ public final class ClientCredentialsTokenClient {
     private final String scope;
     private final java.security.PrivateKey assertionKey;
     private final String assertionKid;
+    private final String assertionAudience;
     private final HttpClient http;
     private volatile String cached;
     private volatile Instant expiresAt = Instant.EPOCH;
@@ -37,12 +38,23 @@ public final class ClientCredentialsTokenClient {
 
     /** Uwierzytelnienie {@code private_key_jwt} (zalecane przez ID-users – rotacja klucza bez przerwy): klucz zamiast sekretu. */
     public ClientCredentialsTokenClient(String tokenUrl, String clientId, String clientSecret, String scope, java.security.PrivateKey assertionKey, String assertionKid) {
+        this(tokenUrl, clientId, clientSecret, scope, assertionKey, assertionKid, null);
+    }
+
+    /**
+     * @param assertionAudience {@code aud} asercji – adres punktu końcowego tokenu widziany przez Keycloak ID-users (publiczny,
+     *     {@code http://localhost:8180/…}); null = {@code tokenUrl}. Keycloak porównuje {@code aud} z adresem frontowym realmu,
+     *     więc z kontenera (token pobierany przez {@code host.docker.internal}) domyślna wartość daje „Invalid token audience”.
+     */
+    public ClientCredentialsTokenClient(String tokenUrl, String clientId, String clientSecret, String scope, java.security.PrivateKey assertionKey, String assertionKid,
+            String assertionAudience) {
         this.tokenUrl = tokenUrl;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.scope = scope;
         this.assertionKey = assertionKey;
         this.assertionKid = assertionKid;
+        this.assertionAudience = assertionAudience == null || assertionAudience.isBlank() ? tokenUrl : assertionAudience;
         this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     }
 
@@ -50,7 +62,7 @@ public final class ClientCredentialsTokenClient {
      * Konfiguracja {@code <prefix>.tokenUrl}, {@code .clientId}, {@code .scope} oraz {@code .clientSecret} albo (zalecane, kontrakt ID-users)
      * {@code private_key_jwt}: {@code .privateKeyPem} (klucz PKCS#8 w PEM, jak zapisuje narzędzie rejestracji ID-users {@code aplikacje:eskarga};
      * {@code kid} z {@code .keyId} albo z pliku {@code <klient>.kid} obok klucza) lub {@code .keyStore} (PKCS#12), {@code .keyStorePassword},
-     * {@code .keyAlias}.
+     * {@code .keyAlias}; {@code .assertionAudience} – {@code aud} asercji (domyślnie {@code .tokenUrl}).
      */
     public static ClientCredentialsTokenClient fromSettings(String prefix) {
         String ks = Settings.value(prefix + ".keyStore", "");
@@ -76,7 +88,7 @@ public final class ClientCredentialsTokenClient {
             }
         }
         return new ClientCredentialsTokenClient(Settings.value(prefix + ".tokenUrl", ""), Settings.value(prefix + ".clientId", ""),
-                Settings.value(prefix + ".clientSecret", ""), Settings.value(prefix + ".scope", ""), key, kid);
+                Settings.value(prefix + ".clientSecret", ""), Settings.value(prefix + ".scope", ""), key, kid, Settings.value(prefix + ".assertionAudience", ""));
     }
 
     /** Klucz prywatny RSA z pliku PEM (PKCS#8, {@code -----BEGIN PRIVATE KEY-----}) – format narzędzia rejestracji ID-users. */
@@ -163,15 +175,19 @@ public final class ClientCredentialsTokenClient {
         }
     }
 
-    /** JWT RS256: iss = sub = client_id, aud = adres tokenu (Keycloak), ważność 60 s, jti losowe. */
     String clientAssertion() {
+        return signedAssertion(clientId, assertionAudience, assertionKey, assertionKid);
+    }
+
+    /** JWT RS256 (RFC 7523): iss = sub = client_id, aud = adres tokenu/realmu widziany przez Keycloak, ważność 60 s, jti losowe, opcjonalny kid. */
+    public static String signedAssertion(String clientId, String audience, java.security.PrivateKey key, String kid) {
         try {
             long now = Instant.now().getEpochSecond();
-            String header = b64("{\"alg\":\"RS256\",\"typ\":\"JWT\"" + (assertionKid == null ? "" : ",\"kid\":\"" + assertionKid + "\"") + "}");
-            String payload = b64("{\"iss\":\"" + clientId + "\",\"sub\":\"" + clientId + "\",\"aud\":\"" + tokenUrl + "\",\"jti\":\"" + java.util.UUID.randomUUID()
+            String header = b64("{\"alg\":\"RS256\",\"typ\":\"JWT\"" + (kid == null || kid.isBlank() ? "" : ",\"kid\":\"" + kid + "\"") + "}");
+            String payload = b64("{\"iss\":\"" + clientId + "\",\"sub\":\"" + clientId + "\",\"aud\":\"" + audience + "\",\"jti\":\"" + java.util.UUID.randomUUID()
                     + "\",\"iat\":" + now + ",\"exp\":" + (now + 60) + "}");
             java.security.Signature sig = java.security.Signature.getInstance("SHA256withRSA");
-            sig.initSign(assertionKey);
+            sig.initSign(key);
             sig.update((header + "." + payload).getBytes(StandardCharsets.US_ASCII));
             return header + "." + payload + "." + java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(sig.sign());
         } catch (java.security.GeneralSecurityException e) {
