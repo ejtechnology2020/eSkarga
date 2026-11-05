@@ -128,19 +128,32 @@ function ConvertTo-ArgumentWiersza([string]$Argument) {
   return '"' + $tekst + '"'
 }
 
+# Spłaszcza argumenty do listy łańcuchów. Parametr ValueFromRemainingArguments bez typu: lista po przecinku
+# (Invoke-Compose 'run', '--rm', 'x') trafia jako jedna zagnieżdżona tablica, a [string[]] skleiłby ją w jeden
+# łańcuch ("run --rm x" jako jedna flaga – błąd "unknown flag" w Docker Compose).
+function ConvertTo-ListaArgumentow($Argumenty) {
+  $lista = New-Object System.Collections.Generic.List[string]
+  foreach ($a in @($Argumenty)) {
+    if ($null -eq $a) { continue }
+    if ($a -is [System.Array]) { foreach ($b in (ConvertTo-ListaArgumentow $a)) { $lista.Add($b) } }
+    else { $lista.Add([string]$a) }
+  }
+  return $lista.ToArray()
+}
+
 # Docker dziedziczy konsolę (Start-Process -NoNewWindow): budowanie obrazów (BuildKit) wymaga prawdziwej konsoli,
 # a przekierowanie wyjścia do potoku PowerShella kończyło się błędem "failed to get console: The handle is invalid".
 function Invoke-Docker {
-  param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Argumenty)
-  $linia = ($Argumenty | ForEach-Object { ConvertTo-ArgumentWiersza $_ }) -join ' '
+  param([Parameter(ValueFromRemainingArguments = $true)]$Argumenty)
+  $linia = ((ConvertTo-ListaArgumentow $Argumenty) | ForEach-Object { ConvertTo-ArgumentWiersza $_ }) -join ' '
   $proces = Start-Process -FilePath 'docker' -ArgumentList $linia -NoNewWindow -Wait -PassThru
   return $proces.ExitCode
 }
 
 # Wywołanie docker compose dla projektu eSkarga; zwraca kod wyjścia. Opcje globalne (np. --profile id-users) podaj na początku.
 function Invoke-Compose {
-  param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Argumenty)
-  $wszystkie = @('compose', '--env-file', $Script:PlikEnv, '-f', $Script:PlikCompose) + $Argumenty
+  param([Parameter(ValueFromRemainingArguments = $true)]$Argumenty)
+  $wszystkie = @('compose', '--env-file', $Script:PlikEnv, '-f', $Script:PlikCompose) + (ConvertTo-ListaArgumentow $Argumenty)
   return (Invoke-Docker @wszystkie)
 }
 
