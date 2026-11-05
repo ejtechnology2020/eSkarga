@@ -6,6 +6,13 @@
       <module name="org.operaton.bpm.operaton-engine" />
       <module name="org.operaton.bpm.dmn.operaton-engine-dmn" />
       <module name="org.operaton.bpm.model.operaton-bpmn-model" />
+      <!-- Apache HttpCore 5 (transport klienta OpenSearch) używa jdk.net.Sockets – pakiet JDK niewidoczny domyślnie dla wdrożeń
+           (NoClassDefFoundError: jdk/net/Sockets w wątkach httpclient-dispatch) -->
+      <system export="true">
+        <paths>
+          <path name="jdk/net" />
+        </paths>
+      </system>
     </dependencies>
     <exclusions>
       <!-- WAR niesie własny PrimeFaces; nie używamy modułów Jackson/Jakarta JSON-B z serwera w UI -->
