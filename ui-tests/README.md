@@ -4,11 +4,13 @@ Dwa projekty Playwright (`playwright.config.ts`), oba przeciw działającej apli
 
 | Projekt | Co sprawdza | Wymaga |
 | --- | --- | --- |
+| `widget` | widżet PDF (`tk:pdfViewer` + `pdf-viewer.js`) w Chromium pod CSP z `web.xml`: skan osadzony w stronie i wstawiony po AJAX PrimeFaces; serwer testowy w teście, pdf.js z npm w wersji webjara | nic (działa też w CI, zadanie `widget`) |
 | `demo` | ekrany w trybie demo (`?rola=`, `?stan=`), audyt axe (WCAG 2.1 A/AA) | aplikacja z `ESKARGA_SECURITY_MODE=demo` |
 | `oidc` | procesy od końca do końca przez ID-users: logowanie z kodem jednorazowym (TOTP), brak tokenów w przeglądarce, rejestracja pisma ze skanem PDF (S-03), kolejka z podglądem skanu i kwalifikacja (S-06), założenie sprawy z sygnaturą (S-07, BR-01), akta (S-14), repertorium (S-08), dziennik wpływu (S-04), przełącznik roli, wylogowanie | środowisko dev obok ID-users (Keycloak :8180), `ESKARGA_E2E=1` |
 
 ```bash
 cd ui-tests && npm ci && npx playwright install chromium
+npm run test:widget                                          # widżet PDF bez aplikacji (ESKARGA_CHROMIUM=… gdy Chromium już jest)
 npm run test:demo                                            # tryb demo + axe
 ESKARGA_E2E=1 ESKARGA_E2E_KC_ADMIN_HASLO=<KEYCLOAK_ADMIN_PASSWORD z id/dev/.env> npm run test:oidc   # zakłada konto e2e.eskarga i konfiguruje OTP
 ESKARGA_E2E=1 ESKARGA_E2E_LOGIN=admin.wszystko ESKARGA_E2E_HASLO=… ESKARGA_E2E_TOTP=<klucz Base32> npm run test:oidc   # istniejące konto

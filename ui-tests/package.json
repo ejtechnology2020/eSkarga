@@ -7,12 +7,14 @@
     "test:demo": "playwright test --project demo",
     "test:oidc": "playwright test --project oidc",
     "test:a11y": "playwright test --project demo --grep @a11y",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "test:widget": "playwright test --project widget"
   },
   "devDependencies": {
     "@playwright/test": "1.65.0",
     "@axe-core/playwright": "4.14.0",
     "typescript": "5.7.2",
-    "@types/node": "22.10.2"
+    "@types/node": "22.10.2",
+    "pdfjs-dist": "6.4.299"
   }
 }

@@ -169,7 +169,19 @@
 
   function mountAll() { document.querySelectorAll('.pdfv').forEach(mount); }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', mountAll); } else { mountAll(); }
-  if (window.PrimeFaces && PrimeFaces.ajax) {
-    document.addEventListener('pfAjaxComplete', mountAll);
+  // Widżet pojawia się też w treści podmienianej AJAX-em PrimeFaces (kolejka S-06 po wyborze pisma, dziennik S-04, akta S-14):
+  // PrimeFaces wysyła pfAjaxComplete zdarzeniem jQuery (nie natywnym DOM), więc nasłuch przez jQuery, a niezależnie od niego
+  // MutationObserver montuje każdy nowy .pdfv wstawiony do dokumentu.
+  if (window.jQuery) { window.jQuery(document).on('pfAjaxComplete', mountAll); }
+  if (window.MutationObserver && document.body) {
+    new MutationObserver(function (muts) {
+      for (let m = 0; m < muts.length; m++) {
+        const added = muts[m].addedNodes;
+        for (let n = 0; n < added.length; n++) {
+          const node = added[n];
+          if (node.nodeType === 1 && (node.matches('.pdfv') || node.querySelector('.pdfv'))) { mountAll(); return; }
+        }
+      }
+    }).observe(document.body, { childList: true, subtree: true });
   }
 })();
