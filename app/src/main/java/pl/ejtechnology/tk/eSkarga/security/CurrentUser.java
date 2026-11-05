@@ -63,9 +63,22 @@ public class CurrentUser implements Serializable {
         return getPrincipal() != null || demoPerson().isPresent();
     }
 
+    /**
+     * Podmiot z kontenera przez {@link HttpServletRequest#getUserPrincipal()} – tożsamość mechanizmu Elytron OIDC jest widoczna
+     * w żądaniu, a {@link SecurityContext} Jakarta Security (Soteria) jej nie zwracał (strony renderowały się jako anonim mimo
+     * zalogowania). Anonimowy podmiot kontenera (Elytron „anonymous”) to brak logowania.
+     */
     public Principal getPrincipal() {
-        Principal p = securityContext == null ? null : securityContext.getCallerPrincipal();
-        return LoginFilter.authenticated(p) ? p : null;   // anonimowy podmiot kontenera (Elytron „anonymous”) to brak logowania
+        Principal p = request == null ? null : request.getUserPrincipal();
+        if (p == null && securityContext != null) {
+            p = securityContext.getCallerPrincipal();
+        }
+        return LoginFilter.authenticated(p) ? p : null;
+    }
+
+    /** Rola kontenera: Elytron mapuje {@code resource_access.eskarga.roles} na role (use-resource-role-mappings), Soteria – swoje. */
+    private boolean inContainerRole(AppRole r) {
+        return (request != null && request.isUserInRole(r.name())) || (securityContext != null && securityContext.isCallerInRole(r.name()));
     }
 
     public String getLogin() {
@@ -93,7 +106,7 @@ public class CurrentUser implements Serializable {
             return p.get().role();
         }
         for (AppRole r : AppRole.values()) {
-            if (securityContext.isCallerInRole(r.name())) {
+            if (inContainerRole(r)) {
                 return r;
             }
         }
@@ -108,7 +121,7 @@ public class CurrentUser implements Serializable {
         }
         EnumSet<AppRole> roles = EnumSet.noneOf(AppRole.class);
         for (AppRole r : AppRole.values()) {
-            if (securityContext.isCallerInRole(r.name())) {
+            if (inContainerRole(r)) {
                 roles.add(r);
             }
         }

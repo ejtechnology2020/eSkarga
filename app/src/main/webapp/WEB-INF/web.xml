@@ -163,10 +163,12 @@
     <auth-method>OIDC</auth-method>
   </login-config>
   <security-constraint>
-    <display-name>Wyzwalacz logowania ID-users</display-name>
+    <display-name>Wyzwalacz logowania i wylogowania ID-users</display-name>
     <web-resource-collection>
       <web-resource-name>logowanie</web-resource-name>
       <url-pattern>/logowanie</url-pattern>
+      <!-- logout-path z oidc.json: mechanizm Elytron obsługuje go (end_session w ID-users) tylko dla zasobu chronionego -->
+      <url-pattern>/wyloguj</url-pattern>
     </web-resource-collection>
     <auth-constraint>
       <role-name>**</role-name>

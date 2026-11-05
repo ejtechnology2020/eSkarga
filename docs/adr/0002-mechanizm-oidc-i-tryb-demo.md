@@ -127,3 +127,9 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   istnieje. Elytron nie wysyła `kid` w asercji – Keycloak dobiera klucz po algorytmie (RS256), co działa przy jednym aktywnym
   kluczu; `ClientCredentialsTokenClient` wysyła `kid` z pliku `<klient>.kid`. Produkcja: klucz w PKCS#12/HSM, do opisania w runbooku.
 
+- **Uzupełnienie 05.11.2026 – podmiot i role z żądania**: po zalogowaniu strony renderowały się jako anonim bez ról (403
+  „Brak uprawnień” bez paska użytkownika). `SecurityContext` Jakarta Security (Soteria) nie zwraca tożsamości mechanizmu Elytron
+  OIDC, więc `CurrentUser` czyta podmiot z `HttpServletRequest.getUserPrincipal()` i role z `isUserInRole` (Elytron mapuje
+  `resource_access.eskarga.roles` na role kontenera), z `SecurityContext` jako zapasem. `/wyloguj` (`logout-path`) dołączony do
+  ograniczenia bezpieczeństwa – mechanizm obsługuje wylogowanie RP-initiated tylko na zasobie chronionym; `LogoutFallbackServlet`
+  kończy sesję lokalną, gdy mechanizm nie przejął żądania (demo, brak sesji OIDC).

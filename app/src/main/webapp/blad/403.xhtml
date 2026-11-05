@@ -17,7 +17,10 @@
       <h1 id="sys-h" class="h1-26">#{msg['sys.403.generalTitle']}</h1>
       <p>#{msg['sys.403.generalText']}</p>
       <p class="hint" jsf:rendered="#{currentUser.authenticated and empty currentUser.roles}" xmlns:jsf="jakarta.faces">#{fmt.msg('sys.403.noRoles', currentUser.login)}</p>
-      <div class="row"><h:link outcome="/pulpit" styleClass="btn p" value="#{msg['sys.backToDesk']}" /><h:link outcome="/blad/sesja" styleClass="btn" value="#{msg['app.logout']}" rendered="#{currentUser.authenticated}" /></div>
+      <div class="row">
+        <h:link outcome="/pulpit" styleClass="btn p" value="#{msg['sys.backToDesk']}" />
+        <h:form rendered="#{currentUser.authenticated}" style="display: contents;"><h:commandLink action="#{logoutBean.logout}" styleClass="btn" value="#{msg['app.logout']}" /></h:form>
+      </div>
     </h:panelGroup>
   </ui:define>
 </ui:composition>
