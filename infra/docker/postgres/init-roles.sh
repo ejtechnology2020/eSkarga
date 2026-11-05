@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Role bazy (T-003, NFR-01): migracje mają pełne prawa w schemacie repertorium; aplikacja tylko INSERT/SELECT
 # (UPDATE wyłącznie na docket_counter – licznik sygnatur, BR-01). Schemat operaton należy do roli aplikacji.
 set -e
