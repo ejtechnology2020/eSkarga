@@ -6,6 +6,9 @@
                 xmlns:tk="jakarta.faces.composite/tk">
   <!-- Panel dokumentu (brief §4.3): pasek z tytułem, wersją, stanem podpisu i przyciskami; podgląd; dokument niejawny
        jako plansza bez miniatury. Parametry: doc (RecordPage), showSplit (boolean). Widżet pdf.js dołącza T-034. -->
+  <!-- bez dokumentu (akta z bazy bez pliku): plansza zamiast panelu – wyrażenia na doc.* dawałyby „Target Unreachable” -->
+  <h:panelGroup rendered="#{empty doc}" layout="block" styleClass="pane-b"><p class="mut">W aktach nie ma jeszcze dokumentów. Pismo z rejestracji wpływu pojawi się tu po założeniu sprawy, kolejne po dołączeniu skanu.</p></h:panelGroup>
+  <h:panelGroup rendered="#{not empty doc}">
   <div class="pane-h">
     <div class="pane-tt"><b>#{doc.tytul}</b>
       <span class="mut"><h:outputText rendered="#{not doc.niejawny}" value="#{doc.karty} · v1 z 1 · skan z OCR · #{doc.opis}" /><h:outputText rendered="#{doc.niejawny}" value="dokument niejawny · tylko metadane" /></span></div>
@@ -18,7 +21,6 @@
   </div>
   <h:panelGroup rendered="#{not doc.niejawny}">
     <div class="pane-sub"><span>karta akt #{doc.karty.replace('k. ', '')} · <b style="color: #171B24;">strona 1 z 14</b></span><span class="sp"></span><button type="button" class="btn s q" aria-expanded="false">Pokaż miniatury stron</button></div>
-    <h:panelGroup rendered="#{not currentUser.demo and empty doc}" layout="block" styleClass="viewer"><p class="mut" style="padding: 16px;">W aktach nie ma jeszcze dokumentów z plikiem.</p></h:panelGroup>
     <h:panelGroup rendered="#{not currentUser.demo and not empty doc}" layout="block" styleClass="viewer">
       <tk:pdfViewer src="#{request.contextPath}/akta/dokument/#{doc.id}" title="#{doc.tytul}" pageFrom="#{doc.karty.replaceAll('[^0-9].*', '').replace('k', '')}"
                     highlights="#{akta.highlightsJson(doc)}" canHighlight="#{akta.zespolSedziego}" downloadUrl="#{request.contextPath}/akta/dokument/#{doc.id}?pobierz=1" />
@@ -56,5 +58,6 @@
     <tk:empty icon="lock" title="Dokument z klauzulą — treść dostępna w kancelarii niejawnej" text="System przechowuje wyłącznie metadane. Kopia w kancelarii niejawnej, poz. 14/2026.">
       <dl class="dl" style="text-align: left;"><dt>Rodzaj</dt><dd>załącznik do skargi</dd><dt>Klauzula</dt><dd>zastrzeżone</dd><dt>Wpływ</dt><dd>14.10.2026 · poczta</dd><dt>Przechowanie</dt><dd>kancelaria niejawna, poz. 14/2026</dd></dl>
     </tk:empty>
+  </h:panelGroup>
   </h:panelGroup>
 </ui:composition>
