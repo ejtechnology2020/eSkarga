@@ -104,3 +104,16 @@ Rozwiązywanie problemów na Windows:
   po wcześniejszym klonowaniu z `core.autocrlf=true` wykonaj `git rm --cached -r . && git reset --hard`.
 - **Wersje obrazów** (`*_IMAGE`, `OPERATON_VERSION`) są zarządzane przez repozytorium – skrypty aktualizują je w istniejącym
   `.env` i wypisują zmiany; porty i hasła zostają.
+
+## Logowanie przez ID-users – jak to działa i gdzie szukać
+
+1. Strona `*.xhtml` bez zalogowanego użytkownika → `LoginFilter` zapisuje adres w sesji i przekierowuje na `/eskarga/logowanie`.
+2. `/logowanie` jest jedynym zasobem chronionym w `web.xml`; mechanizm Elytron OIDC (`WEB-INF/oidc.json`) odsyła przeglądarkę
+   do `http://localhost:8180/realms/id-users/protocol/openid-connect/auth?...&code_challenge_method=S256`.
+3. Po zalogowaniu (i MFA – klient `eskarga` ma `default.acr.values=mfa`) Keycloak wraca na `/eskarga/logowanie?code=...`,
+   Elytron wymienia kod na tokeny, a serwlet przekierowuje na zapamiętany adres (domyślnie pulpit).
+4. Brak ról w tokenie → strona 403 i wpis `WARNING … bez ról eSkargi` w logu z zawartością `resource_access`/`realm_access`.
+
+Diagnostyka: `infra\windows\logi.cmd app`, filtr `Select-String "oidc|OIDC|bez ról|ELY"` – w dev logger
+`org.wildfly.security.http.oidc` ma poziom DEBUG (CLI przy starcie kontenera), więc widać każdy krok mechanizmu.
+

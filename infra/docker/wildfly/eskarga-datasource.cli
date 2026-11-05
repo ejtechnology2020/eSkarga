@@ -32,3 +32,8 @@ if (result != "java:jboss/datasources/EskargaDS") of /subsystem=operaton-bpm-pla
       {"class"=>"org.operaton.connect.plugin.impl.ConnectProcessEnginePlugin"}])
 end-if
 stop-embedded-server
+
+# Diagnostyka logowania ID-users w dev: przebieg mechanizmu Elytron OIDC (bez tokenów w logu na poziomie DEBUG)
+if (outcome != success) of /subsystem=logging/logger=org.wildfly.security.http.oidc:read-resource
+  /subsystem=logging/logger=org.wildfly.security.http.oidc:add(level=DEBUG)
+end-if

@@ -18,10 +18,11 @@ import pl.ejtechnology.tk.eSkarga.audit.AuditService;
 
 /**
  * Wymuszenie logowania przez ID-users (tryb {@code oidc}, D4): strony Facelets wymagają uwierzytelnionego użytkownika
- * z co najmniej jedną rolą eSkargi. Mechanizm {@code @OpenIdAuthenticationMechanismDefinition} (Jakarta Security) startuje
- * dopiero przy żądaniu zasobu chronionego albo jawnym {@link HttpServletRequest#authenticate} – bez tego filtra strony
- * renderowały się dla podmiotu anonimowego (Elytron zgłasza go jako principal „anonymous”) z domyślną rolą referenta.
- * W trybie demo filtr nic nie robi (ADR 0004). Strony błędów i zasoby JSF są dostępne bez logowania.
+ * z co najmniej jedną rolą eSkargi. Mechanizm Elytron OIDC ({@code WEB-INF/oidc.json}) startuje dopiero przy żądaniu zasobu
+ * chronionego – bez tego filtra strony renderowały się dla podmiotu anonimowego (Elytron zgłasza go jako principal „anonymous”)
+ * z domyślną rolą referenta. Anonim jest przekierowywany na {@link LoginTriggerServlet} ({@code /logowanie}, jedyny zasób
+ * z ograniczeniem bezpieczeństwa), a po zalogowaniu wraca na żądany adres. W trybie demo filtr nic nie robi (ADR 0004).
+ * Strony błędów i zasoby JSF są dostępne bez logowania.
  */
 public class LoginFilter implements Filter {
 
@@ -51,28 +52,15 @@ public class LoginFilter implements Filter {
             return;
         }
         if (!authenticated(req.getUserPrincipal())) {
-            // HttpServletRequest.authenticate uruchamia mechanizm kontenera: na WildFly adnotację OIDC obsługuje podsystem
-            // elytron-oidc-client (mechanizm Elytrona, nie bean Jakarta Security), więc SecurityContext.authenticate() nie działa.
-            boolean ok;
-            try {
-                ok = req.authenticate(resp);
-            } catch (ServletException | IllegalStateException e) {
-                LOG.log(Level.WARNING, "Logowanie OIDC niedostępne dla " + path + " (providerUri " + settings.getProviderUri() + ")", e);
-                if (!resp.isCommitted()) {
-                    resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Logowanie przez ID-users niedostępne – szczegóły w logu serwera");
-                }
-                return;
+            // Mechanizm Elytron OIDC wysyła wyzwanie (302 do Keycloaka ID-users) tylko dla zasobu z ograniczeniem bezpieczeństwa –
+            // programowe req.authenticate() kończyło się UT010032 bez przekierowania. Zapamiętujemy cel i idziemy na /logowanie.
+            String target = req.getRequestURI().substring(req.getContextPath().length());
+            if (req.getQueryString() != null && !req.getQueryString().isBlank()) {
+                target = target + "?" + req.getQueryString();
             }
-            if (!ok) {
-                return;   // wyzwanie (przekierowanie do Keycloaka ID-users) już wysłane
-            }
-            if (!authenticated(req.getUserPrincipal())) {
-                LOG.log(Level.WARNING, "authenticate() zakończone bez podmiotu dla {0}", path);
-                if (!resp.isCommitted()) {
-                    resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-                }
-                return;
-            }
+            req.getSession(true).setAttribute(LoginTriggerServlet.TARGET_ATTRIBUTE, target);
+            resp.sendRedirect(req.getContextPath() + LoginTriggerServlet.PATH);
+            return;
         }
         if (currentUser.getRoles().isEmpty()) {
             // diagnostyka (bez tokenów): czy kontekst Elytron OIDC jest widoczny i jakie role niesie token dostępu

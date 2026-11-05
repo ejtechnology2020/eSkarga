@@ -157,10 +157,21 @@
 
   <!-- Zasoby WEB-INF i szablony nie są dostępne bezpośrednio -->
   <!-- Mechanizm Elytron OIDC (WEB-INF/oidc.json, ADR 0002 wariant 2): podsystem elytron-oidc-client aktywuje OIDC tylko dla wdrożenia
-       z auth-method OIDC. Strony nie mają ograniczeń bezpieczeństwa – logowanie wymusza LoginFilter (w trybie demo nieaktywny). -->
+       z auth-method OIDC. Strony nie mają ograniczeń bezpieczeństwa – logowanie wymusza LoginFilter (w trybie demo nieaktywny),
+       przekierowując anonima na /logowanie: jedyny zasób chroniony, na którym kontener wysyła wyzwanie OIDC (302 do ID-users). -->
   <login-config>
     <auth-method>OIDC</auth-method>
   </login-config>
+  <security-constraint>
+    <display-name>Wyzwalacz logowania ID-users</display-name>
+    <web-resource-collection>
+      <web-resource-name>logowanie</web-resource-name>
+      <url-pattern>/logowanie</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>**</role-name>
+    </auth-constraint>
+  </security-constraint>
   <security-constraint>
     <display-name>Szablony i dołączenia</display-name>
     <web-resource-collection>

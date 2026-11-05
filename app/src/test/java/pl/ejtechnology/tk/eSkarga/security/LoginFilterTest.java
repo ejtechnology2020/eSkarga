@@ -15,13 +15,14 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
 
-/** Wymuszenie logowania ID-users na stronach Facelets (D4, T-004): anonim → mechanizm OIDC, zalogowany bez ról → 403. */
+/** Wymuszenie logowania ID-users na stronach Facelets (D4, T-004): anonim → chroniony /logowanie (wyzwanie OIDC), zalogowany bez ról → 403. */
 class LoginFilterTest {
 
     private final LoginFilter filter = new LoginFilter();
@@ -41,14 +42,35 @@ class LoginFilterTest {
     }
 
     @Test
-    void anonimowyPodmiotKonteneraUruchamiaLogowanieOidc() throws Exception {
+    void anonimowyPodmiotKonteneraIdzieNaChronionyWyzwalaczLogowania() throws Exception {
         Principal anon = () -> "anonymous";
         when(req.getUserPrincipal()).thenReturn(anon);
-        when(req.authenticate(resp)).thenReturn(false);   // wyzwanie: przekierowanie do Keycloaka ID-users
+        when(req.getContextPath()).thenReturn("/eskarga");
+        when(req.getRequestURI()).thenReturn("/eskarga/sprawy/repertorium.xhtml");
+        when(req.getQueryString()).thenReturn("rok=2026");
+        HttpSession session = mock(HttpSession.class);
+        when(req.getSession(true)).thenReturn(session);
         filter.doFilter(req, resp, chain);
-        verify(req).authenticate(resp);
+        verify(session).setAttribute(LoginTriggerServlet.TARGET_ATTRIBUTE, "/sprawy/repertorium.xhtml?rok=2026");
+        verify(resp).sendRedirect("/eskarga/logowanie");
+        verify(req, never()).authenticate(any());
         verify(chain, never()).doFilter(any(), any());
         assertThat(LoginFilter.authenticated(anon)).isFalse();
+    }
+
+    @Test
+    void wyzwalaczWracaNaZapamietanyAdresAlboPulpit() {
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute(LoginTriggerServlet.TARGET_ATTRIBUTE)).thenReturn("/sprawy/repertorium.xhtml?rok=2026");
+        assertThat(LoginTriggerServlet.target(session)).isEqualTo("/sprawy/repertorium.xhtml?rok=2026");
+        verify(session).removeAttribute(LoginTriggerServlet.TARGET_ATTRIBUTE);
+        assertThat(LoginTriggerServlet.target(null)).isEqualTo("/pulpit.xhtml");
+        HttpSession obcy = mock(HttpSession.class);
+        when(obcy.getAttribute(LoginTriggerServlet.TARGET_ATTRIBUTE)).thenReturn("//zly.example/x");
+        assertThat(LoginTriggerServlet.target(obcy)).isEqualTo("/pulpit.xhtml");
+        HttpSession petla = mock(HttpSession.class);
+        when(petla.getAttribute(LoginTriggerServlet.TARGET_ATTRIBUTE)).thenReturn("/logowanie");
+        assertThat(LoginTriggerServlet.target(petla)).isEqualTo("/pulpit.xhtml");
     }
 
     @Test

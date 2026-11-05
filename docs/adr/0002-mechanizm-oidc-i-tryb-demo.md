@@ -109,3 +109,10 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   (Elytron używa bieżącego adresu strony jako `redirect_uri`). `/callback` zostaje jako strona błędu dostawcy.
 - Wylogowanie: `LogoutBean` → `/wyloguj` (RP-initiated logout z `id_token_hint`), back-channel logout bez zmian (własny serwlet).
 - `ESKARGA_PKCE` w rejestracji pozostaje przełącznikiem diagnostycznym; domyślnie `S256`.
+- **Uzupełnienie 05.11.2026 – wyzwalacz logowania `/logowanie`**: programowe `HttpServletRequest.authenticate()` w `LoginFilter`
+  kończyło się `UT010032: Authentication failed` bez przekierowania (mechanizm załadował metadane dostawcy, ale wyzwanie 302 nie
+  dotarło do odpowiedzi). Elytron OIDC wysyła wyzwanie dla zasobu z ograniczeniem bezpieczeństwa, dlatego `web.xml` chroni
+  jedyną ścieżkę `/logowanie` (`<role-name>**</role-name>`), `LoginFilter` zapamiętuje w sesji żądany adres (ścieżka w kontekście
+  i zapytanie) i przekierowuje tam anonima, a `LoginTriggerServlet` po zalogowaniu wraca na zapamiętany adres (tylko ścieżka
+  względna, domyślnie pulpit). `redirect_uri` to `<baza>/logowanie` – mieści się w `<baza>/*`. W dev CLI włącza logger
+  `org.wildfly.security.http.oidc` na poziomie DEBUG.
