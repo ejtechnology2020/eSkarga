@@ -2,9 +2,9 @@
 .SYNOPSIS
   Przebudowuje artefakty Mavenem i wdraża je ponownie po zmianach w kodzie.
 .DESCRIPTION
-  WAR-y aplikacji i usługi dokumentów są kopiowane przy starcie kontenera z app\target i docs-service\target
-  (katalogi montowane tylko do odczytu) – po buildzie wystarczy restart WildFly. Workery są kopiowane do obrazu –
-  ich obraz jest budowany ponownie.
+  Najpierw migracje Flyway (osobny kontener z rolą migracji), potem restart WildFly: WAR-y aplikacji i usługi
+  dokumentów są kopiowane przy starcie kontenera z app\target i docs-service\target (katalogi montowane tylko do
+  odczytu). Workery są kopiowane do obrazu – ich obraz jest budowany ponownie.
 .PARAMETER TylkoApp
   Tylko WildFly (aplikacja i usługa dokumentów), bez workerów.
 .PARAMETER Testy
@@ -17,6 +17,9 @@ Assert-Docker
 Initialize-Env
 if ((Build-Maven -Testy:$Testy) -ne 0) { Write-Blad 'Build Mavena zakończył się błędem – szczegóły powyżej.'; exit 1 }
 $env:DOCKER_BUILDKIT = '1'
+Write-Krok 'Migracje Flyway (nowe pliki w app\src\main\resources\db\migration)'
+# migracje uruchamia osobny kontener (rola migracji ma DDL, aplikacja nie) – restart WildFly ich nie wykonuje
+if ((Invoke-Compose 'run', '--rm', 'flyway') -ne 0) { Write-Blad 'Migracja Flyway nie powiodła się – szczegóły powyżej.'; exit 1 }
 Write-Krok 'Restartuję WildFly (eskarga.war, eskarga-docs-service.war)'
 if ((Invoke-Compose 'restart', 'app') -ne 0) { exit 1 }
 if (-not $TylkoApp) {

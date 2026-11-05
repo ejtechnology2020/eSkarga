@@ -131,7 +131,7 @@ Diagnostyka: `infra\windows\logi.cmd app`, filtr `Select-String "oidc|OIDC|bez r
 ## Wdrażanie WAR-ów (dev)
 
 Katalogi `app/target` i `docs-service/target` są montowane do kontenera `app` tylko do odczytu, a `entrypoint.sh` kopiuje z nich
-WAR-y do `standalone/deployments/` przy każdym starcie. Po `mvn package` wystarczy `docker compose … restart app`
-(`infra\windows\wdroz.cmd`). Pojedyncze pliki nie są montowane celowo: `mvn clean` usuwa WAR w trakcie builda, skaner WildFly
+WAR-y do `standalone/deployments/` przy każdym starcie. Po `mvn package` wystarczy `docker compose … run --rm flyway` (nowe migracje) i `docker compose … restart app`
+(`infra\windows\wdroz.cmd` robi oba kroki). Pojedyncze pliki nie są montowane celowo: `mvn clean` usuwa WAR w trakcie builda, skaner WildFly
 zgłaszał `WFLYDS0008 … FileNotFoundException` i cofał wdrożenie, a po restarcie kontener wciąż widział skasowany plik.
 
