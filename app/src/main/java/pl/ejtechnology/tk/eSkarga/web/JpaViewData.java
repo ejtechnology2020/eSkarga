@@ -693,6 +693,12 @@ public class JpaViewData implements ViewData {
     }
 
     @Override
+    public java.util.Map<String, Integer> dictionaryCounts() {
+        return java.util.Map.of("sady", dictionaries.courts().size(), "organy", dictionaries.authorities().size(),
+                "typyPism", dictionaries.letterTypes().size(), "wzorce", dictionaries.reviewStandards().size());
+    }
+
+    @Override
     public List<DictionaryRow> reviewStandards() {
         List<DictionaryRow> out = new ArrayList<>();
         for (ReviewStandard s : dictionaries.reviewStandards()) {

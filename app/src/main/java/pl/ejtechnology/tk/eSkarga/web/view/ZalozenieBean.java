@@ -71,12 +71,21 @@ public class ZalozenieBean implements Serializable {
     private String organ = "postanowienie Sądu Apelacyjnego w Przykładowie";
     private String sygnOrzeczenia = "I ACz 77/26";
     private LocalDate doreczenie = LocalDate.of(2026, 8, 5);
-    private final LocalDate wniesienie = LocalDate.of(2026, 10, 29);
+    private LocalDate wniesienie = LocalDate.of(2026, 10, 29);
+    /** Opis pisma źródłowego (DW, wpływ, wniesienie) i jego nadawca – z bazy; w demo wartości z makiety. */
+    private String pismoOpis = "DW 2026/04809 · wpływ 02.11.2026";
+    private String pismoNadawca = "Stefan Przykładny · 6 str.";
+    private int pismoSkany;
+    private boolean brakPisma;
     private boolean duplikat = true;
     private boolean dialog;
 
     /** Parametr {@code stan} odtwarza warianty z makiety: krok1, krok2, blad, krok3, art77, okno. */
     public void applyState() {
+        if (!settings.isDemo()) {
+            loadLetter();
+            return;
+        }
         switch (stan == null ? "" : stan) {
             case "krok1" -> krok = 0;
             case "krok2" -> krok = 1;
@@ -90,6 +99,32 @@ public class ZalozenieBean implements Serializable {
             case "art77" -> { krok = 2; doreczenie = LocalDate.of(2026, 7, 20); }
             case "okno" -> { krok = 2; dialog = true; }
             default -> krok = 2;
+        }
+    }
+
+    /** Tryb z bazą: formularz zaczyna się od pisma DW z kolejki (UC-02 → UC-03); bez parametru {@code pismo} nie da się założyć sprawy. */
+    private void loadLetter() {
+        krok = 0;
+        duplikat = false;
+        skarzacy = null; adres = null; pelnomocnik = null; dzialaSam = true;
+        przepisy = null; wzorce = null; organ = null; sygnOrzeczenia = null; doreczenie = null;
+        var letter = pismo == null || pismo.isBlank() ? java.util.Optional.<pl.ejtechnology.tk.eSkarga.domain.model.IncomingLetter>empty() : incoming.byRegisterNo(pismo.trim());
+        if (letter.isEmpty()) {
+            brakPisma = true;
+            pismoOpis = pismo == null || pismo.isBlank() ? "brak pisma" : "nie znaleziono pisma " + pismo;
+            pismoNadawca = "";
+            return;
+        }
+        var l = letter.get();
+        pismo = l.getRegisterNo();
+        skarzacy = l.getSender();
+        wniesienie = l.getFiledOn() != null ? l.getFiledOn() : l.getReceivedAt().atZone(AppClock.WARSAW).toLocalDate();
+        pismoOpis = l.getRegisterNo() + " · wpływ " + fmt.date(l.getReceivedAt().atZone(AppClock.WARSAW).toLocalDate()) + " · wniesienie " + fmt.date(wniesienie);
+        pismoSkany = incoming.scans(l.getId()).size();
+        pismoNadawca = l.getSender() + (pismoSkany > 0 ? " · " + pismoSkany + " plik(ów)" : " · bez skanu");
+        if (l.getCaseFile() != null) {
+            brakPisma = true;
+            pismoOpis = l.getRegisterNo() + " jest już w sprawie " + l.getCaseFile().getDocket().format();
         }
     }
 
@@ -167,27 +202,44 @@ public class ZalozenieBean implements Serializable {
     public void setAnonimizacja(boolean anonimizacja) { this.anonimizacja = anonimizacja; }
 
     /** Termin z art. 77 – wyliczenie pomocnicze, ocenia sędzia (BR-03, D6). */
+    /** Null, gdy nie podano daty doręczenia orzeczenia – ekran nie pokazuje wtedy wyliczenia. */
     public DeadlineComputation getArt77() {
-        return new DeadlineCalculator(new PolishHolidays(data.extraDaysOff(2026))).threeMonthsFromRulingDelivery(doreczenie, List.of());
+        if (doreczenie == null) {
+            return null;
+        }
+        return new DeadlineCalculator(new PolishHolidays(data.extraDaysOff(doreczenie.getYear()))).threeMonthsFromRulingDelivery(doreczenie, List.of());
     }
 
     public boolean isArt77Przekroczony() {
-        return wniesienie.isAfter(getArt77().end());
+        DeadlineComputation a = getArt77();
+        return a != null && wniesienie != null && wniesienie.isAfter(a.end());
     }
 
     public long getArt77DniPo() {
-        return java.time.temporal.ChronoUnit.DAYS.between(getArt77().end(), wniesienie);
+        DeadlineComputation a = getArt77();
+        return a == null || wniesienie == null ? 0 : java.time.temporal.ChronoUnit.DAYS.between(a.end(), wniesienie);
     }
 
     public int getArt77Progress() {
-        return new DeadlineCalculator(new PolishHolidays()).progressPercent(getArt77().start(), getArt77().end(), wniesienie);
+        DeadlineComputation a = getArt77();
+        return a == null || wniesienie == null ? 0 : new DeadlineCalculator(new PolishHolidays()).progressPercent(a.start(), a.end(), wniesienie);
     }
 
     public List<Effect> getSkutki() {
+        String rep = repertorium.equals("TS") ? "Ts" : "Tw";
         return List.of(
-                Effect.next("Wpis trafi do repertorium Ts 2026. Sygnatury nie można zmienić — tylko skorygować wpis z akceptacją kierownika."),
-                Effect.next("Pismo DW 2026/04809 zostanie kartami 1–6 akt."),
+                Effect.next("Wpis trafi do repertorium " + rep + " " + clock.today().getYear() + ". Sygnatury nie można zmienić — tylko skorygować wpis z akceptacją kierownika."),
+                Effect.next("Pismo " + (pismo == null ? "" : pismo) + " zostanie pierwszymi kartami akt."),
                 Effect.next("Sprawa czeka na wyznaczenie sędziego przez Prezesa TK."));
+    }
+
+    public String getPismoOpis() { return pismoOpis; }
+    public String getPismoNadawca() { return pismoNadawca; }
+    public int getPismoSkany() { return pismoSkany; }
+    public boolean isBrakPisma() { return brakPisma; }
+    /** Podtytuł ekranu: rodzaj pisma i skarżący. */
+    public String getPodtytul() {
+        return (repertorium.equals("TS") ? "Skarga konstytucyjna" : "Wniosek") + (skarzacy == null || skarzacy.isBlank() ? "" : " · " + skarzacy);
     }
 
     public String stepClass(int i) {

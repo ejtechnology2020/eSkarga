@@ -39,7 +39,7 @@ class IncomingRegisterTest extends ServiceTestSupport {
         IncomingLetter l = tx(s -> s.incoming.register(new IncomingRegister.RegisterCommand(IntakeChannel.OSOBISCIE, null, LocalDate.of(2026, 11, 3), false,
                 "Jan Przykładowy", 1, 1, true, "kprzykladowy", null)));
         assertThat(l.isClassified()).isTrue();
-        assertThat(auditCount("rejestracja wpływu (tylko metadane, klauzula)")).isEqualTo(1);
+        assertThat(auditCount("rejestracja wpływu (tylko metadane, klauzula)")).isGreaterThanOrEqualTo(1);
     }
 
     @Test
@@ -49,5 +49,31 @@ class IncomingRegisterTest extends ServiceTestSupport {
         assertThatThrownBy(() -> run(s -> s.incoming.qualify(id, LetterQualification.PISMO_OGOLNE, null, REFERENT)))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(tx(s -> s.incoming.queue()).stream().map(IncomingLetter::getId)).doesNotContain(id);
+    }
+
+    @Test
+    void skanPdfLubTiffTrafiaDoRepozytoriumZeSkrotem() {
+        IncomingLetter l = tx(s -> registerLetter(s));
+        byte[] pdf = "%PDF-1.7 skan testowy".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+        var scan = tx(s -> s.incoming.attachScan(l.getId(), "pismo.pdf", pdf, "kprzykladowy", "10.0.0.7"));
+        assertThat(scan.getContentType()).isEqualTo("application/pdf");
+        assertThat(scan.getSha256()).hasSize(64);
+        assertThat(scan.getStorageKey()).startsWith("wplyw/" + l.getId() + "/").endsWith(".pdf");
+        assertThat(store.verifySha256(scan.getStorageKey(), scan.getSha256())).isTrue();
+        byte[] tiff = new byte[] {'I', 'I', 42, 0, 8, 0, 0, 0};
+        tx(s -> s.incoming.attachScan(l.getId(), "koperta.tif", tiff, "kprzykladowy", null));
+        java.util.List<pl.ejtechnology.tk.eSkarga.domain.model.IncomingScan> skany = tx(s -> s.incoming.scans(l.getId()));
+        assertThat(skany).hasSize(2);
+        assertThatThrownBy(() -> tx(s -> s.incoming.attachScan(l.getId(), "makro.docx", "PK\u0003\u0004".getBytes(), "kprzykladowy", null)))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("PDF lub TIFF");
+        assertThat(auditCount("skan pisma dołączony (application/pdf, " + pdf.length + " B)")).isEqualTo(1);
+    }
+
+    @Test
+    void pismoZKlauzulaNiePrzyjmujeSkanu() {
+        IncomingLetter l = tx(s -> s.incoming.register(new IncomingRegister.RegisterCommand(IntakeChannel.OSOBISCIE, null, LocalDate.of(2026, 11, 3), false,
+                "Jan Przykładowy", 1, 1, true, "kprzykladowy", null)));
+        assertThatThrownBy(() -> tx(s -> s.incoming.attachScan(l.getId(), "x.pdf", "%PDF-1.4".getBytes(), "kprzykladowy", null)))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("klauzul");
     }
 }

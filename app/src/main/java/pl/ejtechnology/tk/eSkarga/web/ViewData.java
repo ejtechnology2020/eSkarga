@@ -105,6 +105,9 @@ public interface ViewData {
 
     List<DictionaryRow> reviewStandards();
 
+    /** Liczby pozycji słowników do nawigacji S-24 (klucze: sady, organy, typyPism, wzorce). */
+    java.util.Map<String, Integer> dictionaryCounts();
+
     List<AuditRow> audit();
 
     List<CalendarMonth> calendar(int year);

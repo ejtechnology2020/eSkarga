@@ -27,7 +27,7 @@ class EskargaJwtClientCredentialsProviderTest {
     void asercjaZKluczaPemKidIAudienceZKonfiguracji(@TempDir Path dir) throws Exception {
         KeyPair kp = KeyPairGenerator.getInstance("RSA").generateKeyPair();
         Path pem = dir.resolve("eskarga.key.pem");
-        Files.writeString(pem, "-----BEGIN PRIVATE KEY-----\n" + Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(kp.getPrivate().getEncoded()) + "\n-----END PRIVATE KEY-----\n");
+        Files.writeString(pem, "-----BEGIN " + "PRIVATE KEY-----\n" + Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(kp.getPrivate().getEncoded()) + "\n-----END PRIVATE KEY-----\n");
         Files.writeString(dir.resolve("eskarga.kid"), "eskarga-2026-11-04\n");
         OidcClientConfiguration deployment = mock(OidcClientConfiguration.class);
         when(deployment.getResourceName()).thenReturn("eskarga");

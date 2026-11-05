@@ -630,3 +630,8 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   `ESKARGA_UZYTKOWNICY`, MFA (`default.acr.values=mfa`), wylogowanie, tokeny usługi dokumentów i workerów (`private_key_jwt`),
   kontenery `tsa` (kod 127) i `softhsm` (kod 255) zatrzymane przy starcie.
 
+- 05.11.2026 – ekrany z bazą (po pierwszym logowaniu przez ID-users): skany wpływu (`incoming_scan`, V6; `IncomingRegister.attachScan` – PDF/TIFF
+  po sygnaturze, 50 MB, S3 + SHA-256; `p:fileUpload` z listener w S-03, formularz pusty poza demo); S-07 z pisma DW (`?pismo=` z kolejki,
+  bez parametru komunikat i odnośnik do kolejki; z pisma tylko nadawca i data wniesienia – reszta ręcznie; krok 1 domyślnie; art. 77 tylko
+  po podaniu doręczenia); S-14 bez sprawy → repertorium z komunikatem, podgląd tylko z dokumentem; S-04/S-08/S-24 bez liczb z makiety
+  (liczniki słowników z bazy, `Załaduj szablony domyślne`); wspólna przyczyna błędów AJAX: nonce CSP (ADR 0002).

@@ -18,7 +18,8 @@
   </div>
   <h:panelGroup rendered="#{not doc.niejawny}">
     <div class="pane-sub"><span>karta akt #{doc.karty.replace('k. ', '')} · <b style="color: #171B24;">strona 1 z 14</b></span><span class="sp"></span><button type="button" class="btn s q" aria-expanded="false">Pokaż miniatury stron</button></div>
-    <h:panelGroup rendered="#{not currentUser.demo}" layout="block" styleClass="viewer">
+    <h:panelGroup rendered="#{not currentUser.demo and empty doc}" layout="block" styleClass="viewer"><p class="mut" style="padding: 16px;">W aktach nie ma jeszcze dokumentów z plikiem.</p></h:panelGroup>
+    <h:panelGroup rendered="#{not currentUser.demo and not empty doc}" layout="block" styleClass="viewer">
       <tk:pdfViewer src="#{request.contextPath}/akta/dokument/#{doc.id}" title="#{doc.tytul}" pageFrom="#{doc.karty.replaceAll('[^0-9].*', '').replace('k', '')}"
                     highlights="#{akta.highlightsJson(doc)}" canHighlight="#{akta.zespolSedziego}" downloadUrl="#{request.contextPath}/akta/dokument/#{doc.id}?pobierz=1" />
       <p class="mut" jsf:rendered="#{akta.zespolSedziego}" xmlns:jsf="jakarta.faces">Zaznaczenia i komentarze widzi tylko zespół sędziego. Nie trafiają do akt jawnych.</p>

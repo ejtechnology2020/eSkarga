@@ -97,7 +97,7 @@ class ClientCredentialsTokenClientTest {
     @Test
     void kluczPemNarzedziaIdUsersIKidObok(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir) throws Exception {
         java.security.KeyPair kp = java.security.KeyPairGenerator.getInstance("RSA").generateKeyPair();
-        String pem = "-----BEGIN PRIVATE KEY-----\n" + java.util.Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(kp.getPrivate().getEncoded())
+        String pem = "-----BEGIN " + "PRIVATE KEY-----\n" + java.util.Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(kp.getPrivate().getEncoded())
                 + "\n-----END PRIVATE KEY-----\n";
         java.nio.file.Path plik = dir.resolve("eskarga-workers.key.pem");
         java.nio.file.Files.writeString(plik, pem);

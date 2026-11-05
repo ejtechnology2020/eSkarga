@@ -167,6 +167,7 @@ public class AdministracjaBean implements Serializable {
     public List<UserRow> getUzytkownicy() { return data.users(); }
     public List<DelegationRow> getUpowaznienia() { return data.delegations(); }
     public List<TemplateRow> getSzablony() { return data.templates(); }
+    public java.util.Map<String, Integer> getLiczniki() { return data.dictionaryCounts(); }
     public List<DictionaryRow> getWzorce() { return data.reviewStandards(); }
     public List<CalendarMonth> getKalendarz() { return data.calendar(rok); }
     public List<AuditRow> getZdarzenia() { return data.audit(); }

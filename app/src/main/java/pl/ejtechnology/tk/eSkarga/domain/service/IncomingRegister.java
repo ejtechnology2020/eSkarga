@@ -18,6 +18,8 @@ import pl.ejtechnology.tk.eSkarga.domain.LetterQualification;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
 import pl.ejtechnology.tk.eSkarga.domain.model.IncomingCounter;
 import pl.ejtechnology.tk.eSkarga.domain.model.IncomingLetter;
+import pl.ejtechnology.tk.eSkarga.domain.model.IncomingScan;
+import pl.ejtechnology.tk.eSkarga.documents.DocumentStore;
 import pl.ejtechnology.tk.eSkarga.web.AppClock;
 
 /**
@@ -38,6 +40,60 @@ public class IncomingRegister {
     AuditService audit;
     @Inject
     AppClock clock;
+    @Inject
+    DocumentStore store;
+
+    /** Limit pojedynczego skanu (NFR-13 / T-055, zgodny z multipart-config w web.xml). */
+    public static final long MAX_SCAN_BYTES = 50L * 1024 * 1024;
+
+    /**
+     * Dołączenie skanu do zarejestrowanego pisma (S-03): tylko PDF lub TIFF rozpoznane po sygnaturze pliku, do 50 MB; plik trafia do
+     * repozytorium S3 pod klucz {@code wplyw/<id pisma>/<uuid>}, metadane i SHA-256 do bazy. Pismo z klauzulą nie przyjmuje skanów (NFR-06).
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public IncomingScan attachScan(long letterId, String fileName, byte[] content, String userId, String remoteAddr) {
+        IncomingLetter letter = em.find(IncomingLetter.class, letterId);
+        if (letter == null) {
+            throw new IllegalArgumentException("Brak pisma o id " + letterId);
+        }
+        if (letter.isClassified()) {
+            throw new IllegalStateException("Pismo z klauzulą: rejestrujemy tylko metadane, bez skanu (NFR-06)");
+        }
+        if (content == null || content.length == 0) {
+            throw new IllegalArgumentException("Pusty plik");
+        }
+        if (content.length > MAX_SCAN_BYTES) {
+            throw new IllegalArgumentException("Plik przekracza 50 MB (T-055)");
+        }
+        String contentType = detectScanType(content);
+        if (contentType == null) {
+            throw new IllegalArgumentException("Dozwolone są wyłącznie pliki PDF lub TIFF (sygnatura pliku), T-055");
+        }
+        String safeName = fileName == null || fileName.isBlank() ? "skan" : fileName.replaceAll("[\\\\/\\p{Cntrl}]", "_");
+        String key = "wplyw/" + letter.getId() + "/" + java.util.UUID.randomUUID() + ("application/pdf".equals(contentType) ? ".pdf" : ".tif");
+        DocumentStore.Stored stored = store.put(key, new java.io.ByteArrayInputStream(content), content.length, contentType, false);
+        IncomingScan scan = new IncomingScan(letter, safeName.length() > 255 ? safeName.substring(0, 255) : safeName, contentType, content.length,
+                stored.sha256(), stored.key(), userId, clock.instant());
+        em.persist(scan);
+        audit.record(userId, "TK_BIURO_PODAWCZE", "skan pisma dołączony (" + contentType + ", " + content.length + " B)", letter.getRegisterNo(), null, remoteAddr);
+        return scan;
+    }
+
+    /** PDF ({@code %PDF-}) albo TIFF ({@code II*\0} / {@code MM\0*}) po sygnaturze pliku; null, gdy inny format. */
+    public static String detectScanType(byte[] content) {
+        if (content.length >= 5 && content[0] == '%' && content[1] == 'P' && content[2] == 'D' && content[3] == 'F' && content[4] == '-') {
+            return "application/pdf";
+        }
+        if (content.length >= 4 && ((content[0] == 'I' && content[1] == 'I' && content[2] == 42 && content[3] == 0)
+                || (content[0] == 'M' && content[1] == 'M' && content[2] == 0 && content[3] == 42))) {
+            return "image/tiff";
+        }
+        return null;
+    }
+
+    public List<IncomingScan> scans(long letterId) {
+        return em.createQuery("select s from IncomingScan s where s.letter.id = :id order by s.id", IncomingScan.class).setParameter("id", letterId).getResultList();
+    }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public IncomingLetter register(RegisterCommand cmd) {

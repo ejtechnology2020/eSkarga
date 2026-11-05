@@ -20,12 +20,17 @@
   <ui:define name="crumbs">
     <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Sprawy" /></li><li><h:link outcome="/sprawy/kolejka" value="Kolejka pism" /></li><li><span aria-current="page">Założenie sprawy</span></li></ol></nav>
   </ui:define>
-  <ui:define name="eyebrow">z pisma DW 2026/04809</ui:define>
-  <ui:define name="subtitle">Skarga konstytucyjna · Stefan Przykładny (radca prawny we własnej sprawie)</ui:define>
+  <ui:define name="eyebrow">#{empty zalozenie.pismo ? '' : 'z pisma '.concat(zalozenie.pismo)}</ui:define>
+  <ui:define name="subtitle">#{zalozenie.podtytul}</ui:define>
   <ui:define name="actions"><button type="button" class="btn q">Zapisz szkic</button></ui:define>
 
   <ui:define name="content">
-    <h:form id="zf">
+    <h:panelGroup rendered="#{zalozenie.brakPisma}" layout="block" styleClass="card">
+      <!-- UC-03: sprawę zakłada się z pisma zakwalifikowanego w kolejce (UC-02); bez parametru pismo albo gdy pismo ma już sprawę – wskazówka -->
+      <tk:message tone="warn" icon="alert-triangle" role="alert"><b>Założenie sprawy wymaga pisma z kolejki.</b> #{zalozenie.pismoOpis}. Wybierz pismo w kolejce i zakwalifikuj je jako nową skargę albo wniosek.</tk:message>
+      <div class="row" style="margin-top: 12px;"><h:link outcome="/sprawy/kolejka" styleClass="btn p" value="Przejdź do kolejki pism" /><h:link outcome="/wplyw/rejestracja" styleClass="btn" value="Zarejestruj pismo" /></div>
+    </h:panelGroup>
+    <h:form id="zf" rendered="#{not zalozenie.brakPisma}">
       <p:steps activeIndex="#{zalozenie.krok}" readonly="true" pt:aria-label="Kroki">
         <p:menuitem value="Strony" title="skarżący, pełnomocnik" styleClass="#{zalozenie.stepClass(0)}" />
         <p:menuitem value="Przedmiot" title="przepisy, wzorce, orzeczenie" styleClass="#{zalozenie.stepClass(1)}" />
@@ -77,10 +82,10 @@
                 <dt>Skarżący</dt><dd>#{zalozenie.skarzacy} (bez pełnomocnika)</dd>
                 <dt>Zaskarżony przepis</dt><dd>#{zalozenie.przepisy}</dd>
                 <dt>Wzorce kontroli</dt><dd>#{zalozenie.wzorce}</dd>
-                <dt>Orzeczenie ostateczne</dt><dd>postanowienie SA w Przykładowie, #{zalozenie.sygnOrzeczenia}, doręczone #{zalozenie.fmtDoreczenie}</dd>
-                <dt>Pismo</dt><dd>DW 2026/04809 · wpływ 02.11.2026 · wniesienie #{fmt.date(zalozenie.wniesienie)}</dd>
+                <dt>Orzeczenie ostateczne</dt><dd>#{empty zalozenie.organ ? '—' : zalozenie.organ}#{empty zalozenie.sygnOrzeczenia ? '' : ', '.concat(zalozenie.sygnOrzeczenia)}, doręczone #{zalozenie.fmtDoreczenie}</dd>
+                <dt>Pismo</dt><dd>#{zalozenie.pismoOpis}</dd>
               </dl>
-              <h:panelGroup rendered="#{not zalozenie.art77Przekroczony}">
+              <h:panelGroup rendered="#{not empty zalozenie.art77 and not zalozenie.art77Przekroczony}">
                 <span class="term aux"><tk:icon name="info" /><span><b>Art. 77 (pomocniczo):</b> upływa #{fmt.date(zalozenie.art77.end)} · wniesiono #{fmt.date(zalozenie.wniesienie)}, przed upływem</span><span class="bar"><span style="width: #{zalozenie.art77Progress}%;"></span></span></span>
               </h:panelGroup>
               <tk:message rendered="#{zalozenie.art77Przekroczony}" tone="warn" icon="alert-triangle" role="alert">
@@ -96,8 +101,9 @@
           </div>
         </div>
         <aside class="side" aria-label="Pismo źródłowe">
-          <section class="card np"><div class="pane-h"><b class="mono">DW 2026/04809</b><span class="mut">Stefan Przykładny · 6 str.</span></div>
-            <div class="viewer min420 pad14"><tk:paper label="Podgląd pisma DW 2026/04809" styleClass="sm"><p class="r">Przykładowo, 29.10.2026 r.</p><h2 class="fs15">SKARGA KONSTYTUCYJNA</h2><p>Wnoszę o stwierdzenie niezgodności art. 394¹ § 1 k.p.c. z art. 45 ust. 1 i art. 78 Konstytucji…</p></tk:paper></div>
+          <section class="card np"><div class="pane-h"><b class="mono">#{zalozenie.pismo}</b><span class="mut">#{zalozenie.pismoNadawca}</span></div>
+            <h:panelGroup rendered="#{not currentUser.demo}" layout="block" styleClass="viewer min420 pad14"><p class="mut">Skany pisma: #{zalozenie.pismoSkany}. Po założeniu sprawy staną się pierwszymi kartami akt.</p></h:panelGroup>
+            <div class="viewer min420 pad14" jsf:rendered="#{currentUser.demo}" xmlns:jsf="jakarta.faces"><tk:paper label="Podgląd pisma DW 2026/04809" styleClass="sm"><p class="r">Przykładowo, 29.10.2026 r.</p><h2 class="fs15">SKARGA KONSTYTUCYJNA</h2><p>Wnoszę o stwierdzenie niezgodności art. 394¹ § 1 k.p.c. z art. 45 ust. 1 i art. 78 Konstytucji…</p></tk:paper></div>
           </section>
         </aside>
       </div>

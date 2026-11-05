@@ -6,6 +6,8 @@ import java.util.List;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -34,6 +36,8 @@ public class AktaBean implements Serializable {
     @Inject
     private ViewData data;
     @Inject
+    private pl.ejtechnology.tk.eSkarga.security.OidcSettings settings;
+    @Inject
     private CurrentUser currentUser;
     @Inject
     private pl.ejtechnology.tk.eSkarga.domain.service.NoteService notes;
@@ -53,8 +57,18 @@ public class AktaBean implements Serializable {
         load();
     }
 
-    public void load() {
+    /** {@code f:viewAction}: z bazą bez sprawy (brak parametru albo brak dostępu) – powrót do repertorium z komunikatem; w demo domyślnie Ts 312/26. */
+    public String load() {
         sprawa = data.caseBy(sygnatura);
+        if (sprawa == null && !settings.isDemo()) {
+            FacesContext fc = FacesContext.getCurrentInstance();
+            if (fc != null) {
+                fc.getExternalContext().getFlash().setKeepMessages(true);
+                fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_WARN, sygnatura == null || sygnatura.isBlank() ? "Wybierz sprawę z repertorium."
+                        : "Brak sprawy " + sygnatura + " albo brak dostępu do jej akt.", null));
+            }
+            return "/sprawy/repertorium.xhtml?faces-redirect=true";
+        }
         if (sprawa == null) {
             sprawa = data.caseBy("Ts 312/26");
             sygnatura = "Ts 312/26";
@@ -78,6 +92,7 @@ public class AktaBean implements Serializable {
             drugiDokument = spis.get(1);
             widok = "asystent";
         }
+        return null;
     }
 
     public void open(RecordPage p) {

@@ -73,20 +73,30 @@
             <div class="fld"><p:outputLabel for="f-odp" value="Liczba odpisów" /><p:inputText id="f-odp" value="#{rejestracja.odpisy}" pt:inputmode="numeric" /></div>
             <div class="fld full">
               <span class="lbl">Skany</span>
-              <h:panelGroup rendered="#{not rejestracja.hasFiles}">
-                <p:fileUpload mode="advanced" multiple="true" dragDrop="true"
-                              label="Wybierz pliki" uploadLabel="Prześlij" cancelLabel="#{msg['common.cancel']}">
-                  <!-- PrimeFaces 15: ograniczenia typu i rozmiaru tylko przez p:validateFile (atrybuty allowTypes/sizeLimit usunięte z p:fileUpload) -->
-                  <p:validateFile allowTypes="/(\.|\/)(pdf|tiff?)$/" sizeLimit="52428800" />
-                </p:fileUpload>
-                <span class="hint">PDF lub TIFF, do 50 MB. Pismo i koperta osobno.</span>
-              </h:panelGroup>
-              <h:panelGroup rendered="#{rejestracja.hasFiles}" layout="block" styleClass="thumbs">
-                <div class="thumb"><span class="pv" aria-hidden="true"><i class="w6" style="align-self: flex-end;"></i><i class="h"></i><i></i><i></i><i class="w8"></i><i></i></span>
-                  <b>#{rejestracja.electronic ? 'wniosek.pdf' : 'Pismo'}</b><span class="mut">#{rejestracja.electronic ? '4 str. · podpis kwalifikowany' : '2 str. · skan 300 dpi'}</span></div>
-                <div class="thumb"><span class="pv" aria-hidden="true" style="justify-content: center;"><i class="w6"></i><i class="w8"></i></span>
-                  <b>#{rejestracja.electronic ? 'UPO.xml' : 'Koperta'}</b><span class="mut">#{rejestracja.electronic ? 'dowód otrzymania' : 'stempel 31.10.2026'}</span></div>
-                <button type="button" class="btn" style="align-self: center;">Dodaj plik</button>
+              <h:panelGroup id="skany" layout="block">
+                <h:panelGroup rendered="#{not rejestracja.zarejestrowano and not (currentUser.demo and rejestracja.hasFiles)}" layout="block">
+                  <!-- PrimeFaces 15: listener dostaje każdy plik; ograniczenia typu i rozmiaru przez p:validateFile (allowTypes/sizeLimit usunięte z p:fileUpload) -->
+                  <p:fileUpload mode="advanced" multiple="true" dragDrop="true" auto="true" listener="#{rejestracja.upload}" update="skany growl"
+                                label="Wybierz pliki" uploadLabel="Prześlij" cancelLabel="#{msg['common.cancel']}" disabled="#{rejestracja.klauzula}">
+                    <p:validateFile allowTypes="/(\.|\/)(pdf|tiff?)$/" sizeLimit="52428800" />
+                  </p:fileUpload>
+                  <span class="hint">PDF lub TIFF, do 50 MB. Pismo i koperta osobno. Pliki zapisują się w repozytorium przy rejestracji.</span>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{not currentUser.demo and rejestracja.hasFiles}" layout="block" styleClass="thumbs">
+                  <ui:repeat value="#{rejestracja.pliki}" var="pl" varStatus="st">
+                    <div class="thumb"><span class="pv" aria-hidden="true"><i class="w6" style="align-self: flex-end;"></i><i class="h"></i><i></i><i></i><i class="w8"></i><i></i></span>
+                      <b>#{pl.nazwa}</b><span class="mut">#{pl.rozmiarTekst()}</span>
+                      <p:commandButton value="Usuń" action="#{rejestracja.usunPlik(st.index)}" update="skany" process="@this" styleClass="s q" rendered="#{not rejestracja.zarejestrowano}" />
+                    </div>
+                  </ui:repeat>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{currentUser.demo and rejestracja.hasFiles}" layout="block" styleClass="thumbs">
+                  <div class="thumb"><span class="pv" aria-hidden="true"><i class="w6" style="align-self: flex-end;"></i><i class="h"></i><i></i><i></i><i class="w8"></i><i></i></span>
+                    <b>#{rejestracja.electronic ? 'wniosek.pdf' : 'Pismo'}</b><span class="mut">#{rejestracja.electronic ? '4 str. · podpis kwalifikowany' : '2 str. · skan 300 dpi'}</span></div>
+                  <div class="thumb"><span class="pv" aria-hidden="true" style="justify-content: center;"><i class="w6"></i><i class="w8"></i></span>
+                    <b>#{rejestracja.electronic ? 'UPO.xml' : 'Koperta'}</b><span class="mut">#{rejestracja.electronic ? 'dowód otrzymania' : 'stempel 31.10.2026'}</span></div>
+                  <button type="button" class="btn" style="align-self: center;">Dodaj plik</button>
+                </h:panelGroup>
               </h:panelGroup>
             </div>
             <div class="fld full">

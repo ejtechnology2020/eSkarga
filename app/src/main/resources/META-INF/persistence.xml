@@ -29,6 +29,7 @@
     <class>pl.ejtechnology.tk.eSkarga.domain.model.Holiday</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.IncomingCounter</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.IncomingLetter</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.IncomingScan</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.InternalNote</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.LetterTemplate</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.LetterType</class>

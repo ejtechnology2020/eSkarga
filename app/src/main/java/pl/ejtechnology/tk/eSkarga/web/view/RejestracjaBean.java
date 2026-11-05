@@ -59,6 +59,42 @@ public class RejestracjaBean implements Serializable {
     private boolean zarejestrowano;
     private String numerDziennika;
     private boolean hasFiles;
+    /** Pliki wysłane w formularzu (tryb z bazą), zapisywane do repozytorium przy rejestracji. */
+    private final List<Plik> pliki = new java.util.ArrayList<>();
+
+    public record Plik(String nazwa, long rozmiar, byte[] tresc) implements Serializable {
+        public String rozmiarTekst() {
+            return rozmiar >= 1_048_576 ? String.format("%.1f MB", rozmiar / 1_048_576.0) : String.format("%d kB", Math.max(1, rozmiar / 1024));
+        }
+    }
+
+    /** p:fileUpload (listener): plik trafia do listy; format i rozmiar sprawdza ostatecznie IncomingRegister przy zapisie (T-055). */
+    public void upload(org.primefaces.event.FileUploadEvent event) {
+        org.primefaces.model.file.UploadedFile f = event.getFile();
+        FacesContext fc = FacesContext.getCurrentInstance();
+        byte[] tresc = f.getContent();
+        if (IncomingRegister.detectScanType(tresc) == null) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Odrzucono " + f.getFileName(), "Dozwolone są tylko pliki PDF lub TIFF."));
+            return;
+        }
+        if (tresc.length > IncomingRegister.MAX_SCAN_BYTES) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Odrzucono " + f.getFileName(), "Plik przekracza 50 MB."));
+            return;
+        }
+        pliki.add(new Plik(f.getFileName(), tresc.length, tresc));
+        if (zalaczniki == null || zalaczniki < pliki.size()) {
+            zalaczniki = pliki.size();
+        }
+        fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Dodano " + f.getFileName(), null));
+    }
+
+    public void usunPlik(int indeks) {
+        if (indeks >= 0 && indeks < pliki.size()) {
+            pliki.remove(indeks);
+        }
+    }
+
+    public List<Plik> getPliki() { return pliki; }
 
     @PostConstruct
     void init() {
@@ -86,7 +122,13 @@ public class RejestracjaBean implements Serializable {
             case "ok" -> {
                 fill(); register();
             }
-            default -> fill();
+            default -> {
+                if (settings.isDemo()) {
+                    fill();
+                } else {
+                    kanal = null; wniesienie = null; nadawca = null; zalaczniki = null; odpisy = null; hasFiles = false;   // z bazą: pusty formularz
+                }
+            }
         }
     }
 
@@ -123,6 +165,11 @@ public class RejestracjaBean implements Serializable {
                 var letter = incoming.register(new IncomingRegister.RegisterCommand(kanal, wplyw.atZone(AppClock.WARSAW).toInstant(), filedOn, dataNiepewna, nadawca,
                         zalaczniki == null ? 0 : zalaczniki, odpisy == null ? 0 : odpisy, klauzula, currentUser.getLogin(), request.getRemoteAddr()));
                 numerDziennika = letter.getRegisterNo();
+                if (!klauzula) {
+                    for (Plik plik : pliki) {
+                        incoming.attachScan(letter.getId(), plik.nazwa(), plik.tresc(), currentUser.getLogin(), request.getRemoteAddr());
+                    }
+                }
             } catch (RuntimeException e) {
                 fc.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się zarejestrować pisma.", e.getMessage()));
                 return;
@@ -184,6 +231,6 @@ public class RejestracjaBean implements Serializable {
     public void setKlauzula(boolean klauzula) { this.klauzula = klauzula; }
     public boolean isZarejestrowano() { return zarejestrowano; }
     public String getNumerDziennika() { return numerDziennika; }
-    public boolean isHasFiles() { return hasFiles; }
+    public boolean isHasFiles() { return settings.isDemo() ? hasFiles : !pliki.isEmpty(); }
     public IntakeChannel[] getKanaly() { return IntakeChannel.values(); }
 }

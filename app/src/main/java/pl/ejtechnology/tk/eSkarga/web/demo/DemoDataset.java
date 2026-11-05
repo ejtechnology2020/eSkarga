@@ -565,6 +565,11 @@ public class DemoDataset implements Serializable, pl.ejtechnology.tk.eSkarga.web
                 new TemplateRow("Zarządzenie o usunięciu braków", "zarządzenie", "v3", "02.03.2026", "archiwalna", Tone.OFF, false));
     }
 
+    public java.util.Map<String, Integer> dictionaryCounts() {
+        return java.util.Map.of("sady", 312, "organy", 48, "typyPism", 27, "wzorce", 64);
+    }
+
+    @Override
     public List<DictionaryRow> reviewStandards() {
         return List.of(
                 new DictionaryRow("K-002", "art. 2 Konstytucji", "demokratyczne państwo prawne", 118, true, false),

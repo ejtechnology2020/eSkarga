@@ -19,11 +19,11 @@
         <p:tab title="Słowniki">
           <div class="flow">
             <nav class="card fx1" aria-label="Lista słowników">
-              <a class="btn jbetween" href="#">Sądy <span class="badge">312</span></a><a class="btn jbetween" href="#">Organy <span class="badge">48</span></a>
-              <a class="btn jbetween" href="#">Typy pism <span class="badge">27</span></a><a class="btn p jbetween" href="#" aria-current="page">Wzorce kontroli <span class="badge" style="background: #fff; color: #233A6B;">64</span></a>
+              <a class="btn jbetween" href="#">Sądy <span class="badge">#{administracja.liczniki.sady}</span></a><a class="btn jbetween" href="#">Organy <span class="badge">#{administracja.liczniki.organy}</span></a>
+              <a class="btn jbetween" href="#">Typy pism <span class="badge">#{administracja.liczniki.typyPism}</span></a><a class="btn p jbetween" href="#" aria-current="page">Wzorce kontroli <span class="badge" style="background: #fff; color: #233A6B;">#{administracja.liczniki.wzorce}</span></a>
             </nav>
             <section class="tw fx3" aria-labelledby="h-wz">
-              <div class="tt"><h2 id="h-wz" class="h2-17">Wzorce kontroli</h2><span class="count">64</span><span class="sp"></span><button type="button" class="btn s">#{msg['common.exportCsv']}</button><button type="button" class="btn s p">Dodaj pozycję</button></div>
+              <div class="tt"><h2 id="h-wz" class="h2-17">Wzorce kontroli</h2><span class="count">#{administracja.wzorce.size()}</span><span class="sp"></span><button type="button" class="btn s">#{msg['common.exportCsv']}</button><button type="button" class="btn s p">Dodaj pozycję</button></div>
               <p:dataTable value="#{administracja.wzorce}" var="w" rowStyleClass="#{w.rowClass()}" summary="Słownik wzorców kontroli">
                 <p:column headerText="Kod"><span class="mono">#{w.kod}</span></p:column>
                 <p:column headerText="Przepis" filterBy="#{w.przepis}" filterMatchMode="contains">#{w.przepis}</p:column>
@@ -36,7 +36,10 @@
         <p:tab title="Szablony pism">
           <div class="flow">
             <section class="tw fx2" aria-labelledby="h-sz">
-              <div class="tt"><h2 id="h-sz" class="h2-17">Szablony pism</h2><span class="count">#{administracja.szablony.size()}</span><span class="sp"></span><button type="button" class="btn s p">Nowy szablon</button></div>
+              <div class="tt"><h2 id="h-sz" class="h2-17">Szablony pism</h2><span class="count">#{administracja.szablony.size()}</span><span class="sp"></span>
+                <button type="button" class="btn s p" jsf:rendered="#{currentUser.demo}" xmlns:jsf="jakarta.faces">Nowy szablon</button>
+                <!-- z bazą: szablony domyślne z usługi dokumentów (T-026a); edytor szablonów to osobny ekran w zakresie T-026 -->
+                <p:commandButton value="Załaduj szablony domyślne" action="#{administracja.seedTemplates}" update="@form growl" styleClass="s p" rendered="#{not currentUser.demo}" process="@this" /></div>
               <p:dataTable value="#{administracja.szablony}" var="t" rowStyleClass="#{t.rowClass()}" summary="Szablony pism">
                 <p:column headerText="Nazwa">#{t.nazwa}</p:column><p:column headerText="Rodzaj">#{t.rodzaj}</p:column><p:column headerText="Wersja">#{t.wersja}</p:column>
                 <p:column headerText="Zmieniono">#{t.zmieniono}</p:column><p:column headerText="Stan"><tk:tag value="#{t.stan}" tone="#{t.stanTone}" /></p:column>

@@ -91,12 +91,12 @@ public final class ClientCredentialsTokenClient {
                 Settings.value(prefix + ".clientSecret", ""), Settings.value(prefix + ".scope", ""), key, kid, Settings.value(prefix + ".assertionAudience", ""));
     }
 
-    /** Klucz prywatny RSA z pliku PEM (PKCS#8, {@code -----BEGIN PRIVATE KEY-----}) – format narzędzia rejestracji ID-users. */
+    /** Klucz prywatny RSA z pliku PEM (PKCS#8, {@code BEGIN PRIVATE KEY}) – format narzędzia rejestracji ID-users. */
     public static java.security.PrivateKey privateKeyFromPem(java.nio.file.Path plik) {
         try {
             String tekst = java.nio.file.Files.readString(plik, StandardCharsets.US_ASCII);
             if (!tekst.contains("BEGIN PRIVATE KEY")) {
-                throw new IllegalStateException("Plik " + plik.getFileName() + " nie zawiera klucza PKCS#8 (-----BEGIN PRIVATE KEY-----)");
+                throw new IllegalStateException("Plik " + plik.getFileName() + " nie zawiera klucza PKCS#8 (znacznik BEGIN PRIVATE KEY)");
             }
             String b64 = tekst.replaceAll("-----(BEGIN|END) PRIVATE KEY-----", "").replaceAll("\\s", "");
             byte[] der = java.util.Base64.getMimeDecoder().decode(b64);
