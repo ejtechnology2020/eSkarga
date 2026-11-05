@@ -9,7 +9,7 @@ trap 'docker rm -f "$name" >/dev/null' EXIT
 sleep 8
 docker cp "$dump" "$name:/tmp/eskarga.dump"
 docker exec "$name" pg_restore -U postgres -d eskarga --no-owner /tmp/eskarga.dump
-tmp=$(mktemp -d); curl -fsSL "$NEXUS/operaton/operaton-bpm-wildfly-${version}.tar.gz" | tar -xz -C "$tmp" --strip-components=1
+tmp=$(mktemp -d); curl -fsSL "$NEXUS/operaton/operaton-bpm-wildfly-${version}.tar.gz" | tar -xz -C "$tmp"   # bez katalogu nadrzędnego: sql/ i server/
 for f in "$tmp"/sql/upgrade/postgres_engine_${current}_to_*.sql "$tmp"/sql/upgrade/postgres_identity_${current}_to_*.sql; do
   [[ -f "$f" ]] || continue
   docker cp "$f" "$name:/tmp/up.sql"

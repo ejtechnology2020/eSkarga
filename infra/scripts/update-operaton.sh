@@ -16,10 +16,14 @@ tmp=$(mktemp -d)
 curl -fsSL "$NEXUS/operaton/operaton-bpm-wildfly-${version}.tar.gz" -o "$tmp/dist.tar.gz"
 curl -fsSL "$NEXUS/operaton/operaton-bpm-wildfly-${version}.tar.gz.sha256" -o "$tmp/dist.sha256"
 (cd "$tmp" && echo "$(cat dist.sha256 | awk '{print $1}')  dist.tar.gz" | sha256sum -c -)
-mkdir -p "$target" && tar -xzf "$tmp/dist.tar.gz" -C "$target" --strip-components=1
+# archiwum operaton-bpm-wildfly: bez katalogu nadrzędnego – serwer w server/wildfly-<wersja WildFly>/, skrypty SQL w sql/
+mkdir -p "$tmp/dist" && tar -xzf "$tmp/dist.tar.gz" -C "$tmp/dist"
+[[ -e "$target" ]] && { echo "katalog $target już istnieje"; exit 1; }
+mv "$tmp/dist"/server/wildfly-* "$target"
+rm -f "$target"/standalone/deployments/operaton-example-invoice-*.war
 # skrypty upgrade schematu operaton (między kolejnymi wersjami) – właścicielem schematu jest rola aplikacji
 current=$(readlink -f "$HOME_DIR" | sed 's#.*operaton-##')
-for f in "$target"/sql/upgrade/postgres_engine_${current}_to_*.sql "$target"/sql/upgrade/postgres_identity_${current}_to_*.sql; do
+for f in "$tmp/dist"/sql/upgrade/postgres_engine_${current}_to_*.sql "$tmp/dist"/sql/upgrade/postgres_identity_${current}_to_*.sql; do
   [[ -f "$f" ]] && psql "$DB_URL" -v ON_ERROR_STOP=1 -c "SET search_path TO operaton" -f "$f"
 done
 cp -a "$HOME_DIR/standalone/configuration/." "$target/standalone/configuration/"

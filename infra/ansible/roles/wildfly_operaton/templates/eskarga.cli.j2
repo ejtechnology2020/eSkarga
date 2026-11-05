@@ -7,4 +7,11 @@ if (outcome != success) of /subsystem=datasources/xa-data-source=EskargaDS:read-
   xa-data-source add --name=EskargaDS --jndi-name=java:jboss/datasources/EskargaDS --driver-name=postgresql --user-name=eskarga_app --password=${env.DB_PASSWORD_APP} --min-pool-size=5 --max-pool-size=40 --xa-datasource-properties={"ServerName"=>"{{ groups['lb'][0] }}","PortNumber"=>"5000","DatabaseName"=>"eskarga","CurrentSchema"=>"repertorium,operaton"}
 end-if
 /subsystem=operaton-bpm-platform/process-engines=default:write-attribute(name=datasource, value=java:jboss/datasources/EskargaDS)
+/subsystem=operaton-bpm-platform/process-engines=default:write-attribute(name=history-level, value=audit)
+/subsystem=operaton-bpm-platform/process-engines=default/properties=jobExecutorDeploymentAware:write-attribute(name=value, value=false)
+{% for wlasciwosc, wartosc in {'databaseTablePrefix': 'operaton.', 'databaseSchema': 'operaton', 'configureScriptEngineHostAccess': 'false', 'enableScriptEngineLoadExternalResources': 'false'}.items() %}
+if (outcome != success) of /subsystem=operaton-bpm-platform/process-engines=default/properties={{ wlasciwosc }}:read-resource
+  /subsystem=operaton-bpm-platform/process-engines=default/properties={{ wlasciwosc }}:add(value={{ wartosc }})
+end-if
+{% endfor %}
 stop-embedded-server

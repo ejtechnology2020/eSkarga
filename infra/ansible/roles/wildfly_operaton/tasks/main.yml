@@ -5,13 +5,22 @@
     update_cache: true
 - name: Użytkownik usługi
   ansible.builtin.user: { name: "{{ eskarga_user }}", system: true, home: "{{ eskarga_home }}", shell: /usr/sbin/nologin }
+# Archiwum operaton-bpm-wildfly-<wersja>.tar.gz nie ma katalogu nadrzędnego: serwer w server/wildfly-<wersja WildFly>/, SQL w sql/.
+- name: Katalog rozpakowania dystrybucji Operaton
+  ansible.builtin.file: { path: "/opt/operaton-dist-{{ operaton_version }}", state: directory, owner: "{{ eskarga_user }}" }
 - name: Dystrybucja Operaton dla WildFly z Nexusa
   ansible.builtin.unarchive:
     src: "{{ nexus_base_url }}/operaton/operaton-bpm-wildfly-{{ operaton_version }}.tar.gz"
-    dest: /opt
+    dest: "/opt/operaton-dist-{{ operaton_version }}"
     remote_src: true
     creates: "{{ wildfly_home }}/bin/standalone.sh"
     owner: "{{ eskarga_user }}"
+- name: Serwer WildFly z dystrybucji jako wildfly_home
+  ansible.builtin.shell: "mv /opt/operaton-dist-{{ operaton_version }}/server/wildfly-* {{ wildfly_home }}"
+  args: { creates: "{{ wildfly_home }}/bin/standalone.sh" }
+- name: Bez przykładowej aplikacji procesowej (użytkownicy demo)
+  ansible.builtin.shell: "rm -f {{ wildfly_home }}/standalone/deployments/operaton-example-invoice-*.war"
+  changed_when: false
 - name: Sterownik PostgreSQL jako moduł
   ansible.builtin.template: { src: module-postgresql.xml.j2, dest: "{{ wildfly_home }}/modules/org/postgresql/main/module.xml", owner: "{{ eskarga_user }}" }
 - name: Konfiguracja WildFly (źródło danych XA, logi JSON, HA)
