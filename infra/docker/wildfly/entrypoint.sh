@@ -7,7 +7,9 @@ if [ ! -f standalone/configuration/.eskarga-configured ]; then
     -Ddb.host="${DB_HOST}" -Ddb.name="${DB_NAME}" -Ddb.user="${DB_USER_APP}" -Ddb.password="${DB_PASSWORD_APP}"
   touch standalone/configuration/.eskarga-configured
 fi
+# ${db.*} w standalone.xml to wyrażenia rozwiązywane przy starcie z właściwości systemowych (hasło nie leży w pliku konfiguracji)
 exec bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 \
+  -Ddb.host="${DB_HOST}" -Ddb.name="${DB_NAME}" -Ddb.user="${DB_USER_APP}" -Ddb.password="${DB_PASSWORD_APP}" \
   -Deskarga.environment="${ESKARGA_ENVIRONMENT:-TEST}" \
   -Deskarga.faces.stage="${ESKARGA_FACES_STAGE:-Production}" \
   -Deskarga.security.mode="${ESKARGA_SECURITY_MODE:-oidc}" \
