@@ -68,10 +68,12 @@ services:
       tsa:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/operaton/app/cockpit/"]
+      # gotowość aplikacji (HealthServlet: baza, S3, silnik); Cockpit Operaton bez silnika logował pełny stos co 20 s
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/eskarga/health"]
       interval: 20s
       timeout: 5s
-      retries: 15
+      retries: 30
+      start_period: 90s
 
   flyway:
     # Migracje schematu repertorium rolą migracji – przed startem aplikacji (T-003, ADR 0016). Rola aplikacji nie ma praw DDL.
