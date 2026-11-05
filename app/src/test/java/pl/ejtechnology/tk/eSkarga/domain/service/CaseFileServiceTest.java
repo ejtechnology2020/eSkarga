@@ -123,4 +123,22 @@ class CaseFileServiceTest extends ServiceTestSupport {
         DocketNumber b = tx(s -> s.docketNumbers.peekNextNumber(DocketSymbol.TW, LocalDate.of(2026, 11, 3)));
         assertThat(a).isEqualTo(b);
     }
+
+    @Test
+    void skanyWplywuStajaSieDokumentamiAkt() {
+        IncomingLetter l = tx(s -> registerLetter(s));
+        byte[] pdf1 = "%PDF-1.7 pismo".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+        byte[] pdf2 = "%PDF-1.7 pelnomocnictwo".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+        tx(s -> s.incoming.attachScan(l.getId(), "pismo.pdf", pdf1, "kprzykladowy", null));
+        tx(s -> s.incoming.attachScan(l.getId(), "koperta.tif", new byte[] {'I', 'I', 42, 0, 8, 0, 0, 0}, "kprzykladowy", null));
+        tx(s -> s.incoming.attachScan(l.getId(), "pelnomocnictwo.pdf", pdf2, "kprzykladowy", null));
+        CaseFile cf = tx(s -> createCase(s, l.getId()));
+        java.util.List<CaseDocument> docs = tx(s -> s.cases.documents(s.em.find(CaseFile.class, cf.getId())));
+        assertThat(docs).hasSize(2);
+        CaseDocument pismo = docs.get(0);
+        assertThat(pismo.getStorageKey()).startsWith("akta/" + cf.getId() + "/").endsWith(".pdf");
+        assertThat(store.verifySha256(pismo.getStorageKey(), pismo.getSha256())).isTrue();
+        assertThat(docs.get(1).getTitle()).isEqualTo("pelnomocnictwo.pdf");
+        assertThat(docs.get(1).getStorageKey()).isNotNull();
+    }
 }

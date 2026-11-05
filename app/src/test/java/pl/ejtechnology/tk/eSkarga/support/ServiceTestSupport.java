@@ -121,7 +121,7 @@ public abstract class ServiceTestSupport {
             this.incoming = Wiring.inject(new IncomingRegister(), em, audit, clock, store);
             this.caseAccess0 = Wiring.inject(new CaseAccessService(), em, audit);
             this.search = Wiring.inject(new SearchService(), em, searchIndex, caseAccess0);
-            this.cases = Wiring.inject(new CaseFileService(), em, docketNumbers, process, audit, clock, search);
+            this.cases = Wiring.inject(new CaseFileService(), em, docketNumbers, process, audit, clock, search, store);
             this.corrections = Wiring.inject(new CorrectionService(), em, audit, clock);
             this.deliveries = Wiring.inject(new DeliveryService(), em, holidays, process, audit);
             this.appeals = Wiring.inject(new AppealService(), em, cases, delegations, process, audit, clock);

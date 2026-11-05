@@ -114,7 +114,7 @@
         <tk:effects value="#{zalozenie.skutki}" />
         <f:facet name="footer">
           <p:commandButton value="Wróć do podsumowania" action="#{zalozenie.closeDialog}" update="dlg" oncomplete="PF('dlgSig').hide()" process="@this" />
-          <p:commandButton value="Zatwierdź i nadaj #{zalozenie.nastepnaSygnatura.format()}" action="#{zalozenie.confirm}" styleClass="p" process="@this" />
+          <p:commandButton value="Zatwierdź i nadaj #{zalozenie.nastepnaSygnatura.format()}" action="#{zalozenie.confirm}" styleClass="p" process="@this" update="@form growl" oncomplete="if (args &amp;&amp; args.validationFailed) { PF('dlgSig').show(); }" />
         </f:facet>
       </p:dialog>
     </h:form>

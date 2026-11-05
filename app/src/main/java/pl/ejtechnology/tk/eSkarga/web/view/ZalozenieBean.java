@@ -172,7 +172,10 @@ public class ZalozenieBean implements Serializable {
                         organ, sygnOrzeczenia, null, doreczenie, false, pilna, anonimizacja, 6, currentUser.getLogin()));
                 docket = cf.getDocket();
             } catch (RuntimeException e) {
-                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się założyć sprawy.", e.getMessage()));
+                java.util.logging.Logger.getLogger(ZalozenieBean.class.getName()).log(java.util.logging.Level.WARNING,
+                        "Założenie sprawy z pisma " + pismo + " nie powiodło się: " + e, e);   // bez danych osobowych: numer dziennika i wyjątek
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się założyć sprawy.",
+                        e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
                 return null;
             }
         }

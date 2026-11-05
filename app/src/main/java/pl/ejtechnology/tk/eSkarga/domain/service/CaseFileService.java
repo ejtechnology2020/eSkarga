@@ -29,6 +29,8 @@ import pl.ejtechnology.tk.eSkarga.domain.model.ProceduralAct;
 import pl.ejtechnology.tk.eSkarga.domain.model.ProceduralActKind;
 import pl.ejtechnology.tk.eSkarga.domain.model.FinalRuling;
 import pl.ejtechnology.tk.eSkarga.domain.model.IncomingLetter;
+import pl.ejtechnology.tk.eSkarga.domain.model.IncomingScan;
+import pl.ejtechnology.tk.eSkarga.documents.DocumentStore;
 import pl.ejtechnology.tk.eSkarga.domain.model.Party;
 import pl.ejtechnology.tk.eSkarga.domain.model.PartyRole;
 import pl.ejtechnology.tk.eSkarga.domain.model.PowerOfAttorney;
@@ -70,9 +72,47 @@ public class CaseFileService {
     @Inject
     AppClock clock;
     @Inject
+    DocumentStore store;
+    @Inject
     pl.ejtechnology.tk.eSkarga.search.SearchService search;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    /**
+     * Skany z rejestracji wpływu (S-03) stają się dokumentami akt (UC-03): pierwszy PDF to plik pisma procesowego, kolejne PDF-y – osobne
+     * dokumenty (tytuł = nazwa pliku) na kolejnych kartach; TIFF-y zostają w repozytorium wpływu (akta przyjmują PDF, T-055). Plik jest
+     * kopiowany pod klucz akt ({@code akta/<id>/…}), skrót SHA-256 bez zmian.
+     */
+    private void attachIntakeScans(CaseFile cf, CaseDocument pismo, IncomingLetter letter, String userId) {
+        if (store == null) {
+            return;
+        }
+        List<IncomingScan> scans = em.createQuery("select s from IncomingScan s where s.letter = :l order by s.id", IncomingScan.class).setParameter("l", letter).getResultList();
+        boolean first = true;
+        for (IncomingScan scan : scans) {
+            if (!"application/pdf".equals(scan.getContentType())) {
+                continue;
+            }
+            byte[] bytes;
+            try (java.io.InputStream in = store.get(scan.getStorageKey(), Optional.empty())) {
+                bytes = in.readAllBytes();
+            } catch (java.io.IOException e) {
+                throw new IllegalStateException("Nie udało się odczytać skanu " + scan.getFileName() + " z repozytorium", e);
+            }
+            String key = "akta/" + cf.getId() + "/" + java.util.UUID.randomUUID() + ".pdf";
+            DocumentStore.Stored stored = store.put(key, new java.io.ByteArrayInputStream(bytes), bytes.length, "application/pdf", false);
+            if (first) {
+                pismo.attachFile(stored.key(), stored.sha256());
+                first = false;
+            } else {
+                CaseDocument extra = new CaseDocument(cf, scan.getFileName(), DocumentKind.ZALACZNIK, pismo.getDocumentDate(), userId);
+                int last = lastPage(cf);
+                extra.paginate(1, last + 1, last + 1);
+                extra.attachFile(stored.key(), stored.sha256());
+                em.persist(extra);
+            }
+        }
+    }
+
     public CaseFile createCase(CreateCaseCommand cmd) {
         IncomingLetter letter = em.find(IncomingLetter.class, cmd.letterId());
         if (letter == null) {
@@ -105,6 +145,7 @@ public class CaseFileService {
                 letter.getFiledOn() == null ? today : letter.getFiledOn(), cmd.userId());
         pismo.paginate(1, 1, Math.max(1, cmd.letterPages()));
         em.persist(pismo);
+        attachIntakeScans(cf, pismo, letter, cmd.userId());
         letter.qualify(cmd.symbol() == DocketSymbol.TS ? LetterQualification.NOWA_SKARGA_TS : LetterQualification.NOWY_WNIOSEK_TW, cf);
         em.persist(new CaseAssignment(cf, cmd.userId(), AssignmentRole.CLERK, today));
         // start procesu w tej samej transakcji (D1); wyjątek wycofuje wpis i licznik sygnatur
