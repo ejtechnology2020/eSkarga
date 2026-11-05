@@ -6,12 +6,18 @@ end-if
 if (outcome != success) of /subsystem=datasources/xa-data-source=EskargaDS:read-resource
   xa-data-source add --name=EskargaDS --jndi-name=java:jboss/datasources/EskargaDS --driver-name=postgresql --user-name=eskarga_app --password=${env.DB_PASSWORD_APP} --min-pool-size=5 --max-pool-size=40 --xa-datasource-properties={"ServerName"=>"{{ groups['lb'][0] }}","PortNumber"=>"5000","DatabaseName"=>"eskarga","CurrentSchema"=>"repertorium,operaton"}
 end-if
-/subsystem=operaton-bpm-platform/process-engines=default:write-attribute(name=datasource, value=java:jboss/datasources/EskargaDS)
-/subsystem=operaton-bpm-platform/process-engines=default:write-attribute(name=history-level, value=audit)
-/subsystem=operaton-bpm-platform/process-engines=default/properties=jobExecutorDeploymentAware:write-attribute(name=value, value=false)
-{% for wlasciwosc, wartosc in {'databaseTablePrefix': 'operaton.', 'databaseSchema': 'operaton', 'configureScriptEngineHostAccess': 'false', 'enableScriptEngineLoadExternalResources': 'false'}.items() %}
-if (outcome != success) of /subsystem=operaton-bpm-platform/process-engines=default/properties={{ wlasciwosc }}:read-resource
-  /subsystem=operaton-bpm-platform/process-engines=default/properties={{ wlasciwosc }}:add(value={{ wartosc }})
+# Silnik Operaton na tym samym źródle danych (schemat operaton, tabele z prefiksem), historia audit, skrypty bez dostępu do hosta
+# i zasobów zewnętrznych (D8). Atrybuty silnika w podsystemie są tylko do odczytu („WFLYCTL0048: Attribute datasource is not
+# writable”), więc silnik "default" z dystrybucji jest usuwany i dodawany ponownie z kompletem ustawień (właściwości = mapa,
+# wtyczki = lista; SubsystemAttributeDefinitons podsystemu 2.2.0). Wtyczki jak w standalone.xml dystrybucji.
+if (result != "java:jboss/datasources/EskargaDS") of /subsystem=operaton-bpm-platform/process-engines=default:read-attribute(name=datasource)
+  /subsystem=operaton-bpm-platform/process-engines=default:remove
+  /subsystem=operaton-bpm-platform/process-engines=default:add(name=default, default=true, datasource=java:jboss/datasources/EskargaDS, history-level=audit, \
+    properties={"jobExecutorAcquisitionName"=>"default", "isAutoSchemaUpdate"=>"true", "authorizationEnabled"=>"true", "jobExecutorDeploymentAware"=>"false", \
+      "historyCleanupBatchWindowStartTime"=>"00:01", "databaseTablePrefix"=>"operaton.", "databaseSchema"=>"operaton", \
+      "configureScriptEngineHostAccess"=>"false", "enableScriptEngineLoadExternalResources"=>"false"}, \
+    plugins=[{"class"=>"org.operaton.bpm.application.impl.event.ProcessApplicationEventListenerPlugin"}, \
+      {"class"=>"org.operaton.spin.plugin.impl.SpinProcessEnginePlugin"}, \
+      {"class"=>"org.operaton.connect.plugin.impl.ConnectProcessEnginePlugin"}])
 end-if
-{% endfor %}
 stop-embedded-server
