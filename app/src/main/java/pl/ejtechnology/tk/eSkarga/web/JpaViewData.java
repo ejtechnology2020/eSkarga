@@ -116,6 +116,7 @@ public class JpaViewData implements ViewData {
     @Inject DelegationService delegations;
     @Inject TemplateService templates;
     @Inject DictionaryService dictionaries;
+    @Inject pl.ejtechnology.tk.eSkarga.domain.service.UserDirectoryService directory;
     @Inject HolidayService holidays;
     @Inject CaseAccessService caseAccess;
     @Inject AuditService audit;
@@ -651,16 +652,29 @@ public class JpaViewData implements ViewData {
     }
 
     @Override
+    /** S-22: osoby znane eSkardze (rejestr z logowań: nazwa, role z tokenu, ostatnie logowanie) połączone z przydziałami i upoważnieniami. */
     public List<UserRow> users() {
         Map<String, List<CaseAssignment>> byUser = new TreeMap<>();
         for (CaseAssignment a : caseAccess.activeAssignments()) {
             byUser.computeIfAbsent(a.getUserId(), k -> new ArrayList<>()).add(a);
         }
         List<UserRow> out = new ArrayList<>();
+        java.util.Set<String> listed = new java.util.HashSet<>();
+        for (var k : directory.all()) {
+            List<CaseAssignment> list = byUser.getOrDefault(k.getLogin(), List.of());
+            String roles = java.util.Arrays.stream(k.getRoles().split(",")).filter(r -> !r.isBlank()).map(r -> fmt.msg("role." + r)).reduce((a, b) -> a + ", " + b).orElse("—");
+            boolean delegated = !delegations.policyDelegations(k.getLogin()).isEmpty();
+            out.add(new UserRow(k.getDisplayName() == null || k.getDisplayName().isBlank() ? k.getLogin() : k.getDisplayName() + " (" + k.getLogin() + ")", "ID-users", roles,
+                    at(k.getLastLoginAt()), list.isEmpty() ? "—" : list.size() + " spraw", !list.isEmpty(), delegated ? "tak" : "", false));
+            listed.add(k.getLogin());
+        }
         byUser.forEach((u, list) -> {
+            if (listed.contains(u)) {
+                return;
+            }
             String roles = list.stream().map(a -> a.getRole().name()).distinct().sorted().reduce((a, b) -> a + ", " + b).orElse("");
             boolean delegated = !delegations.policyDelegations(u).isEmpty();
-            out.add(new UserRow(u, "ID-users", roles, null, list.size() + " spraw", true, delegated ? "tak" : "—", false));
+            out.add(new UserRow(u, "ID-users", roles, null, list.size() + " spraw", true, delegated ? "tak" : "", false));
         });
         return out;
     }

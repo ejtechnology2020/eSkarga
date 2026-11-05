@@ -171,3 +171,9 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   zalogowany użytkownik eSkargi dostaje w silniku grupę `tk-eskarga` (`OperatonAuthenticationFilter`), a `EngineAuthorizations`
   po wdrożeniu aplikacji idempotentnie nadaje tej grupie pełne uprawnienia do definicji i instancji procesów, zadań, wdrożeń,
   historii i filtrów. Konta administracyjne Cockpitu pozostają osobnym tematem.
+- **Uzupełnienie 05.11.2026 – lista użytkowników (S-22)**: ID-users nie udostępnia API posiadaczy ról aplikacji (SCIM to
+  zarządzanie tożsamościami, PU-INT-05; przypisania ról widzi tylko konsola ADM), a eSkarga nie ma własnych kont (D4). Ekran
+  administratora pokazuje więc rejestr osób znanych eSkardze: `LoginFilter` raz na sesję zapisuje login, nazwę z ID tokenu
+  (`name`) i role eSkargi z tokenu (`app_user_seen`, V7; `UserDirectoryService`), a lista łączy go z przydziałami do spraw
+  i upoważnieniami. To obraz „z ostatniego logowania”, nie źródło prawdy – nim pozostaje ID-users. Przycisk „Synchronizuj
+  z ID-users” z makiety zostaje tylko w demo; pełna synchronizacja wymagałaby API po stronie ID-users (propozycja do backlogu id).

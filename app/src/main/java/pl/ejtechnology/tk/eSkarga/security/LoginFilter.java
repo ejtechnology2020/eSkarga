@@ -55,6 +55,10 @@ public class LoginFilter implements Filter {
     CurrentUser currentUser;
     @Inject
     AuditService audit;
+    @Inject
+    pl.ejtechnology.tk.eSkarga.domain.service.UserDirectoryService directory;
+    /** Atrybut sesji: wpis do rejestru osób zrobiony (raz na sesję). */
+    static final String SEEN_ATTRIBUTE = "eskarga.login.zapisany";
 
     /** Czy podmiot jest naprawdę uwierzytelniony (nie null i nie anonimowy podmiot kontenera). */
     public static boolean authenticated(Principal p) {
@@ -103,6 +107,22 @@ public class LoginFilter implements Filter {
             req.getRequestDispatcher(FORBIDDEN_PAGE).forward(req, resp);
             return;
         }
+        rememberUser(req);
         chain.doFilter(request, response);
+    }
+
+    /** Raz na sesję: login, nazwa z ID tokenu i role do rejestru osób znanych eSkardze (S-22); błąd nie przerywa żądania. */
+    private void rememberUser(HttpServletRequest req) {
+        var session = req.getSession(false);
+        if (directory == null || session == null || session.getAttribute(SEEN_ATTRIBUTE) != null) {
+            return;
+        }
+        try {
+            String name = ElytronTokens.idTokenClaims(req).map(c -> c.containsKey("name") ? c.getString("name", null) : null).orElse(null);
+            directory.touch(req.getUserPrincipal().getName(), name, currentUser.getRoles());
+            session.setAttribute(SEEN_ATTRIBUTE, Boolean.TRUE);
+        } catch (RuntimeException e) {
+            LOG.log(Level.WARNING, "Nie udało się zapisać osoby w rejestrze użytkowników: " + e, e);
+        }
     }
 }
