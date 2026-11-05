@@ -91,8 +91,10 @@ public class IncomingRegister {
         return null;
     }
 
+    /** Skan razem z pismem (fetch join) – serwlet czyta {@code scan.getLetter()} poza transakcją EJB. */
     public java.util.Optional<IncomingScan> scan(long id) {
-        return java.util.Optional.ofNullable(em.find(IncomingScan.class, id));
+        return em.createQuery("select s from IncomingScan s join fetch s.letter where s.id = :id", IncomingScan.class).setParameter("id", id)
+                .getResultStream().findFirst();
     }
 
     public List<IncomingScan> scans(long letterId) {

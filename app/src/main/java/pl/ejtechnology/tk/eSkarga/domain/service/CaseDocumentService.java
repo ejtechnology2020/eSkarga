@@ -87,10 +87,16 @@ public class CaseDocumentService {
                 .setParameter("q", like).setMaxResults(limit).getResultList();
     }
 
+    /** Dokument razem ze sprawą i jej bieżącą wersją (fetch join) – serwlet dokumentów czyta {@code getCaseFile()} poza transakcją EJB. */
     public CaseDocument require(long id) {
-        CaseDocument d = em.find(CaseDocument.class, id);
+        CaseDocument d = em.createQuery("select d from CaseDocument d join fetch d.caseFile where d.id = :id", CaseDocument.class).setParameter("id", id)
+                .getResultStream().findFirst().orElse(null);
         if (d == null) {
             throw new IllegalArgumentException("Brak dokumentu " + id);
+        }
+        d.getCaseFile().getDocket();
+        if (d.getCaseFile().current() != null) {
+            d.getCaseFile().current().getStatus();   // inicjalizacja wersji przed opuszczeniem transakcji (canRead, isReadOnly)
         }
         return d;
     }
