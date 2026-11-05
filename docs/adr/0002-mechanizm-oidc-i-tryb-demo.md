@@ -68,7 +68,7 @@ i `eskarga-workers` rejestruje w realmie `id-users` skrypt `infra/docker/keycloa
 `id-users-rejestracja`), który nadaje też role eSkargi fikcyjnym użytkownikom testowym ID-users. Adres back-channel
 rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchannel-logout` (Keycloak ID-users ma wpis host.docker.internal).
 
-## Uzupełnienie 05.11.2026 – pierwsze logowanie na WildFly 41 (decyzja: wariant 1, 05.11.2026)
+## Uzupełnienie 05.11.2026 – pierwsze logowanie na WildFly 41 (wariant 1 wybrany, ale niewykonalny – patrz niżej)
 
 - `@OpenIdAuthenticationMechanismDefinition` realizuje Soteria (Jakarta Security), nie podsystem `elytron-oidc-client`; logowanie
   na stronach wymusza `LoginFilter` przez `HttpServletRequest.authenticate` (strony bez `security-constraint`, bo tryb demo działa
@@ -87,3 +87,8 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   z PKCE S256) do zaplanowania przed środowiskiem TEST, gdzie kontrakt ID-users będzie egzekwowany. Domyślna wartość w
   `.env.example` pozostaje `S256`;
   `/callback` z błędem dostawcy pokazuje stronę „Logowanie nie powiodło się” zamiast 404 (`OidcCallbackServlet`).
+- **Wariant 1 zablokowany przez realm (05.11.2026, po ponownej rejestracji z pustym `ESKARGA_PKCE`)**: realm `id-users` ma politykę
+  klientów `idusers-klienci-przegladarkowi` (profil `idusers-rfc9700`, wykonawca `pkce-enforcer`, `auto-configure=true`) dla
+  wszystkich klientów poufnych i publicznych (`id-users-keycloak-config/src/main/realm/id-users.json`). Keycloak dopisuje `S256`
+  przy każdej aktualizacji klienta i wymusza PKCE na endpoincie autoryzacji niezależnie od atrybutu. Zdjęcie wymogu oznaczałoby
+  zmianę polityki bezpieczeństwa całego ID-users (RFC 9700), nie konfiguracji eSkargi. Pozostaje wariant 2 (mechanizm z PKCE).
