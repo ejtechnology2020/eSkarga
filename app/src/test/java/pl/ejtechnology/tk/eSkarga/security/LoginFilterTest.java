@@ -11,8 +11,6 @@ import static org.mockito.Mockito.when;
 import java.security.Principal;
 import java.util.EnumSet;
 
-import jakarta.security.enterprise.AuthenticationStatus;
-import jakarta.security.enterprise.SecurityContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,7 +35,6 @@ class LoginFilterTest {
             @Override
             public boolean isDemo() { return false; }
         };
-        filter.securityContext = mock(SecurityContext.class);
         filter.currentUser = mock(CurrentUser.class);
         filter.audit = mock(AuditService.class);
         when(req.getServletPath()).thenReturn("/pulpit.xhtml");
@@ -47,9 +44,9 @@ class LoginFilterTest {
     void anonimowyPodmiotKonteneraUruchamiaLogowanieOidc() throws Exception {
         Principal anon = () -> "anonymous";
         when(req.getUserPrincipal()).thenReturn(anon);
-        when(filter.securityContext.authenticate(eq(req), eq(resp), any())).thenReturn(AuthenticationStatus.SEND_CONTINUE);
+        when(req.authenticate(resp)).thenReturn(false);   // wyzwanie: przekierowanie do Keycloaka ID-users
         filter.doFilter(req, resp, chain);
-        verify(filter.securityContext).authenticate(eq(req), eq(resp), any());
+        verify(req).authenticate(resp);
         verify(chain, never()).doFilter(any(), any());
         assertThat(LoginFilter.authenticated(anon)).isFalse();
     }
@@ -73,7 +70,7 @@ class LoginFilterTest {
         when(filter.currentUser.getRoles()).thenReturn(EnumSet.of(AppRole.TK_BIURO_PODAWCZE));
         filter.doFilter(req, resp, chain);
         verify(chain).doFilter(req, resp);
-        verify(filter.securityContext, never()).authenticate(any(), any(), any());
+        verify(req, never()).authenticate(any());
     }
 
     @Test
@@ -81,6 +78,6 @@ class LoginFilterTest {
         when(req.getServletPath()).thenReturn("/blad/403.xhtml");
         filter.doFilter(req, resp, chain);
         verify(chain).doFilter(req, resp);
-        verify(filter.securityContext, never()).authenticate(any(), any(), any());
+        verify(req, never()).authenticate(any());
     }
 }

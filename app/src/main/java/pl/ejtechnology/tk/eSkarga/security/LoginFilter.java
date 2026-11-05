@@ -6,9 +6,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import jakarta.inject.Inject;
-import jakarta.security.enterprise.AuthenticationStatus;
-import jakarta.security.enterprise.SecurityContext;
-import jakarta.security.enterprise.authentication.mechanism.http.AuthenticationParameters;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,7 +19,7 @@ import pl.ejtechnology.tk.eSkarga.audit.AuditService;
 /**
  * Wymuszenie logowania przez ID-users (tryb {@code oidc}, D4): strony Facelets wymagają uwierzytelnionego użytkownika
  * z co najmniej jedną rolą eSkargi. Mechanizm {@code @OpenIdAuthenticationMechanismDefinition} (Jakarta Security) startuje
- * dopiero przy żądaniu zasobu chronionego albo jawnym {@link SecurityContext#authenticate} – bez tego filtra strony
+ * dopiero przy żądaniu zasobu chronionego albo jawnym {@link HttpServletRequest#authenticate} – bez tego filtra strony
  * renderowały się dla podmiotu anonimowego (Elytron zgłasza go jako principal „anonymous”) z domyślną rolą referenta.
  * W trybie demo filtr nic nie robi (ADR 0004). Strony błędów i zasoby JSF są dostępne bez logowania.
  */
@@ -34,8 +31,6 @@ public class LoginFilter implements Filter {
 
     @Inject
     OidcSettings settings;
-    @Inject
-    SecurityContext securityContext;
     @Inject
     CurrentUser currentUser;
     @Inject
@@ -56,18 +51,28 @@ public class LoginFilter implements Filter {
             return;
         }
         if (!authenticated(req.getUserPrincipal())) {
-            AuthenticationStatus status = securityContext.authenticate(req, resp, AuthenticationParameters.withParams().newAuthentication(false));
-            if (status == AuthenticationStatus.SUCCESS) {
-                chain.doFilter(request, response);
-            } else if (status != AuthenticationStatus.SEND_CONTINUE) {
-                // SEND_FAILURE/NOT_DONE: mechanizm OIDC nie przejął żądania (brak mechanizmu w wdrożeniu, błąd metadanych dostawcy itp.)
-                LOG.log(Level.WARNING, "Logowanie OIDC nie zostało rozpoczęte dla {0}: status {1}, principal {2}, providerUri {3}",
-                        new Object[] {path, status, req.getUserPrincipal(), settings.getProviderUri()});
+            // HttpServletRequest.authenticate uruchamia mechanizm kontenera: na WildFly adnotację OIDC obsługuje podsystem
+            // elytron-oidc-client (mechanizm Elytrona, nie bean Jakarta Security), więc SecurityContext.authenticate() nie działa.
+            boolean ok;
+            try {
+                ok = req.authenticate(resp);
+            } catch (ServletException | IllegalStateException e) {
+                LOG.log(Level.WARNING, "Logowanie OIDC niedostępne dla " + path + " (providerUri " + settings.getProviderUri() + ")", e);
                 if (!resp.isCommitted()) {
-                    resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Logowanie przez ID-users niedostępne (status " + status + ") – szczegóły w logu serwera");
+                    resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Logowanie przez ID-users niedostępne – szczegóły w logu serwera");
                 }
+                return;
             }
-            return;   // SEND_CONTINUE: przekierowanie do Keycloaka ID-users już wysłane
+            if (!ok) {
+                return;   // wyzwanie (przekierowanie do Keycloaka ID-users) już wysłane
+            }
+            if (!authenticated(req.getUserPrincipal())) {
+                LOG.log(Level.WARNING, "authenticate() zakończone bez podmiotu dla {0}", path);
+                if (!resp.isCommitted()) {
+                    resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                }
+                return;
+            }
         }
         if (currentUser.getRoles().isEmpty()) {
             audit.recordDenial(req.getUserPrincipal().getName(), null, "odmowa: brak ról eSkargi w tokenie ID-users", path, null, req.getRemoteAddr());
