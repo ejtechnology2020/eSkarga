@@ -15,6 +15,7 @@ docker compose -f infra/docker/compose.yml up -d --build   # aplikacja http://lo
 docker compose -f infra/docker/compose.yml logs -f app
 docker compose -f infra/docker/compose.yml --profile monitoring up -d   # Prometheus/Grafana
 cd ui-tests && npm ci && npm test                    # Playwright + axe (ESKARGA_URL)
+infra\windows\start.cmd                             # Windows: całe środowisko obok ID-users (pozostałe skrypty: stop, status, logi, wdroz, rejestracja, reset, buduj – infra/docker/README.md)
 ```
 
 Tryb pracy nad interfejsem bez ID-users: `-Deskarga.security.mode=demo -Deskarga.demo.today=2026-11-03`,

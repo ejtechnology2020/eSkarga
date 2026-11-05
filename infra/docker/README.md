@@ -70,9 +70,37 @@ co ID-users, jak w jego własnym `keycloak-uzytkownicy`): `OIDC_PROVIDER_URI_ADM
 `docker compose -f infra/docker/compose.yml --profile id-users run --rm --network id-users_default id-users-rejestracja`.
 Bez ID-users: `docker compose --profile oidc-local up -d` z `OIDC_PROVIDER_URI=http://oidc:8180/realms/id-users` (Keycloak eSkargi na :8181 – wtedy issuer też trzeba zmienić na `http://localhost:8181/realms/id-users`).
 
-## Windows
+## Windows – szybki start
 
-Skrypty montowane do kontenerów (`infra/docker/**/*.sh`, `*.cli`) muszą mieć końcówki linii LF – wymusza to `.gitattributes`.
-Jeśli repozytorium było sklonowane wcześniej z `core.autocrlf=true` (objaw: `set: pipefail\r: invalid option name`),
-odśwież kopię roboczą: `git rm --cached -r . && git reset --hard`. Docker Desktop: włączony `host.docker.internal`
-(domyślnie) – przez ten adres aplikacja i workery łączą się z Keycloakiem ID-users na hoście (:8180).
+Wymagania: **Windows 10/11 z Docker Desktop** (backend WSL 2, co najmniej 8 GB pamięci dla Dockera razem z ID-users) i Git.
+Javy ani Mavena nie trzeba instalować – gdy ich brak, build odbywa się w kontenerze `maven:3.9-eclipse-temurin-21`
+(zależności w wolumenie `eskarga-m2`). Skrypty są odwzorowaniem `dev\windows\` projektu ID-users.
+
+1. Uruchom ID-users (projekt `id`: `dev\windows\start.cmd`) – eSkarga loguje przez jego Keycloak na `localhost:8180`.
+2. Kliknij dwukrotnie `infra\windows\start.cmd` (albo w PowerShell: `.\infra\windows\start.ps1`).
+
+Pierwsze uruchomienie trwa 10–20 minut (dystrybucja Operaton, obrazy, zależności Maven). Po starcie skrypt wypisuje adresy
+i konta testowe oraz otwiera <http://localhost:8082/eskarga>.
+
+| Skrypt (`infra\windows\`) | Działanie |
+| --- | --- |
+| `start.cmd` / `start.ps1 [-Przebuduj] [-BezPrzegladarki] [-BezRejestracji] [-Monitoring]` | sprawdza Docker, ID-users i porty, tworzy `infra\docker\.env`, buduje artefakty Mavenem (gdy ich brak lub `-Przebuduj`), rejestruje klientów w ID-users, uruchamia usługi i czeka na gotowość (`/eskarga/health`) |
+| `stop.cmd` | zatrzymuje kontenery (dane zostają) |
+| `status.cmd` | stan kontenerów i punktów zdrowia (aplikacja, Cockpit, MinIO, OpenSearch, WireMock, Keycloak ID-users) |
+| `logi.cmd [usługa] [-Sledz]` | logi, np. `logi.cmd app -Sledz` |
+| `wdroz.cmd [-TylkoApp] [-Testy]` | build Mavenem i ponowne wdrożenie po zmianach w kodzie (restart WildFly, przebudowa obrazu workerów) |
+| `rejestracja.cmd` | ponowna rejestracja klientów `eskarga`/`eskarga-workers` i ról użytkowników testowych w Keycloaku ID-users (idempotentna) |
+| `reset.cmd [-Wymus] [-ZObrazami] [-ZMaven]` | usuwa kontenery i dane (z potwierdzeniem); klienci w Keycloaku ID-users zostają |
+| `buduj.cmd [-Szybko] [-WDockerze]` | `mvn -B verify` (196 testów) albo `-Szybko` = samo pakowanie; lokalny JDK 21 lub kontener Maven |
+
+Rozwiązywanie problemów na Windows:
+
+- **Porty zajęte** – start wypisuje, które; zmień je w `infra\docker\.env` (`PORT_APP`, `PORT_DB` …). Po zmianie `PORT_APP`
+  ustaw też `ESKARGA_PUBLIC_URL` i uruchom `rejestracja.cmd` (adresy callback i back-channel w Keycloaku).
+- **„running scripts is disabled”** – użyj plików `.cmd` (uruchamiają PowerShell z `-ExecutionPolicy Bypass`).
+- **ID-users nie odpowiada** – start przerywa z adresem, którego oczekuje; uruchom projekt `id` albo ustaw
+  `ESKARGA_SECURITY_MODE=demo` (interfejs bez logowania, dane fikcyjne, ADR 0004).
+- **Błędy `\r` w kontenerach** (`set: pipefail\r: invalid option name`) – `.gitattributes` wymusza LF dla skryptów `.sh`;
+  po wcześniejszym klonowaniu z `core.autocrlf=true` wykonaj `git rm --cached -r . && git reset --hard`.
+- **Wersje obrazów** (`*_IMAGE`, `OPERATON_VERSION`) są zarządzane przez repozytorium – skrypty aktualizują je w istniejącym
+  `.env` i wypisują zmiany; porty i hasła zostają.

@@ -15,7 +15,6 @@ $app = Get-Ustawienie 'PORT_APP' '8082'
 $sprawdzenia = [ordered]@{
   'Aplikacja /eskarga/health' = "http://localhost:$app/eskarga/health"
   'Operaton Cockpit'          = "http://localhost:$app/operaton/app/cockpit/"
-  'Usługa dokumentów'         = "http://localhost:$app/eskarga-docs/"
   'MinIO (S3)'                = ('http://localhost:{0}/minio/health/live' -f (Get-Ustawienie 'PORT_S3' '9100'))
   'OpenSearch'                = ('http://localhost:{0}/_cluster/health' -f (Get-Ustawienie 'PORT_OPENSEARCH' '9200'))
   'WireMock (zaślepki)'       = ('http://localhost:{0}/__admin/health' -f (Get-Ustawienie 'PORT_WIREMOCK' '8089'))
