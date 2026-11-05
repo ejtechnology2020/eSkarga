@@ -121,6 +121,13 @@
     <url-pattern>*.xhtml</url-pattern>
   </servlet-mapping>
 
+  <!-- pdf.js (webjar) to moduły ES (.mjs); Undertow nie ma domyślnego typu MIME dla .mjs, a przeglądarka odrzuca moduł bez typu JavaScript
+       („Failed to load module script”) – widżet PDF nie otwierał dokumentów (T-034, ADR 0007) -->
+  <mime-mapping>
+    <extension>mjs</extension>
+    <mime-type>text/javascript</mime-type>
+  </mime-mapping>
+
   <welcome-file-list>
     <welcome-file>index.xhtml</welcome-file>
   </welcome-file-list>
