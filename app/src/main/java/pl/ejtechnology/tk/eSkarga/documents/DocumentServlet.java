@@ -27,10 +27,11 @@ import pl.ejtechnology.tk.eSkarga.web.Fmt;
  * weryfikacja SHA-256 przy pełnym pobraniu, znak wodny „kto i kiedy” przy pobraniu ({@code ?pobierz=1}, brief §6).
  * Dokumenty niejawne nie mają pliku – 404 (NFR-06). W trybie demo bez bazy: 404.
  */
-@WebServlet(urlPatterns = "/akta/*")
+// mapowanie prefiksowe ma pierwszeństwo przed *.xhtml – "/akta/*" przechwytywało stronę /akta/podglad.xhtml (404 na S-14)
+@WebServlet(urlPatterns = "/akta/dokument/*")
 public class DocumentServlet extends HttpServlet {
 
-    private static final Pattern PATH = Pattern.compile("^/(?:(\\d+)/)?dokument/(\\d+)$");
+    private static final Pattern PATH = Pattern.compile("^/(\\d+)$");
 
     @Inject
     private CaseDocumentService documents;
@@ -66,7 +67,7 @@ public class DocumentServlet extends HttpServlet {
         }
         CaseDocument doc;
         try {
-            doc = documents.require(Long.parseLong(m.group(2)));
+            doc = documents.require(Long.parseLong(m.group(1)));
         } catch (IllegalArgumentException e) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
