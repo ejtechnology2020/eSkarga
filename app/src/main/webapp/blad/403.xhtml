@@ -2,13 +2,22 @@
 <!DOCTYPE html>
 <ui:composition template="/WEB-INF/templates/system.xhtml"
                 xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core" xmlns:ui="jakarta.faces.facelets" xmlns:tk="jakarta.faces.composite/tk">
-  <!-- Brak uprawnień do sprawy: sygnatura i informacja, kto może nadać dostęp – bez danych sprawy. -->
+  <!-- Brak uprawnień. Wariant sprawy (parametr sygnatura): kto może nadać dostęp – bez danych sprawy. Wariant ogólny: zasób
+       lub ekran poza rolami użytkownika; po zalogowaniu bez ról eSkargi w tokenie ID-users (LoginFilter) – wskazówka dla administratora. -->
   <ui:define name="title">Brak uprawnień</ui:define>
   <ui:define name="content">
     <tk:icon name="lock" size="xxl" color="#233A6B" />
-    <h1 id="sys-h" class="h1-26">#{fmt.msg('sys.403.title', empty param.sygnatura ? 'Ts 315/26' : param.sygnatura)}</h1>
-    <p>#{msg['sys.403.text']}</p>
-    <dl class="dl"><dt>#{msg['sys.403.grants']}</dt><dd>sędzia sprawozdawca tej sprawy albo kierownik wydziału Ewa Szablon (wewn. 2140)</dd></dl>
-    <div class="row"><button type="button" class="btn p">#{msg['sys.403.request']}</button><h:link outcome="/pulpit" styleClass="btn" value="#{msg['sys.backToDesk']}" /></div>
+    <h:panelGroup rendered="#{not empty param.sygnatura}">
+      <h1 id="sys-h" class="h1-26">#{fmt.msg('sys.403.title', param.sygnatura)}</h1>
+      <p>#{msg['sys.403.text']}</p>
+      <dl class="dl"><dt>#{msg['sys.403.grants']}</dt><dd>#{msg['sys.403.grantsWho']}</dd></dl>
+      <div class="row"><button type="button" class="btn p">#{msg['sys.403.request']}</button><h:link outcome="/pulpit" styleClass="btn" value="#{msg['sys.backToDesk']}" /></div>
+    </h:panelGroup>
+    <h:panelGroup rendered="#{empty param.sygnatura}">
+      <h1 id="sys-h" class="h1-26">#{msg['sys.403.generalTitle']}</h1>
+      <p>#{msg['sys.403.generalText']}</p>
+      <p class="hint" jsf:rendered="#{currentUser.authenticated and empty currentUser.roles}" xmlns:jsf="jakarta.faces">#{fmt.msg('sys.403.noRoles', currentUser.login)}</p>
+      <div class="row"><h:link outcome="/pulpit" styleClass="btn p" value="#{msg['sys.backToDesk']}" /><h:link outcome="/blad/sesja" styleClass="btn" value="#{msg['app.logout']}" rendered="#{currentUser.authenticated}" /></div>
+    </h:panelGroup>
   </ui:define>
 </ui:composition>

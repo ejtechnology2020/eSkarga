@@ -29,6 +29,7 @@ services:
       ESKARGA_OIDC_CLIENTID: eskarga
       ESKARGA_PUBLIC_URL: ${ESKARGA_PUBLIC_URL:-http://localhost:8082/eskarga}   # post-logout-redirect-uri (oidc.json)
       ESKARGA_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
+      ESKARGA_OIDC_CLIENTAUTH: ${OIDC_CLIENT_AUTH:-auto}      # auto: private_key_jwt, gdy w ID_USERS_KLUCZE_DIR jest eskarga.key.pem (rejestracja T-037 projektu id); jwt | secret
       ESKARGA_OIDC_ROLESCLAIM: ${OIDC_ROLES_CLAIM:-resource_access.eskarga.roles}
       ESKARGA_OIDC_MFACLAIM: ${OIDC_MFA_CLAIM:-acr}
       ESKARGA_OIDC_MFAREQUIREDVALUE: ${OIDC_MFA_VALUE:-mfa,wysoki}
@@ -60,6 +61,8 @@ services:
       # i-węzeł – skaner WildFly cofał wdrożenie (WFLYDS0008 FileNotFoundException). entrypoint.sh kopiuje WAR-y przy każdym starcie.
       - ../../app/target:/opt/eskarga/wary/app:ro
       - ../../docs-service/target:/opt/eskarga/wary/docs:ro
+      # klucze prywatne z rejestracji eSkargi w ID-users (npm --prefix frontend run aplikacje:eskarga w projekcie id): eskarga.key.pem, eskarga-workers.key.pem, *.kid
+      - ${ID_USERS_KLUCZE_DIR:-../../../id/frontend/narzedzia/wyniki/eskarga}:/opt/eskarga/klucze:ro
       - ./wildfly/eskarga-datasource.cli:/opt/operaton/eskarga-datasource.cli:ro
     depends_on:
       db:
@@ -249,10 +252,13 @@ services:
       ESKARGA_OIDC_TOKEN_URL: ${OIDC_PROVIDER_URI:-http://host.docker.internal:8180/realms/id-users}/protocol/openid-connect/token
       ESKARGA_OIDC_CLIENT_ID: eskarga-workers
       ESKARGA_OIDC_CLIENT_SECRET: ${OIDC_WORKERS_SECRET:?ustaw w .env}
+      ESKARGA_OIDC_PRIVATE_KEY_PEM: /opt/eskarga/klucze/eskarga-workers.key.pem   # private_key_jwt, gdy plik istnieje (rejestracja T-037)
       ESKARGA_APP_API: http://app:8080/eskarga/api
       ESKARGA_DOCS_API: http://app:8080/eskarga-docs/api
       ESKARGA_EXTERNAL_BASE_URL: http://wiremock:8080
       ESKARGA_WORKER_ID: eskarga-worker-dev
+    volumes:
+      - ${ID_USERS_KLUCZE_DIR:-../../../id/frontend/narzedzia/wyniki/eskarga}:/opt/eskarga/klucze:ro
     depends_on:
       app:
         condition: service_healthy

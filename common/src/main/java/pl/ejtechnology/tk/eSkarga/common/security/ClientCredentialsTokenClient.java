@@ -47,14 +47,21 @@ public final class ClientCredentialsTokenClient {
     }
 
     /**
-     * Konfiguracja {@code <prefix>.tokenUrl}, {@code .clientId}, {@code .scope} oraz {@code .clientSecret} albo (zalecane) {@code .keyStore}
-     * (PKCS#12), {@code .keyStorePassword}, {@code .keyAlias} dla {@code private_key_jwt}.
+     * Konfiguracja {@code <prefix>.tokenUrl}, {@code .clientId}, {@code .scope} oraz {@code .clientSecret} albo (zalecane, kontrakt ID-users)
+     * {@code private_key_jwt}: {@code .privateKeyPem} (klucz PKCS#8 w PEM, jak zapisuje narzędzie rejestracji ID-users {@code aplikacje:eskarga};
+     * {@code kid} z {@code .keyId} albo z pliku {@code <klient>.kid} obok klucza) lub {@code .keyStore} (PKCS#12), {@code .keyStorePassword},
+     * {@code .keyAlias}.
      */
     public static ClientCredentialsTokenClient fromSettings(String prefix) {
         String ks = Settings.value(prefix + ".keyStore", "");
+        String pem = Settings.value(prefix + ".privateKeyPem", "");
         java.security.PrivateKey key = null;
         String kid = null;
-        if (!ks.isBlank()) {
+        if (!pem.isBlank()) {
+            java.nio.file.Path plik = java.nio.file.Path.of(pem);
+            key = privateKeyFromPem(plik);
+            kid = Settings.value(prefix + ".keyId", keyIdNextTo(plik));
+        } else if (!ks.isBlank()) {
             try {
                 java.security.KeyStore store = java.security.KeyStore.getInstance("PKCS12");
                 char[] pwd = Settings.value(prefix + ".keyStorePassword", "").toCharArray();
@@ -70,6 +77,33 @@ public final class ClientCredentialsTokenClient {
         }
         return new ClientCredentialsTokenClient(Settings.value(prefix + ".tokenUrl", ""), Settings.value(prefix + ".clientId", ""),
                 Settings.value(prefix + ".clientSecret", ""), Settings.value(prefix + ".scope", ""), key, kid);
+    }
+
+    /** Klucz prywatny RSA z pliku PEM (PKCS#8, {@code -----BEGIN PRIVATE KEY-----}) – format narzędzia rejestracji ID-users. */
+    public static java.security.PrivateKey privateKeyFromPem(java.nio.file.Path plik) {
+        try {
+            String tekst = java.nio.file.Files.readString(plik, StandardCharsets.US_ASCII);
+            if (!tekst.contains("BEGIN PRIVATE KEY")) {
+                throw new IllegalStateException("Plik " + plik.getFileName() + " nie zawiera klucza PKCS#8 (-----BEGIN PRIVATE KEY-----)");
+            }
+            String b64 = tekst.replaceAll("-----(BEGIN|END) PRIVATE KEY-----", "").replaceAll("\\s", "");
+            byte[] der = java.util.Base64.getMimeDecoder().decode(b64);
+            return java.security.KeyFactory.getInstance("RSA").generatePrivate(new java.security.spec.PKCS8EncodedKeySpec(der));
+        } catch (IOException | java.security.GeneralSecurityException | IllegalArgumentException e) {
+            throw new IllegalStateException("Nie udało się wczytać klucza prywatnego " + plik.getFileName(), e);
+        }
+    }
+
+    /** {@code kid} z pliku {@code <nazwa>.kid} obok {@code <nazwa>.key.pem} (narzędzie ID-users); null, gdy brak – Keycloak dobiera klucz po algorytmie. */
+    public static String keyIdNextTo(java.nio.file.Path pem) {
+        String nazwa = pem.getFileName().toString();
+        String baza = nazwa.endsWith(".key.pem") ? nazwa.substring(0, nazwa.length() - ".key.pem".length()) : nazwa.replaceFirst("\\.[^.]+$", "");
+        java.nio.file.Path kid = pem.resolveSibling(baza + ".kid");
+        try {
+            return java.nio.file.Files.isRegularFile(kid) ? java.nio.file.Files.readString(kid, StandardCharsets.UTF_8).trim() : null;
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     public boolean usesPrivateKeyJwt() {

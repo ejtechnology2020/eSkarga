@@ -46,7 +46,8 @@
 | Klient WWW | poufny, authorization code + PKCE S256 (kontrakt); **otwarte 05.11.2026**: mechanizm Jakarta Security (Soteria na WildFly 41) nie wysyła `code_challenge` – patrz uzupełnienie; rejestracja w portalu integratora (PU-INT-01) | `OidcSecurityConfig`, `zarejestruj-w-id-users.sh` (`ESKARGA_PKCE`) |
 | Role aplikacji | `resource_access.<client_id>.roles` (zakres `roles`); role realmu `realm_access.roles`; grupy nie trafiają do tokenów | `RoleMapper`, `eskarga.oidc.rolesClaim` |
 | MFA | `acr`: `haslo` (LoA 1), `mfa` (LoA 2), `wysoki` (LoA 3); `amr` nie jest wystawiany; żądanie `acr_values=mfa` | `MfaPolicy`, `eskarga.oidc.mfaRequiredValue=mfa,wysoki`, `extraParameters` |
-| Usługi techniczne | `client_credentials`, konto serwisowe; `client_secret` albo zalecane `private_key_jwt`; token 5 min, bez refresh | `ClientCredentialsTokenClient` (`.keyStore` → `private_key_jwt`) |
+| Uwierzytelnienie klienta WWW | rejestracja narzędziem ID-users (`aplikacje:eskarga`, T-037 projektu id) nadaje `private_key_jwt` (Keycloak `client-jwt`, klucz publiczny JWK w ID-users, prywatny PKCS#8 w katalogu wyników narzędzia); klient utworzony skryptem dev ma sekret | `oidc.json` `credentials.provider` = `${env.ESKARGA_OIDC_CLIENTAUTH}` (`jwt`/`secret`), `entrypoint.sh` buduje PKCS#12 z PEM, `ID_USERS_KLUCZE_DIR` |
+| Usługi techniczne | `client_credentials`, konto serwisowe; `client_secret` albo zalecane `private_key_jwt`; token 5 min, bez refresh | `ClientCredentialsTokenClient` (`.privateKeyPem` + `kid` z `<klient>.kid` albo `.keyStore` → `private_key_jwt`) |
 | Back-channel logout | OIDC Back-Channel Logout 1.0, `sid` wymagane, adres podawany przy rejestracji | `BackChannelLogoutServlet`, `SessionRegistry` |
 | Walidacja tokenu | `iss`, podpis JWKS, `exp`, `aud`/`azp`; `sub` jako stały identyfikator | `JwtRs256Verifier` |
 
@@ -116,3 +117,13 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   i zapytanie) i przekierowuje tam anonima, a `LoginTriggerServlet` po zalogowaniu wraca na zapamiętany adres (tylko ścieżka
   względna, domyślnie pulpit). `redirect_uri` to `<baza>/logowanie` – mieści się w `<baza>/*`. W dev CLI włącza logger
   `org.wildfly.security.http.oidc` na poziomie DEBUG.
+- **Uzupełnienie 05.11.2026 – `private_key_jwt` klienta `eskarga`**: po przekierowaniu z ID-users wymiana kodu kończyła się
+  `invalid_client: Parameter client_assertion_type is missing` – klient `eskarga` zarejestrowany narzędziem projektu id (T-037)
+  ma `clientAuthenticatorType=client-jwt`, a Elytron wysyłał sekret. Elytron wybiera dostawcę poświadczeń po kluczu
+  `credentials.provider`, więc `oidc.json` ma oba warianty (`secret`, `jwt` z PKCS#12), a `ESKARGA_OIDC_CLIENTAUTH` (`auto`/`jwt`/`secret`)
+  wskazuje właściwy. W dev `entrypoint.sh` buduje PKCS#12 (openssl, hasło losowe na czas życia kontenera) z `eskarga.key.pem`
+  zamontowanego z katalogu wyników narzędzia (`ID_USERS_KLUCZE_DIR`), ten sam klucz PEM służy klientowi dokumentów
+  (`ESKARGA_DOCS_OIDC_PRIVATEKEYPEM`), a workery czytają `eskarga-workers.key.pem` (`ESKARGA_OIDC_PRIVATE_KEY_PEM`), gdy plik
+  istnieje. Elytron nie wysyła `kid` w asercji – Keycloak dobiera klucz po algorytmie (RS256), co działa przy jednym aktywnym
+  kluczu; `ClientCredentialsTokenClient` wysyła `kid` z pliku `<klient>.kid`. Produkcja: klucz w PKCS#12/HSM, do opisania w runbooku.
+

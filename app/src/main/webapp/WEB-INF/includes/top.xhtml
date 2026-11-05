@@ -38,11 +38,11 @@
         </h:selectOneMenu>
       </h:form>
     </h:panelGroup>
-    <div class="e-user">
+    <h:panelGroup rendered="#{currentUser.authenticated}" layout="block" styleClass="e-user">
       <span class="e-av" aria-hidden="true">#{currentUser.initials}</span>
       <span class="who"><b>#{currentUser.displayName}</b><small>#{currentUser.roleLabel}</small></span>
-    </div>
-    <h:form id="logoutForm" prependId="false" style="display: contents;">
+    </h:panelGroup>
+    <h:form id="logoutForm" prependId="false" style="display: contents;" rendered="#{currentUser.authenticated}">
       <h:commandLink action="#{logoutBean.logout}" styleClass="btn q">
         <tk:icon name="logout" /> #{msg['app.logout']}
       </h:commandLink>

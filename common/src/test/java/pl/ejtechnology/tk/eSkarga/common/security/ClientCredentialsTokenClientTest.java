@@ -93,4 +93,19 @@ class ClientCredentialsTokenClientTest {
         }
         assertThat(new ClientCredentialsTokenClient("", "x", "y", null).configured()).isFalse();
     }
+
+    @Test
+    void kluczPemNarzedziaIdUsersIKidObok(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir) throws Exception {
+        java.security.KeyPair kp = java.security.KeyPairGenerator.getInstance("RSA").generateKeyPair();
+        String pem = "-----BEGIN PRIVATE KEY-----\n" + java.util.Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(kp.getPrivate().getEncoded())
+                + "\n-----END PRIVATE KEY-----\n";
+        java.nio.file.Path plik = dir.resolve("eskarga-workers.key.pem");
+        java.nio.file.Files.writeString(plik, pem);
+        java.nio.file.Files.writeString(dir.resolve("eskarga-workers.kid"), "eskarga-workers-2026-11-05\n");
+        assertThat(ClientCredentialsTokenClient.privateKeyFromPem(plik)).isEqualTo(kp.getPrivate());
+        assertThat(ClientCredentialsTokenClient.keyIdNextTo(plik)).isEqualTo("eskarga-workers-2026-11-05");
+        assertThat(ClientCredentialsTokenClient.keyIdNextTo(dir.resolve("inny.key.pem"))).isNull();
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> ClientCredentialsTokenClient.privateKeyFromPem(dir.resolve("eskarga-workers.kid")))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("PKCS#8");
+    }
 }

@@ -2,7 +2,16 @@
   "provider-url": "${env.ESKARGA_OIDC_PROVIDERURI:http://localhost:8180/realms/id-users}",
   "client-id": "${env.ESKARGA_OIDC_CLIENTID:eskarga}",
   "credentials": {
-    "secret": "${env.ESKARGA_OIDC_CLIENTSECRET:nieustawiony}"
+    "provider": "${env.ESKARGA_OIDC_CLIENTAUTH:secret}",
+    "secret": "${env.ESKARGA_OIDC_CLIENTSECRET:nieustawiony}",
+    "jwt": {
+      "client-keystore-file": "${env.ESKARGA_OIDC_KEYSTORE:/opt/eskarga/eskarga-klient.p12}",
+      "client-keystore-type": "PKCS12",
+      "client-keystore-password": "${env.ESKARGA_OIDC_KEYSTOREPASSWORD:nieustawione}",
+      "client-key-password": "${env.ESKARGA_OIDC_KEYSTOREPASSWORD:nieustawione}",
+      "client-key-alias": "${env.ESKARGA_OIDC_KEYALIAS:eskarga}",
+      "token-timeout": "10"
+    }
   },
   "public-client": false,
   "enable-pkce": true,

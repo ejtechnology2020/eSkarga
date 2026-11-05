@@ -114,6 +114,13 @@ Rozwiązywanie problemów na Windows:
    Elytron wymienia kod na tokeny, a serwlet przekierowuje na zapamiętany adres (domyślnie pulpit).
 4. Brak ról w tokenie → strona 403 i wpis `WARNING … bez ról eSkargi` w logu z zawartością `resource_access`/`realm_access`.
 
+Uwierzytelnienie klienta `eskarga` przy wymianie kodu na token: jeśli eSkarga została zarejestrowana w ID-users narzędziem projektu
+id (`npm --prefix frontend run aplikacje:eskarga`, T-037), klient ma `private_key_jwt` i aplikacja potrzebuje klucza prywatnego
+`eskarga.key.pem` (oraz `eskarga-workers.key.pem` dla workerów) z katalogu wyników tego narzędzia – wskaż go w `.env`
+(`ID_USERS_KLUCZE_DIR`, domyślnie `../../../id/frontend/narzedzia/wyniki/eskarga`). `entrypoint.sh` loguje przy starcie
+`Uwierzytelnienie klienta eskarga: private_key_jwt …` albo `client_secret`; `rejestracja.cmd` pokazuje typ ustawiony w Keycloaku.
+Błąd `invalid_client: Parameter client_assertion_type is missing` w logu oznacza klienta `client-jwt` bez klucza po stronie eSkargi.
+
 Diagnostyka: `infra\windows\logi.cmd app`, filtr `Select-String "oidc|OIDC|bez ról|ELY"` – w dev logger
 `org.wildfly.security.http.oidc` ma poziom DEBUG (CLI przy starcie kontenera), więc widać każdy krok mechanizmu.
 

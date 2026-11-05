@@ -124,6 +124,14 @@ admin PUT "/clients/$ID" "{
     \"backchannel.logout.session.required\":\"true\",\"post.logout.redirect.uris\":$(json_str "$PUBLICZNY/+"),
     \"acr.loa.map\":\"{\\\"haslo\\\":1,\\\"mfa\\\":2,\\\"wysoki\\\":3}\",\"default.acr.values\":\"mfa\"}
 }"
+# metoda uwierzytelnienia klienta – skrypt jej nie zmienia: rejestracja narzędziem projektu id (aplikacje:eskarga) daje client-jwt
+# (private_key_jwt, klucz w katalogu wyników → ID_USERS_KLUCZE_DIR), klient utworzony tutaj ma client-secret (OIDC_CLIENT_SECRET)
+admin GET "/clients/$ID"
+case "$(json_pole clientAuthenticatorType)" in
+  client-jwt) echo "Uwierzytelnienie klienta eskarga: client-jwt (private_key_jwt) – aplikacja potrzebuje klucza eskarga.key.pem z ID_USERS_KLUCZE_DIR";;
+  client-secret) echo "Uwierzytelnienie klienta eskarga: client-secret (OIDC_CLIENT_SECRET)";;
+  *) echo "Uwierzytelnienie klienta eskarga: $(json_pole clientAuthenticatorType)";;
+esac
 for ROLA in TK_REFERENT TK_ASYSTENT TK_SEDZIA TK_PREZES TK_KIEROWNIK TK_BIURO_PODAWCZE TK_ARCHIWISTA TK_ADMIN eskarga-worker eskarga-docs; do
   rola_klienta "$ID" "$ROLA"
 done

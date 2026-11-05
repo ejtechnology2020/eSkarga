@@ -14,7 +14,18 @@ public final class OidcTokenInterceptor implements ClientRequestInterceptor {
     private final ClientCredentialsTokenClient tokens;
 
     public OidcTokenInterceptor(WorkerConfig cfg) {
-        this(new ClientCredentialsTokenClient(cfg.oidcTokenUrl(), cfg.oidcClientId(), cfg.oidcClientSecret(), cfg.oidcScope()));
+        this(tokenClient(cfg));
+    }
+
+    /** {@code private_key_jwt}, gdy wskazany plik klucza istnieje (rejestracja w ID-users), inaczej sekret klienta. */
+    static ClientCredentialsTokenClient tokenClient(WorkerConfig cfg) {
+        String pem = cfg.oidcPrivateKeyPem();
+        if (pem != null && !pem.isBlank() && java.nio.file.Files.isRegularFile(java.nio.file.Path.of(pem))) {
+            java.nio.file.Path plik = java.nio.file.Path.of(pem);
+            return new ClientCredentialsTokenClient(cfg.oidcTokenUrl(), cfg.oidcClientId(), null, cfg.oidcScope(),
+                    ClientCredentialsTokenClient.privateKeyFromPem(plik), ClientCredentialsTokenClient.keyIdNextTo(plik));
+        }
+        return new ClientCredentialsTokenClient(cfg.oidcTokenUrl(), cfg.oidcClientId(), cfg.oidcClientSecret(), cfg.oidcScope());
     }
 
     public OidcTokenInterceptor(ClientCredentialsTokenClient tokens) {
