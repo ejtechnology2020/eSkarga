@@ -319,7 +319,7 @@ function Show-Adresy {
   Write-Host "  Stan (health)         http://localhost:$app/eskarga/health"
   Write-Host "  Operaton Cockpit      http://localhost:$app/operaton/"
   Write-Host "  Konsola WildFly       http://localhost:$admin/"
-  Write-Host "  MinIO (akta, S3)      http://localhost:$s3c/   ($(Get-Ustawienie 'S3_ACCESS_KEY' 'eskarga-dev') / $(Get-Ustawienie 'S3_SECRET_KEY' '…'))"
+  Write-Host "  RustFS (akta, S3)     http://localhost:$s3c/   ($(Get-Ustawienie 'S3_ACCESS_KEY' 'eskarga-dev') / $(Get-Ustawienie 'S3_SECRET_KEY' '…'))"
   Write-Host "  OpenSearch            http://localhost:$os/"
   Write-Host "  WireMock (zaślepki)   http://localhost:$wm/__admin/"
   if ($tryb -eq 'oidc') {

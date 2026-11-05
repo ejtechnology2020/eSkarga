@@ -13,7 +13,7 @@ docker compose -f infra/docker/compose.yml logs -f app
 | Cockpit Operaton | http://localhost:8080/operaton/ | `demo` / `demo` (dystrybucja) |
 | Konsola WildFly | http://localhost:9990/ | `add-user.sh` w kontenerze |
 | ID-users (Keycloak, realm `id-users`) | http://localhost:8180 | z projektu `id` (`dev/docker-compose.yml`); użytkownicy testowi ID-users z rolami eSkargi nadanymi przez `id-users-rejestracja` |
-| S3 (MinIO) | http://localhost:9100 (API), http://localhost:9101 (konsola) | `S3_ACCESS_KEY` / `S3_SECRET_KEY`; kubełek `eskarga-akta` z Object Lock |
+| S3 (RustFS) | http://localhost:9100 (API), http://localhost:9101 (konsola) | `S3_ACCESS_KEY` / `S3_SECRET_KEY`; kubełek `eskarga-akta` z Object Lock |
 | TSA dev (RFC 3161) | http://localhost:3180 | certyfikat do magazynu zaufania: `/tsa.crt` |
 | PostgreSQL | localhost:5432 | role z `.env` |
 | OpenSearch | http://localhost:9200 | bez TLS (tylko dev) |
@@ -46,7 +46,7 @@ Demon Dockera nie był dostępny w sesji, w której powstał ten plik – konfig
 
 Środowisko ID-users (repozytorium `id`, `dev/docker-compose.yml`, projekt `id-users`) zajmuje porty 8080, 9990, 8180, 9000, 5432,
 8025, 1025, 1389, 1636, 8200. eSkarga używa projektu `eskarga` i portów 8082 (aplikacja, Cockpit), 9992 (konsola WildFly), 5433
-(PostgreSQL), 9100/9101 (MinIO), 9200, 3180, 8089, 9090, 3000 – wszystkie do zmiany w `.env` (`PORT_*`).
+(PostgreSQL), 9100/9101 (RustFS), 9200, 3180, 8089, 9090, 3000 – wszystkie do zmiany w `.env` (`PORT_*`).
 
 ```bash
 # 1. ID-users (w katalogu projektu id)
@@ -86,7 +86,7 @@ i konta testowe oraz otwiera <http://localhost:8082/eskarga>.
 | --- | --- |
 | `start.cmd` / `start.ps1 [-Przebuduj] [-BezPrzegladarki] [-BezRejestracji] [-Monitoring]` | sprawdza Docker, ID-users i porty, tworzy `infra\docker\.env`, buduje artefakty Mavenem (gdy ich brak lub `-Przebuduj`), rejestruje klientów w ID-users, uruchamia usługi i czeka na gotowość (`/eskarga/health`) |
 | `stop.cmd` | zatrzymuje kontenery (dane zostają) |
-| `status.cmd` | stan kontenerów i punktów zdrowia (aplikacja, Cockpit, MinIO, OpenSearch, WireMock, Keycloak ID-users) |
+| `status.cmd` | stan kontenerów i punktów zdrowia (aplikacja, Cockpit, RustFS, OpenSearch, WireMock, Keycloak ID-users) |
 | `logi.cmd [usługa] [-Sledz]` | logi, np. `logi.cmd app -Sledz` |
 | `wdroz.cmd [-TylkoApp] [-Testy]` | build Mavenem i ponowne wdrożenie po zmianach w kodzie (restart WildFly, przebudowa obrazu workerów) |
 | `rejestracja.cmd` | ponowna rejestracja klientów `eskarga`/`eskarga-workers` i ról użytkowników testowych w Keycloaku ID-users (idempotentna) |

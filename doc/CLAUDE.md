@@ -169,6 +169,6 @@ Używaj wyłącznie danych fikcyjnych, np. „Jan Przykładowy”, „adw. Anna 
 
 - Kontrakt OIDC ID-users – znany od 03.11.2026 (ADR 0002, tabela): role `resource_access.<client_id>.roles`, `acr` haslo/mfa/wysoki, client credentials (`private_key_jwt`), back-channel logout z `sid`. Otwarte: ostateczny adres środowiska TEST, rejestracja klienta w portalu integratora.
 - Aplikacja lokalna do podpisu: decyzja 03.11.2026 – na razie certyfikat niekwalifikowany na kluczu YubiKey (moduł `local-signer`, ADR 0008).
-- Produkty repozytorium S3 i HSM (zakup). Kod pisz pod API S3 i PKCS#11, bez zależności od dostawcy. Dev: MinIO z Object Lock (ADR 0022), SoftHSM2.
+- Produkty repozytorium S3 i HSM (zakup). Kod pisz pod API S3 i PKCS#11, bez zależności od dostawcy. Dev: RustFS z Object Lock (ADR 0022; MinIO wycofane z Docker Hub), SoftHSM2.
 - API e-Doręczeń, operatora pocztowego i repertoriów SK/K/U – decyzja 03.11.2026: zaślepki WireMock są kontraktem tymczasowym (ADR 0021).
 - Kategorie archiwalne i okresy retencji – w konfiguracji (tabela edytowana w S-24 i właściwości `eskarga.archive.retention.*`, ADR 0012).

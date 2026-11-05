@@ -6,6 +6,8 @@ import java.net.URI;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.HexFormat;
 import java.util.Optional;
 
@@ -14,6 +16,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
+import software.amazon.awssdk.core.checksums.ResponseChecksumValidation;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -34,19 +38,33 @@ public class S3DocumentStore implements DocumentStore {
 
     private S3Client s3;
     private String bucket;
+    /** SSE-S3 (AES256) przy zapisie – {@code eskarga.s3.sse}; wyłączane dla serwerów dev bez szyfrowania po stronie serwera. */
+    private boolean sse;
+    /** Okres blokady COMPLIANCE w latach ({@code eskarga.s3.lockRetentionYears}); S3 wymaga daty RetainUntil razem z trybem. */
+    private int lockRetentionYears;
 
     @PostConstruct
     void init() {
         bucket = OidcSettings.value("eskarga.s3.bucket", "eskarga-akta");
-        String endpoint = OidcSettings.value("eskarga.s3.endpoint", "http://localhost:8333");
+        String endpoint = OidcSettings.value("eskarga.s3.endpoint", "http://localhost:9000");
         String access = OidcSettings.value("eskarga.s3.accessKey", "");
         String secret = OidcSettings.value("eskarga.s3.secretKey", "");
+        sse = Boolean.parseBoolean(OidcSettings.value("eskarga.s3.sse", "true"));
+        lockRetentionYears = Integer.parseInt(OidcSettings.value("eskarga.s3.lockRetentionYears", "10"));
         s3 = S3Client.builder()
                 .endpointOverride(URI.create(endpoint))
                 .region(Region.of(OidcSettings.value("eskarga.s3.region", "eu-central-1")))
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(access, secret)))
                 .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
+                // sumy kontrolne CRC32 i kodowanie aws-chunked (domyślne od SDK 2.30) odrzuca część serwerów zgodnych z S3
+                .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED)
+                .responseChecksumValidation(ResponseChecksumValidation.WHEN_REQUIRED)
                 .build();
+    }
+
+    /** Koniec blokady COMPLIANCE liczony od chwili zapisu (D5; długość okresu do decyzji – ADR 0022). */
+    Instant lockRetainUntil(Instant now) {
+        return now.atOffset(ZoneOffset.UTC).plusYears(lockRetentionYears).toInstant();
     }
 
     @Override
@@ -54,10 +72,12 @@ public class S3DocumentStore implements DocumentStore {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             DigestInputStream din = new DigestInputStream(content, md);
-            PutObjectRequest.Builder req = PutObjectRequest.builder().bucket(bucket).key(key).contentType(contentType)
-                    .serverSideEncryption(ServerSideEncryption.AES256);
+            PutObjectRequest.Builder req = PutObjectRequest.builder().bucket(bucket).key(key).contentType(contentType);
+            if (sse) {
+                req.serverSideEncryption(ServerSideEncryption.AES256);
+            }
             if (lockCompliance) {
-                req.objectLockMode(ObjectLockMode.COMPLIANCE);
+                req.objectLockMode(ObjectLockMode.COMPLIANCE).objectLockRetainUntilDate(lockRetainUntil(Instant.now()));
             }
             s3.putObject(req.build(), RequestBody.fromInputStream(din, size));
             return new Stored(key, size, HexFormat.of().formatHex(md.digest()), contentType);

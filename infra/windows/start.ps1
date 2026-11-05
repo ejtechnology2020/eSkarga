@@ -4,7 +4,7 @@
 .DESCRIPTION
   Buduje WAR-y i workery Mavenem (lokalny JDK 21 albo kontener Maven – Javy nie trzeba instalować),
   rejestruje klientów eSkargi w Keycloaku ID-users (idempotentnie), uruchamia WildFly+Operaton,
-  PostgreSQL z migracjami Flyway, MinIO, OpenSearch, SoftHSM, TSA dev, WireMock i workery, a potem
+  PostgreSQL z migracjami Flyway, RustFS (S3), OpenSearch, SoftHSM, TSA dev, WireMock i workery, a potem
   czeka na gotowość. Pierwsze uruchomienie trwa 10–20 minut (obrazy, dystrybucja Operaton, zależności Maven).
 .PARAMETER Przebuduj
   Buduje artefakty i obrazy ponownie (po zmianach w kodzie).

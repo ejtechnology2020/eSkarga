@@ -19,4 +19,5 @@ exec bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 \
   -Deskarga.oidc.mfaRequiredValue="${ESKARGA_OIDC_MFAREQUIREDVALUE}" \
   -Deskarga.s3.endpoint="${ESKARGA_S3_ENDPOINT}" -Deskarga.s3.bucket="${ESKARGA_S3_BUCKET}" \
   -Deskarga.s3.accessKey="${ESKARGA_S3_ACCESSKEY}" -Deskarga.s3.secretKey="${ESKARGA_S3_SECRETKEY}" \
+  -Deskarga.s3.sse="${ESKARGA_S3_SSE:-true}" -Deskarga.s3.lockRetentionYears="${ESKARGA_S3_LOCKRETENTIONYEARS:-10}" \
   -Deskarga.demo.today="${ESKARGA_DEMO_TODAY}"

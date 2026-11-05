@@ -29,6 +29,6 @@ warianty ról i stanów ekranów parametrami `?rola=`, `?stan=`, `?widok=` (ADR 
 - `docs-service/` – WAR: szablony pism (FreeMarker w piaskownicy), PDF/A (OpenHTMLtoPDF), walidacja.
 - `workers/` – JAR: external tasks (doręczenia, przekazanie do SK/K/U), cykl przetwarzania dokumentów.
 - `local-signer/` – JAR na stacji sędziego: podpis skrótu kluczem YubiKey (PKCS#11), HTTP na 127.0.0.1 (ADR 0008).
-- `infra/docker/` – środowisko dev (Compose: WildFly+Operaton, PostgreSQL, Flyway, MinIO, OpenSearch, SoftHSM, Keycloak „id-users”, TSA dev, WireMock, monitoring);
+- `infra/docker/` – środowisko dev (Compose: WildFly+Operaton, PostgreSQL, Flyway, RustFS (S3), OpenSearch, SoftHSM, Keycloak „id-users”, TSA dev, WireMock, monitoring);
   `infra/ansible/` – role dla VM; `infra/monitoring/` – Prometheus/Grafana/alerty; `infra/scripts/` – aktualizacja Operaton, diagram ER.
 - `ui-tests/` – Playwright + axe-core (poza `mvn verify`).

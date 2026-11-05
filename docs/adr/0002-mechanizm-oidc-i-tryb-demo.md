@@ -62,7 +62,7 @@ i adresy w przeglądarce pozostają `localhost:8180`.
 ## Środowisko dev obok ID-users (04.11.2026)
 
 Compose eSkargi (`name: eskarga`) nie koliduje z Compose ID-users (`id-users`): aplikacja na `http://localhost:8082/eskarga`,
-PostgreSQL 5433, MinIO 9100/9101, pozostałe porty w `.env` (`PORT_*`). Logowanie przez Keycloak ID-users z projektu `id`
+PostgreSQL 5433, RustFS (S3) 9100/9101, pozostałe porty w `.env` (`PORT_*`). Logowanie przez Keycloak ID-users z projektu `id`
 (issuer `http://localhost:8180/realms/id-users`, discovery z kontenera przez `host.docker.internal`). Klientów `eskarga`
 i `eskarga-workers` rejestruje w realmie `id-users` skrypt `infra/docker/keycloak/zarejestruj-w-id-users.sh` (usługa
 `id-users-rejestracja`), który nadaje też role eSkargi fikcyjnym użytkownikom testowym ID-users. Adres back-channel

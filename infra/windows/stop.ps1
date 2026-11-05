@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  Zatrzymuje kontenery środowiska eSkarga (dane w bazie, MinIO i OpenSearch zostają).
+  Zatrzymuje kontenery środowiska eSkarga (dane w bazie, RustFS i OpenSearch zostają).
 #>
 [CmdletBinding()]
 param()

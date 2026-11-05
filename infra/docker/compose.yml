@@ -38,6 +38,8 @@ services:
       ESKARGA_S3_BUCKET: eskarga-akta
       ESKARGA_S3_ACCESSKEY: ${S3_ACCESS_KEY:?ustaw w .env}
       ESKARGA_S3_SECRETKEY: ${S3_SECRET_KEY:?ustaw w .env}
+      ESKARGA_S3_SSE: ${ESKARGA_S3_SSE:-false}          # SSE-S3 tylko gdy serwer dev je obsługuje; produkcja: true
+      ESKARGA_S3_LOCKRETENTIONYEARS: ${ESKARGA_S3_LOCKRETENTIONYEARS:-10}   # blokada COMPLIANCE podpisanych czynności (ADR 0022)
       ESKARGA_DEMO_TODAY: ${ESKARGA_DEMO_TODAY:-}
       ESKARGA_SEARCH_URL: http://opensearch:9200
       ESKARGA_DOCS_URL: http://localhost:8080/eskarga-docs/api
@@ -111,31 +113,39 @@ services:
       retries: 20
 
   s3:
-    # Repozytorium dokumentów S3 z Object Lock (D5, ADR 0022): MinIO; kubełek zakłada init z --with-lock.
-    image: minio/minio:latest
-    command: ["server", "/data", "--console-address", ":9001"]
+    # Repozytorium dokumentów S3 z Object Lock (D5, ADR 0022): RustFS (Apache 2.0, zamiennik MinIO – obrazy MinIO zniknęły
+    # z Docker Hub 2025/2026). API :9000, konsola :9001, dane w /data. Kubełek z Object Lock zakłada usługa s3-init.
+    image: ${RUSTFS_IMAGE:-rustfs/rustfs:1.0.4}
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?ustaw w .env}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?ustaw w .env}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:?ustaw w .env}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:?ustaw w .env}
+      RUSTFS_UNSAFE_BYPASS_DISK_CHECK: "true"   # jeden wolumen – tylko dev
     ports:
       - "${PORT_S3:-9100}:9000"           # S3 API (9000 zajmuje panel zdrowia Keycloaka ID-users)
-      - "${PORT_S3_CONSOLE:-9101}:9001"   # konsola MinIO (tylko dev)
+      - "${PORT_S3_CONSOLE:-9101}:9001"   # konsola RustFS (tylko dev)
     volumes:
       - s3-data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/health || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 12
+      retries: 18
 
   s3-init:
-    image: minio/mc:latest
+    # Kubełek eskarga-akta: Object Lock + wersjonowanie, kontrola egzekwowania blokady COMPLIANCE (infra/docker/s3/init-bucket.sh)
+    image: ${AWSCLI_IMAGE:-amazon/aws-cli:2.39.4}
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?ustaw w .env}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?ustaw w .env}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?ustaw w .env}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?ustaw w .env}
+      S3_ENDPOINT: http://s3:9000
+      S3_BUCKET: eskarga-akta
     entrypoint: ["/bin/sh", "/init-bucket.sh"]
     volumes:
-      - ./minio/init-bucket.sh:/init-bucket.sh:ro
+      - ./s3/init-bucket.sh:/init-bucket.sh:ro
     depends_on:
       s3:
         condition: service_healthy

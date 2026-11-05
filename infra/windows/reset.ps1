@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  Usuwa kontenery i dane środowiska eSkarga (PostgreSQL, MinIO, OpenSearch, tokeny SoftHSM, TSA).
+  Usuwa kontenery i dane środowiska eSkarga (PostgreSQL, RustFS, OpenSearch, tokeny SoftHSM, TSA).
 .PARAMETER Wymus
   Bez pytania o potwierdzenie.
 .PARAMETER ZObrazami
