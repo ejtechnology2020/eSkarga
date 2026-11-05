@@ -648,4 +648,6 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   append-only `case_file` – poprawione: `@OrderBy`, `changeStatus(…, init)`, `@DynamicUpdate`, V7_2), wyścig o pierwszy wiersz licznika w roku
   (`CounterRows`, `INSERT … ON CONFLICT DO NOTHING`; padał `DocketConcurrencyPostgresIT` w CI), scenariusz współbieżności wspólny dla IT
   i testów lokalnych, CI: `security` bez sekretu `NVD_API_KEY` jako ostrzeżenie, `it` z pełnym zestawem na PostgreSQL. Testy GUI Playwright
-  w trybie OIDC (`ui-tests/tests/e2e`, `infra\windows\testy-gui.cmd`) – do uruchomienia na dev przez użytkownika. ADR 0020 (dopisek).
+  w trybie OIDC (`ui-tests/tests/e2e`, `infra\windows\testy-gui.cmd`) – do uruchomienia na dev przez użytkownika. Widżet PDF: po podmianie
+  AJAX nie montował się (`pfAjaxComplete` to zdarzenie jQuery, nie DOM) – MutationObserver + jQuery; test w Chromium bez WildFly
+  (`ui-tests` projekt `widget`, zadanie CI `widget`). ADR 0020 (dopisek).
