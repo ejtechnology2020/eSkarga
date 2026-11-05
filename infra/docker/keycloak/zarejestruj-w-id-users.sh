@@ -112,17 +112,17 @@ service_account_uid() { admin GET "/clients/$1/service-account-user"; json_pole 
 user_uid() { admin GET "/users?username=$(urlenc "$1")&exact=true"; json_pole id; }
 
 # --- klient WWW: eskarga ---------------------------------------------------------------------------------------------
-# PKCE: domyślnie wymagane S256 (kontrakt ID-users). Mechanizm OIDC Jakarta Security (Soteria) nie wysyła code_challenge
-# („Missing parameter: code_challenge_method”) – wyłączenie wymogu tylko jawną decyzją: ESKARGA_PKCE= (pusty = usunięcie atrybutu). ADR 0002.
+# PKCE S256 (kontrakt ID-users; polityka klientów realmu wymusza je i tak). Mechanizm Elytron OIDC wysyła PKCE (enable-pkce w oidc.json).
+# default.acr.values=mfa: Elytron nie wysyła acr_values, więc poziom LoA 2 wymusza konfiguracja klienta w Keycloaku. ADR 0002.
 ID=$(utworz_klienta eskarga "eSkarga – Repertorium Ts/Tw")
 if [[ -n "${ESKARGA_PKCE-S256}" ]]; then echo "PKCE klienta eskarga: wymagane ${ESKARGA_PKCE-S256}"; else echo "PKCE klienta eskarga: bez wymogu (ESKARGA_PKCE puste – decyzja z 05.11.2026, ADR 0002)"; fi
 admin PUT "/clients/$ID" "{
   \"clientId\":\"eskarga\",\"enabled\":true,\"publicClient\":false,\"standardFlowEnabled\":true,\"directAccessGrantsEnabled\":false,
   \"serviceAccountsEnabled\":true,\"fullScopeAllowed\":false,\"secret\":$(json_str "${OIDC_CLIENT_SECRET:?brak OIDC_CLIENT_SECRET}"),
-  \"redirectUris\":[$(json_str "$PUBLICZNY/callback")],\"webOrigins\":[$(json_str "${PUBLICZNY%/eskarga}")],
+  \"redirectUris\":[$(json_str "$PUBLICZNY/*")],\"webOrigins\":[$(json_str "${PUBLICZNY%/eskarga}")],
   \"attributes\":{\"pkce.code.challenge.method\":$(json_str "${ESKARGA_PKCE-S256}"),\"backchannel.logout.url\":$(json_str "$BACKCHANNEL"),
     \"backchannel.logout.session.required\":\"true\",\"post.logout.redirect.uris\":$(json_str "$PUBLICZNY/+"),
-    \"acr.loa.map\":\"{\\\"haslo\\\":1,\\\"mfa\\\":2,\\\"wysoki\\\":3}\"}
+    \"acr.loa.map\":\"{\\\"haslo\\\":1,\\\"mfa\\\":2,\\\"wysoki\\\":3}\",\"default.acr.values\":\"mfa\"}
 }"
 for ROLA in TK_REFERENT TK_ASYSTENT TK_SEDZIA TK_PREZES TK_KIEROWNIK TK_BIURO_PODAWCZE TK_ARCHIWISTA TK_ADMIN eskarga-worker eskarga-docs; do
   rola_klienta "$ID" "$ROLA"

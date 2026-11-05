@@ -2,10 +2,8 @@ package pl.ejtechnology.tk.eSkarga.security;
 
 import java.io.IOException;
 
-import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.json.JsonObject;
-import jakarta.security.enterprise.identitystore.openid.OpenIdContext;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,8 +28,6 @@ public class MfaFilter implements Filter {
     @Inject
     OidcSettings settings;
     @Inject
-    Instance<OpenIdContext> openId;
-    @Inject
     AuditService audit;
     @Inject
     SessionRegistry sessions;
@@ -49,7 +45,7 @@ public class MfaFilter implements Filter {
             chain.doFilter(request, response);
             return;
         }
-        JsonObject claims = claims();
+        JsonObject claims = claims(req);
         if (MfaPolicy.satisfied(claims, settings.getMfaClaim(), settings.getMfaRequiredValue())) {
             req.getSession().setAttribute(SESSION_FLAG, Boolean.TRUE);
             if (claims != null) {
@@ -64,21 +60,8 @@ public class MfaFilter implements Filter {
     }
 
     /** Claimy tokenu ID (tam ID-users umieszcza {@code acr}/{@code amr} i {@code sid}); token zweryfikował już mechanizm Jakarta Security. */
-    private JsonObject claims() {
-        if (openId.isUnsatisfied()) {
-            return null;
-        }
-        try {
-            OpenIdContext ctx = openId.get();
-            if (ctx.getIdentityToken() != null && ctx.getIdentityToken().getToken() != null) {
-                String[] parts = ctx.getIdentityToken().getToken().split("\\.");
-                if (parts.length == 3) {
-                    return JwtRs256Verifier.json(parts[1]);
-                }
-            }
-            return ctx.getClaimsJson();
-        } catch (RuntimeException e) {
-            return null;
-        }
+    /** Treść ID tokenu z mechanizmu Elytron OIDC ({@code acr}, {@code sid}, {@code sub}); null bez logowania OIDC. */
+    private JsonObject claims(HttpServletRequest req) {
+        return ElytronTokens.idTokenClaims(req).orElse(null);
     }
 }

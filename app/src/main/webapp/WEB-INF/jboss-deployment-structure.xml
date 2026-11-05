@@ -6,6 +6,8 @@
       <module name="org.operaton.bpm.operaton-engine" />
       <module name="org.operaton.bpm.dmn.operaton-engine-dmn" />
       <module name="org.operaton.bpm.model.operaton-bpmn-model" />
+      <!-- OidcSecurityContext (tokeny logowania) z mechanizmu Elytron OIDC – ElytronTokens -->
+      <module name="org.wildfly.security.elytron-http-oidc" />
       <!-- Apache HttpCore 5 (transport klienta OpenSearch) używa jdk.net.Sockets – pakiet JDK niewidoczny domyślnie dla wdrożeń
            (NoClassDefFoundError: jdk/net/Sockets w wątkach httpclient-dispatch) -->
       <system export="true">

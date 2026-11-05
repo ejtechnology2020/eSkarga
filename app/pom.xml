@@ -139,6 +139,13 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <!-- Mechanizm OIDC WildFly (moduł org.wildfly.security.elytron-http-oidc, wersja Elytrona z WildFly 41): OidcSecurityContext w ElytronTokens -->
+      <groupId>org.wildfly.security</groupId>
+      <artifactId>wildfly-elytron-http-oidc</artifactId>
+      <version>${wildfly-elytron.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.wiremock</groupId>
       <artifactId>wiremock</artifactId>
       <scope>test</scope>

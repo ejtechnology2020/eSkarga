@@ -24,13 +24,20 @@ public class LogoutBean implements Serializable {
         FacesContext fc = FacesContext.getCurrentInstance();
         ExternalContext ec = fc.getExternalContext();
         HttpServletRequest req = (HttpServletRequest) ec.getRequest();
+        if (!settings.isDemo()) {
+            // Elytron OIDC: logout-path z oidc.json – unieważnia sesję, kończy sesję SSO w ID-users (end_session, id_token_hint)
+            // i wraca na post-logout-redirect-uri (strona „sesja zakończona”)
+            ec.redirect(ec.getRequestContextPath() + "/wyloguj");
+            fc.responseComplete();
+            return;
+        }
         try {
             req.logout();
         } catch (Exception ignored) {
             // brak mechanizmu uwierzytelniania w trybie demo
         }
         ec.invalidateSession();
-        ec.redirect(ec.getRequestContextPath() + (settings.isDemo() ? "/blad/sesja.xhtml" : "/"));
+        ec.redirect(ec.getRequestContextPath() + "/blad/sesja.xhtml");
         fc.responseComplete();
     }
 }

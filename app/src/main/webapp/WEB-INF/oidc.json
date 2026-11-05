@@ -1,0 +1,15 @@
+{
+  "_komentarz": "Elytron OIDC (podsystem elytron-oidc-client WildFly 41, ADR 0002 wariant 2): Authorization Code + PKCE S256, klient poufny. Wartości ${env.X:domyślna} podstawia serwer (StringPropertyReplacer); metadane dostawcy pobierane leniwie przy pierwszym logowaniu, więc tryb demo (bez IdP) nie kontaktuje się z Keycloakiem.",
+  "provider-url": "${env.ESKARGA_OIDC_PROVIDERURI:http://localhost:8180/realms/id-users}",
+  "client-id": "${env.ESKARGA_OIDC_CLIENTID:eskarga}",
+  "credentials": { "secret": "${env.ESKARGA_OIDC_CLIENTSECRET:nieustawiony}" },
+  "public-client": false,
+  "enable-pkce": true,
+  "ssl-required": "${env.ESKARGA_OIDC_SSLREQUIRED:external}",
+  "principal-attribute": "preferred_username",
+  "use-resource-role-mappings": true,
+  "scope": "profile email",
+  "token-store": "SESSION",
+  "logout-path": "/wyloguj",
+  "post-logout-redirect-uri": "${env.ESKARGA_PUBLIC_URL:http://localhost:8082/eskarga}/blad/sesja.xhtml"
+}

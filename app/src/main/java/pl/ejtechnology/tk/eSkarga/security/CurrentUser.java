@@ -36,8 +36,6 @@ public class CurrentUser implements Serializable {
     private Fmt fmt;
     @Inject
     private HttpServletRequest request;
-    @Inject
-    private jakarta.enterprise.inject.Instance<jakarta.security.enterprise.identitystore.openid.OpenIdContext> openId;
 
     private AppRole demoRole;
 
@@ -121,18 +119,9 @@ public class CurrentUser implements Serializable {
     /** Role z tokenu dostępu ID-users ({@code resource_access.<client>.roles}, {@code realm_access.roles}) – niezależnie od mapowania grup kontenera. */
     Set<AppRole> tokenRoles() {
         try {
-            if (openId == null || openId.isUnsatisfied()) {
-                return EnumSet.noneOf(AppRole.class);
-            }
-            var ctx = openId.get();
-            if (ctx.getAccessToken() == null || ctx.getAccessToken().getToken() == null) {
-                return EnumSet.noneOf(AppRole.class);
-            }
-            String[] parts = ctx.getAccessToken().getToken().split("\\.");
-            if (parts.length != 3) {
-                return EnumSet.noneOf(AppRole.class);
-            }
-            return RoleMapper.roles(pl.ejtechnology.tk.eSkarga.common.security.JwtRs256Verifier.json(parts[1]), settings.getRolesClaim(), settings.getRealmRolesClaim(), settings.getRolePrefix());
+            return ElytronTokens.accessTokenClaims(request)
+                    .map(claims -> RoleMapper.roles(claims, settings.getRolesClaim(), settings.getRealmRolesClaim(), settings.getRolePrefix()))
+                    .orElseGet(() -> EnumSet.noneOf(AppRole.class));
         } catch (RuntimeException e) {
             return EnumSet.noneOf(AppRole.class);
         }

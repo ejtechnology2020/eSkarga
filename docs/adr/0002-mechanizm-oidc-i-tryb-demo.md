@@ -1,4 +1,4 @@
-# ADR 0002 – Mechanizm OIDC (Jakarta Security) i tryb demo interfejsu
+# ADR 0002 – Mechanizm OIDC (Elytron OIDC, wcześniej Jakarta Security) i tryb demo interfejsu
 
 - Status: propozycja do potwierdzenia z zespołem ID-users (T-004 [zaślepka])
 - Data: 3.11.2026
@@ -92,3 +92,20 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   wszystkich klientów poufnych i publicznych (`id-users-keycloak-config/src/main/realm/id-users.json`). Keycloak dopisuje `S256`
   przy każdej aktualizacji klienta i wymusza PKCE na endpoincie autoryzacji niezależnie od atrybutu. Zdjęcie wymogu oznaczałoby
   zmianę polityki bezpieczeństwa całego ID-users (RFC 9700), nie konfiguracji eSkargi. Pozostaje wariant 2 (mechanizm z PKCE).
+
+## Decyzja 05.11.2026 – wariant 2 zrealizowany: Elytron OIDC z PKCE S256
+
+- `WEB-INF/oidc.json` (podsystem `elytron-oidc-client` WildFly 41): `enable-pkce=true`, klient poufny, `use-resource-role-mappings`
+  (role `resource_access.eskarga.roles` → role kontenera), `principal-attribute=preferred_username`, `token-store=SESSION`,
+  `logout-path=/wyloguj` z `post-logout-redirect-uri` na stronę „sesja zakończona”. Wartości `${env.ESKARGA_OIDC_*}` podstawia
+  serwer (ten sam WAR na wszystkie środowiska – D11). Podsystem nie ma atrybutu PKCE w modelu `secure-deployment`, dlatego
+  konfiguracja w WAR, nie w CLI. Metadane dostawcy są pobierane leniwie – tryb demo nie odpytuje Keycloaka, `LoginFilter`
+  jest w nim nieaktywny.
+- Odczyt tokenów: `ElytronTokens` (`OidcSecurityContext` w atrybucie żądania/sesji) zamiast `OpenIdContext`; `CurrentUser`
+  i `MfaFilter` bez zależności od Jakarta Security (zostaje `SecurityContext` do `isCallerInRole`). `SecurityModeExtension`
+  usunięte (brak adnotacji mechanizmu do wyłączania w demo).
+- Elytron nie wysyła `acr_values` – poziom LoA 2 wymusza konfiguracja klienta `eskarga` w Keycloaku (`default.acr.values=mfa`,
+  ustawiane przez skrypt rejestracji); `MfaFilter` nadal sprawdza `acr` w ID tokenie. Adresy zwrotne klienta: `<baza>/*`
+  (Elytron używa bieżącego adresu strony jako `redirect_uri`). `/callback` zostaje jako strona błędu dostawcy.
+- Wylogowanie: `LogoutBean` → `/wyloguj` (RP-initiated logout z `id_token_hint`), back-channel logout bez zmian (własny serwlet).
+- `ESKARGA_PKCE` w rejestracji pozostaje przełącznikiem diagnostycznym; domyślnie `S256`.

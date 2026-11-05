@@ -40,6 +40,7 @@
     <openhtmltopdf.version>1.1.108</openhtmltopdf.version>
     <jackson.version>2.22.4</jackson.version>
     <slf4j.version>2.0.20</slf4j.version>
+    <wildfly-elytron.version>2.9.2.Final</wildfly-elytron.version>   <!-- Elytron dostarczany przez WildFly 41.0.1 -->
     <hibernate.version>7.4.14.Final</hibernate.version>
     <dss.version>6.5.1</dss.version>
     <verapdf.version>1.30.3</verapdf.version>

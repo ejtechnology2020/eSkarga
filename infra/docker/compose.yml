@@ -27,6 +27,7 @@ services:
       ESKARGA_OIDC_ISSUER: http://localhost:8180/realms/id-users            # iss w tokenach = adres używany w przeglądarce
       ESKARGA_OIDC_PROVIDERURI: ${OIDC_PROVIDER_URI:-http://host.docker.internal:8180/realms/id-users}   # discovery z kontenera do Keycloaka ID-users na hoście; profil oidc-local: http://oidc:8180/realms/id-users
       ESKARGA_OIDC_CLIENTID: eskarga
+      ESKARGA_PUBLIC_URL: ${ESKARGA_PUBLIC_URL:-http://localhost:8082/eskarga}   # post-logout-redirect-uri (oidc.json)
       ESKARGA_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
       ESKARGA_OIDC_ROLESCLAIM: ${OIDC_ROLES_CLAIM:-resource_access.eskarga.roles}
       ESKARGA_OIDC_MFACLAIM: ${OIDC_MFA_CLAIM:-acr}
