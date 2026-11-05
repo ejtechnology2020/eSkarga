@@ -37,7 +37,7 @@
             </p:selectOneRadio>
             <div class="radios">
               <ui:repeat value="#{rejestracja.kanaly}" var="k" varStatus="st">
-                <label class="#{rejestracja.kanal eq k ? 'on' : ''}"><p:radioButton for="f-kanal" itemIndex="#{st.index}" />#{msg['channel.'.concat(k)]}</label>
+                <label class="#{rejestracja.kanal eq k ? 'on' : ''}"><p:radioButton for="@form:f-kanal" itemIndex="#{st.index}" />#{msg['channel.'.concat(k)]}</label>
               </ui:repeat>
             </div>
             <p:message for="f-kanal" styleClass="ferr" />
@@ -74,7 +74,7 @@
             <div class="fld full">
               <span class="lbl">Skany</span>
               <h:panelGroup rendered="#{not rejestracja.hasFiles}">
-                <p:fileUpload mode="advanced" multiple="true" dragDropSupport="true"
+                <p:fileUpload mode="advanced" multiple="true" dragDrop="true"
                               label="Wybierz pliki" uploadLabel="Prześlij" cancelLabel="#{msg['common.cancel']}">
                   <!-- PrimeFaces 15: ograniczenia typu i rozmiaru tylko przez p:validateFile (atrybuty allowTypes/sizeLimit usunięte z p:fileUpload) -->
                   <p:validateFile allowTypes="/(\.|\/)(pdf|tiff?)$/" sizeLimit="52428800" />

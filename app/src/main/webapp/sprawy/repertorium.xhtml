@@ -59,7 +59,7 @@
           <p:column headerText="Data">#{fmt.date(c.dataZakonczenia)}</p:column>
           <p:column headerText="Sygn. merytoryczna"><h:panelGroup rendered="#{not empty c.powiazana}"><tk:sig value="#{c.powiazana}" /></h:panelGroup><h:outputText rendered="#{empty c.powiazana}" value="—" /></p:column>
         </p:dataTable>
-        <div class="pager"><span class="mut">Wpisy 312–318 z #{repertoriumWidok.total} · #{repertoriumWidok.rows.size()} na stronę z filtrem „sprawy z danych przykładowych”</span><span class="sp"></span><button type="button" class="pg">1</button><button type="button" class="pg">…</button><button type="button" class="pg" aria-current="page">46</button></div>
+        <div class="pager"><span class="mut">#{fmt.msg('common.rows', repertoriumWidok.firstRow, repertoriumWidok.total, repertoriumWidok.total)}</span><span class="sp"></span><button type="button" class="pg" aria-current="page">1</button></div>
       </section>
 
       <section class="card mw900" aria-labelledby="h-hist" style="margin-top: 16px;">

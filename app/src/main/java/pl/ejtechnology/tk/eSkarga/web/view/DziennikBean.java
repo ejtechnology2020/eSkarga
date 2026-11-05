@@ -32,7 +32,7 @@ public class DziennikBean implements Serializable {
     @PostConstruct
     void init() {
         rows = data.incomingLetters();
-        selected = rows.get(0);
+        selected = rows.isEmpty() ? null : rows.get(0);   // baza dev bez pism: pusta lista, brak podglądu
     }
 
     public List<IncomingLetterRow> getRows() { return rows; }

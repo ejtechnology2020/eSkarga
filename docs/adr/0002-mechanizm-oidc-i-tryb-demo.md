@@ -154,3 +154,9 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   postback Mojarry go nie niesie. Wylogowanie to teraz odnośnik GET `/wylogowanie` (`LogoutServlet`): w oidc ciasteczko
   `ESKARGA_WYLOGOWANO` i przekierowanie na `/wyloguj` (logout-path Elytrona, zasób chroniony), w demo koniec sesji lokalnej.
   `LogoutBean` tylko przekierowuje tam z akcji JSF.
+- **Uzupełnienie 05.11.2026 – CSP i nonce PrimeFaces**: `CSP nonce mismatch` na każdym żądaniu AJAX PrimeFaces (przełączanie
+  Ts/Tw, zakładki, gęstość tabel) miało jedną przyczynę: `CspPhaseListener.initCsp` dokleja `" 'nonce-…';"` do **końca**
+  `primefaces.CSP_POLICY`, a nasza polityka kończyła się `form-action 'self'` – nonce lądował w `form-action`, dyrektywy
+  `script-src` nie było (skrypty spadały na `default-src 'self'`), przeglądarka blokowała `PrimeFaces.csp.init(nonce)`
+  i `core.js` wysyłał żądania bez `primefaces.nonce`. Polityka kończy się teraz `script-src 'self'` (web.xml). Wylogowanie
+  odnośnikiem GET zostaje (niezależne od nonce).

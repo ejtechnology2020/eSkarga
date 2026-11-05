@@ -64,6 +64,8 @@
 
         <aside class="side card np fb440" aria-labelledby="h-pv">
           <h:panelGroup id="pv" layout="block" styleClass="col gap12" style="gap: 0;">
+            <h:panelGroup rendered="#{empty dziennik.selected}" layout="block" styleClass="pane-b"><p class="mut">Brak pism w dzienniku za wybrany okres. Zarejestruj pismo, żeby zobaczyć tu jego podgląd.</p></h:panelGroup>
+            <h:panelGroup rendered="#{not empty dziennik.selected}" layout="block" styleClass="col" style="gap: 0;">
             <div class="pane-h"><div class="pane-tt"><b id="h-pv" class="mono">#{dziennik.selected.nr}</b><span class="mut">#{dziennik.selected.nadawca} · #{dziennik.selected.strony} str. + koperta</span></div><span class="sp"></span><button type="button" class="ibtn q" aria-label="Zamknij podgląd">×</button></div>
             <div class="viewer min520" style="padding: 16px;">
               <tk:paper label="Podgląd pisma #{dziennik.selected.nr}, strona 1" styleClass="sm">
@@ -79,6 +81,7 @@
                 <dt>Kwalifikacja</dt><dd>#{empty dziennik.selected.kwalifikacja ? 'oczekuje · referent Wydziału Weryfikacyjnego' : dziennik.selected.kwalifikacja}</dd></dl>
               <div class="row"><h:link outcome="/wplyw/etykieta" styleClass="btn" value="Etykieta" /><button type="button" class="btn q">Pobierz skan</button></div>
             </div>
+            </h:panelGroup>
           </h:panelGroup>
         </aside>
       </div>

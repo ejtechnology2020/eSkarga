@@ -74,7 +74,7 @@
               <p:datePicker id="z-dat" value="#{ekspedycja.dataDoreczenia}" pattern="dd.MM.yyyy" showIcon="false"><p:ajax event="dateSelect" listener="#{ekspedycja.dateChanged}" update="side" /><p:ajax listener="#{ekspedycja.dateChanged}" update="side" /></p:datePicker></div>
             <fieldset class="fieldset"><legend>Sposób doręczenia</legend>
               <p:selectOneRadio id="sp" value="#{ekspedycja.sposob}" layout="custom"><f:selectItems value="#{ekspedycja.sposoby}" var="s" itemLabel="#{msg['delivery.'.concat(s)]}" itemValue="#{s}" /></p:selectOneRadio>
-              <div class="radios"><ui:repeat value="#{ekspedycja.sposoby}" var="s" varStatus="st"><label class="#{ekspedycja.sposob eq s ? 'on' : ''}"><p:radioButton for="sp" itemIndex="#{st.index}" />#{msg['delivery.'.concat(s)]}</label></ui:repeat></div></fieldset>
+              <div class="radios"><ui:repeat value="#{ekspedycja.sposoby}" var="s" varStatus="st"><label class="#{ekspedycja.sposob eq s ? 'on' : ''}"><p:radioButton for="@form:sp" itemIndex="#{st.index}" />#{msg['delivery.'.concat(s)]}</label></ui:repeat></div></fieldset>
             <div class="fld"><p:outputLabel for="z-pl" value="Dowód doręczenia" /><p:inputText id="z-pl" value="UPD e-Doręczenia · 02.11.2026 10:24" readonly="true" /></div>
             <div class="card acc">
               <span class="eyebrow">Po zapisie ruszy termin</span>

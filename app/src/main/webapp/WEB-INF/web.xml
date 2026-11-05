@@ -37,7 +37,10 @@
   </context-param>
   <context-param>
     <param-name>primefaces.CSP_POLICY</param-name>
-    <param-value>default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'</param-value>
+    <!-- script-src musi być OSTATNIĄ dyrektywą: PrimeFaces dokleja do końca polityki " 'nonce-…';" (CspPhaseListener.initCsp);
+         z form-action na końcu nonce trafiał do form-action, skrypt PrimeFaces.csp.init był blokowany i żądania AJAX szły bez
+         primefaces.nonce („CSP nonce mismatch”) -->
+    <param-value>default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; script-src 'self'</param-value>
   </context-param>
   <context-param>
     <param-name>primefaces.FONT_AWESOME</param-name>

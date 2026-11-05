@@ -20,10 +20,10 @@
       <section class="tw" aria-labelledby="h-u">
         <div class="tt"><h2 id="h-u" class="h2-17">Użytkownicy</h2><span class="count">#{administracja.uzytkownicy.size()}</span></div>
         <p:dataTable value="#{administracja.uzytkownicy}" var="u" rowStyleClass="#{u.wybrany ? 'sel' : ''}" summary="Użytkownicy i przydziały">
-          <p:column headerText="Imię i nazwisko (ID-users)" styleClass="lk" headerStyleClass="lk"><b jsf:rendered="#{u.wybrany}">#{u.nazwa}</b><h:outputText rendered="#{not u.wybrany}" value="#{u.nazwa}" /></p:column>
-          <p:column headerText="Komórka" styleClass="lk" headerStyleClass="lk">#{u.komorka}</p:column>
-          <p:column headerText="Role ogólne" styleClass="lk" headerStyleClass="lk">#{u.role}</p:column>
-          <p:column headerText="Ostatnie logowanie" styleClass="lk" headerStyleClass="lk">#{fmt.dateTime(u.logowanie)}</p:column>
+          <p:column headerText="Imię i nazwisko (ID-users)" styleClass="lk"><b jsf:rendered="#{u.wybrany}">#{u.nazwa}</b><h:outputText rendered="#{not u.wybrany}" value="#{u.nazwa}" /></p:column>
+          <p:column headerText="Komórka" styleClass="lk">#{u.komorka}</p:column>
+          <p:column headerText="Role ogólne" styleClass="lk">#{u.role}</p:column>
+          <p:column headerText="Ostatnie logowanie" styleClass="lk">#{fmt.dateTime(u.logowanie)}</p:column>
           <p:column headerText="Przydział w aplikacji" headerStyleClass="acc">
             <h:panelGroup rendered="#{u.przydzialEdytowalny}"><p:selectOneMenu pt:aria-label="Przydział: #{u.nazwa}"><f:selectItem itemLabel="#{u.przydzial}" itemValue="a" /></p:selectOneMenu></h:panelGroup>
             <h:panelGroup rendered="#{not empty u.upowaznienie}"><span class="tag info">#{u.upowaznienie}</span> <h:link outcome="/admin/upowaznienia" value="rejestr" /></h:panelGroup>

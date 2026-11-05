@@ -60,7 +60,7 @@ public class AktaBean implements Serializable {
             sygnatura = "Ts 312/26";
         }
         spis = data.recordPages(sygnatura);
-        dokument = spis.get(0);
+        dokument = spis.isEmpty() ? null : spis.get(0);
         if (widok == null) {
             AppRole r = currentUser.getRole();
             widok = r == AppRole.TK_REFERENT || r == AppRole.TK_KIEROWNIK ? "referent" : "asystent";

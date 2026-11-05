@@ -69,7 +69,7 @@
                   <p:ajax update="kw" />
                 </p:selectOneRadio>
                 <ui:repeat value="#{kolejka.decyzje}" var="d" varStatus="st">
-                  <label class="chkl opt #{kolejka.decyzja eq d ? 'on' : ''}"><p:radioButton for="dec" itemIndex="#{st.index}" />#{msg['qualification.'.concat(d)]}</label>
+                  <label class="chkl opt #{kolejka.decyzja eq d ? 'on' : ''}"><p:radioButton for="@form:dec" itemIndex="#{st.index}" />#{msg['qualification.'.concat(d)]}</label>
                 </ui:repeat>
               </fieldset>
               <h:panelGroup rendered="#{kolejka.doSprawy}" layout="block" styleClass="col gap12">
