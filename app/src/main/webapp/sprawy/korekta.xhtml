@@ -13,7 +13,7 @@
   <ui:define name="crumbs">
     <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Sprawy" /></li><li><h:link outcome="/sprawy/repertorium" value="Repertorium Ts 2026" /></li><li><span aria-current="page">Korekta wpisu Ts 318/26</span></li></ol></nav>
   </ui:define>
-  <ui:define name="eyebrow">S-09 · #{korekta.eyebrow}</ui:define>
+  <ui:define name="eyebrow">#{korekta.eyebrow}</ui:define>
   <ui:define name="subtitle">Zmiany w repertorium wymagają uzasadnienia i akceptacji kierownika wydziału. Do akceptacji obowiązuje wersja v1.</ui:define>
   <ui:define name="actions"><h:panelGroup id="st"><tk:tag value="#{korekta.statusText}" tone="#{korekta.statusTone}" /></h:panelGroup></ui:define>
 

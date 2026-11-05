@@ -15,7 +15,6 @@
     <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Czynności i decyzje" /></li><li><h:link outcome="/rejestry/zazalenia" value="Zażalenia" /></li><li><span aria-current="page">#{sklad.sygnatura} · skierowanie do składu</span></li></ol></nav>
   </ui:define>
   <ui:define name="banners"><tk:banner icon="shield" title="Działasz na podstawie upoważnienia z 30.10.2026" text="(ważne do 31.12.2026)" /></ui:define>
-  <ui:define name="eyebrow">S-18</ui:define>
   <ui:define name="subtitle"><tk:sig value="#{dane.caseBy(sklad.sygnatura).sygnatura}" /> · #{sklad.skarzacy} · pełn. adw. Jan Makieta</ui:define>
   <ui:define name="actions">
     <h:link rendered="#{not sklad.poTerminie}" outcome="/czynnosci/podpis" styleClass="btn p" value="Skieruj i podpisz zarządzenie" />

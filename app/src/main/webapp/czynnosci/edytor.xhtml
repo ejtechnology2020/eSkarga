@@ -17,7 +17,7 @@
   <ui:define name="crumbs">
     <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Czynności i decyzje" /></li><li><a href="#">Projekty pism</a></li><li><span aria-current="page">#{edytor.sygnatura} · #{edytor.rodzajLabel}</span></li></ol></nav>
   </ui:define>
-  <ui:define name="eyebrow">S-15 · #{edytor.eyebrow}</ui:define>
+  <ui:define name="eyebrow">#{edytor.eyebrow}</ui:define>
   <ui:define name="subtitle"><tk:sig value="#{dane.caseBy(edytor.sygnatura).sygnatura}" /> · #{edytor.opis}</ui:define>
   <ui:define name="actions">
     <h:form id="acts" styleClass="row">

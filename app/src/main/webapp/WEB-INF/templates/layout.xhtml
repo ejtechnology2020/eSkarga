@@ -41,7 +41,8 @@
       <ui:insert name="titlebar">
         <div class="e-titlebar">
           <div class="tt">
-            <p class="eyebrow"><ui:insert name="eyebrow">#{menu.current.briefId()}</ui:insert></p>
+            <!-- identyfikator ekranu z briefu (S-xx) jest w stopce; eyebrow tylko dla dodatkowego kontekstu widoku (pusty = ukryty w CSS) -->
+            <p class="eyebrow"><ui:insert name="eyebrow" /></p>
             <h1><ui:insert name="heading"><ui:insert name="title" /></ui:insert></h1>
             <p class="mut"><ui:insert name="subtitle" /></p>
           </div>

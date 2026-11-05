@@ -11,7 +11,7 @@
   <!-- S-25 Dziennik zdarzeń (NFR-02): tabela zdarzeń, filtry, szczegóły, wynik weryfikacji łańcucha skrótów (lancuch=alarm pokazuje alarm). Tylko do odczytu. -->
   <f:metadata><f:viewParam name="lancuch" value="#{administracja.lancuch}" /><f:viewAction action="#{administracja.applyState}" /></f:metadata>
   <ui:define name="title">Dziennik zdarzeń (audyt)</ui:define>
-  <ui:define name="eyebrow">S-25 · tylko do odczytu</ui:define>
+  <ui:define name="eyebrow">tylko do odczytu</ui:define>
   <ui:define name="subtitle">Każda czynność w systemie z czasem, osobą i adresem. Wpisów nie można zmienić ani usunąć.</ui:define>
   <ui:define name="actions"><button type="button" class="btn">#{msg['common.exportCsv']}</button><button type="button" class="btn">Zweryfikuj łańcuch teraz</button></ui:define>
   <ui:define name="banners">

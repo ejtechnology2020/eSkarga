@@ -12,7 +12,7 @@
        tabela aktów, eksport XLSX/CSV/PDF, stan „brak danych w okresie” (stan=brak). -->
   <f:metadata><f:viewParam name="stan" value="#{raporty.stan}" /><f:viewAction action="#{raporty.applyState}" /></f:metadata>
   <ui:define name="title">Raporty i statystyki</ui:define>
-  <ui:define name="eyebrow">S-20 · dane przykładowe</ui:define>
+  <ui:define name="eyebrow">dane przykładowe</ui:define>
   <ui:define name="subtitle">Liczby na ekranie są przykładowe i służą tylko do pokazania układu.</ui:define>
   <ui:define name="actions"><button type="button" class="btn">XLSX</button><button type="button" class="btn">CSV</button><button type="button" class="btn p">#{msg['common.exportPdf']}</button></ui:define>
   <ui:define name="content">

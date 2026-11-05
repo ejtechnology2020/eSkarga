@@ -7,6 +7,8 @@
     <span>#{msg['app.name']} · #{fmt.msg('app.version', appInfo.version)}</span>
     <span class="#{appInfo.footerEnvClass}">#{msg['app.env.'.concat(appInfo.environment)]}</span>
     <span class="sp"></span>
+    <!-- identyfikator ekranu z inwentarza briefu (S-01…S-27) – przeniesiony z nagłówka widoku do stopki (05.11.2026) -->
+    <h:panelGroup rendered="#{not empty menu.current}" styleClass="mono mut" pt:aria-label="Identyfikator ekranu" xmlns:pt="jakarta.faces.passthrough">#{menu.current.briefId()}</h:panelGroup>
     <span><ui:insert name="footerNote">#{msg['app.help']}</ui:insert></span>
   </footer>
 </ui:composition>
