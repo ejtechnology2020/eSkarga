@@ -219,6 +219,7 @@ services:
       ESKARGA_BACKCHANNEL_URL: ${ESKARGA_BACKCHANNEL_URL:-http://host.docker.internal:8082/eskarga/oidc/backchannel-logout}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?ustaw w .env}
       OIDC_WORKERS_SECRET: ${OIDC_WORKERS_SECRET:?ustaw w .env}
+      ESKARGA_PKCE: ${ESKARGA_PKCE-S256}   # wymóg PKCE klienta eskarga; pusty = brak wymogu (decyzja, ADR 0002)
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

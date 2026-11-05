@@ -43,7 +43,7 @@
 | --- | --- | --- |
 | Issuer dev / test | `http://localhost:8180/realms/id-users` / `https://login.test.id-users.example.com/realms/id-users` (ostateczny po uruchomieniu TEST) | `eskarga.oidc.issuer` |
 | Discovery / JWKS | `<issuer>/.well-known/openid-configuration`, `<issuer>/protocol/openid-connect/certs` | `JwtRs256Verifier.fromSettings` |
-| Klient WWW | poufny, authorization code + PKCE S256, rejestracja w portalu integratora (PU-INT-01) | `OidcSecurityConfig` |
+| Klient WWW | poufny, authorization code + PKCE S256 (kontrakt); **otwarte 05.11.2026**: mechanizm Jakarta Security (Soteria na WildFly 41) nie wysyła `code_challenge` – patrz uzupełnienie; rejestracja w portalu integratora (PU-INT-01) | `OidcSecurityConfig`, `zarejestruj-w-id-users.sh` (`ESKARGA_PKCE`) |
 | Role aplikacji | `resource_access.<client_id>.roles` (zakres `roles`); role realmu `realm_access.roles`; grupy nie trafiają do tokenów | `RoleMapper`, `eskarga.oidc.rolesClaim` |
 | MFA | `acr`: `haslo` (LoA 1), `mfa` (LoA 2), `wysoki` (LoA 3); `amr` nie jest wystawiany; żądanie `acr_values=mfa` | `MfaPolicy`, `eskarga.oidc.mfaRequiredValue=mfa,wysoki`, `extraParameters` |
 | Usługi techniczne | `client_credentials`, konto serwisowe; `client_secret` albo zalecane `private_key_jwt`; token 5 min, bez refresh | `ClientCredentialsTokenClient` (`.keyStore` → `private_key_jwt`) |
@@ -67,3 +67,21 @@ PostgreSQL 5433, RustFS (S3) 9100/9101, pozostałe porty w `.env` (`PORT_*`). Lo
 i `eskarga-workers` rejestruje w realmie `id-users` skrypt `infra/docker/keycloak/zarejestruj-w-id-users.sh` (usługa
 `id-users-rejestracja`), który nadaje też role eSkargi fikcyjnym użytkownikom testowym ID-users. Adres back-channel
 rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchannel-logout` (Keycloak ID-users ma wpis host.docker.internal).
+
+## Uzupełnienie 05.11.2026 – pierwsze logowanie na WildFly 41 (decyzja do podjęcia)
+
+- `@OpenIdAuthenticationMechanismDefinition` realizuje Soteria (Jakarta Security), nie podsystem `elytron-oidc-client`; logowanie
+  na stronach wymusza `LoginFilter` przez `HttpServletRequest.authenticate` (strony bez `security-constraint`, bo tryb demo działa
+  bez IdP). W adnotacji działają tylko wyrażenia `${…}`; bez `prompt=none`.
+- Keycloak ID-users odrzuca logowanie: „Missing parameter: code_challenge_method” – klient `eskarga` wymaga PKCE S256 (kontrakt),
+  a Soteria nie wysyła `code_challenge`. Sprawdzone w źródłach (05.11.2026): API Jakarta Security 4.0
+  (`OpenIdAuthenticationMechanismDefinition`) nie ma atrybutu PKCE, `AuthenticationController` Soterii buduje żądanie autoryzacji
+  bez `code_challenge`, w issue Soterii i specyfikacji brak zgłoszeń PKCE. Warianty:
+  1. **Wyłączyć wymóg PKCE** dla klienta poufnego (`ESKARGA_PKCE=` w `.env`, ponowna rejestracja `rejestracja.cmd`). Kod
+     autoryzacyjny chroni sekret klienta i walidacja `redirect_uri`; PKCE dla klientów poufnych jest w OAuth 2.0 zalecane,
+     nie wymagane (wymagane w OAuth 2.1). Odstępstwo od kontraktu do uzgodnienia z zespołem ID-users.
+  2. **Mechanizm Elytron OIDC** (`oidc.json`/`auth-method OIDC`, podsystem `elytron-oidc-client`, PKCE S256 wspierane) zamiast
+     Jakarta Security – zmiana odczytu tokenów (`CurrentUser`, `MfaFilter`: `OpenIdContext` → `OidcSecurityContext`), wylogowania
+     i konfiguracji przez EL.
+- Do czasu decyzji rejestracja zostaje przy S256 (domyślna wartość `ESKARGA_PKCE`), więc logowanie w dev nie przechodzi;
+  `/callback` z błędem dostawcy pokazuje stronę „Logowanie nie powiodło się” zamiast 404 (`OidcCallbackServlet`).

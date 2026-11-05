@@ -112,12 +112,14 @@ service_account_uid() { admin GET "/clients/$1/service-account-user"; json_pole 
 user_uid() { admin GET "/users?username=$(urlenc "$1")&exact=true"; json_pole id; }
 
 # --- klient WWW: eskarga ---------------------------------------------------------------------------------------------
+# PKCE: domyślnie wymagane S256 (kontrakt ID-users). Mechanizm OIDC Jakarta Security (Soteria) nie wysyła code_challenge
+# („Missing parameter: code_challenge_method”) – wyłączenie wymogu tylko jawną decyzją: ESKARGA_PKCE= (pusty = usunięcie atrybutu). ADR 0002.
 ID=$(utworz_klienta eskarga "eSkarga – Repertorium Ts/Tw")
 admin PUT "/clients/$ID" "{
   \"clientId\":\"eskarga\",\"enabled\":true,\"publicClient\":false,\"standardFlowEnabled\":true,\"directAccessGrantsEnabled\":false,
   \"serviceAccountsEnabled\":true,\"fullScopeAllowed\":false,\"secret\":$(json_str "${OIDC_CLIENT_SECRET:?brak OIDC_CLIENT_SECRET}"),
   \"redirectUris\":[$(json_str "$PUBLICZNY/callback")],\"webOrigins\":[$(json_str "${PUBLICZNY%/eskarga}")],
-  \"attributes\":{\"pkce.code.challenge.method\":\"S256\",\"backchannel.logout.url\":$(json_str "$BACKCHANNEL"),
+  \"attributes\":{\"pkce.code.challenge.method\":$(json_str "${ESKARGA_PKCE-S256}"),\"backchannel.logout.url\":$(json_str "$BACKCHANNEL"),
     \"backchannel.logout.session.required\":\"true\",\"post.logout.redirect.uris\":$(json_str "$PUBLICZNY/+"),
     \"acr.loa.map\":\"{\\\"haslo\\\":1,\\\"mfa\\\":2,\\\"wysoki\\\":3}\"}
 }"
