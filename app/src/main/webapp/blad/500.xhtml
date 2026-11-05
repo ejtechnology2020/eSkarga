@@ -8,7 +8,7 @@
     <span class="code" aria-hidden="true">500</span>
     <h1 id="sys-h" class="h1-26">#{msg['sys.500.title']}</h1>
     <p>#{msg['sys.500.text']}</p>
-    <dl class="dl"><dt>Kod dla administratora</dt><dd class="mono"><b>#{errorCode.code}</b> <button type="button" class="btn s q">#{msg['common.copyToClipboard']}</button></dd><dt>Kontakt</dt><dd>pomoc techniczna, wewn. 2100</dd></dl>
-    <div class="row"><button type="button" class="btn p" onclick="window.location.reload()">#{msg['common.retry']}</button><h:link outcome="/pulpit" styleClass="btn" value="#{msg['sys.backToDesk']}" /></div>
+    <dl class="dl"><dt>Kod dla administratora</dt><dd class="mono"><b id="kod-bledu">#{errorCode.code}</b> <button type="button" class="btn s q" data-action="copy" data-text="#{errorCode.code}" data-done="Skopiowano" aria-describedby="kod-bledu">#{msg['common.copyToClipboard']}</button></dd><dt>Kontakt</dt><dd>pomoc techniczna, wewn. 2100</dd></dl>
+    <div class="row"><button type="button" class="btn p" data-action="reload">#{msg['common.retry']}</button><h:link outcome="/pulpit" styleClass="btn" value="#{msg['sys.backToDesk']}" /></div>
   </ui:define>
 </ui:composition>

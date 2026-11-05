@@ -33,13 +33,47 @@
     if (qs) { qs.focus(); qs.select(); }
   }
 
+  function announce(text) {
+    var live = document.getElementById('e-live');
+    if (!live) {
+      live = document.createElement('div');
+      live.id = 'e-live'; live.className = 'sr'; live.setAttribute('aria-live', 'polite');
+      document.body.appendChild(live);
+    }
+    live.textContent = text;
+  }
+
+  /* Kopiowanie do schowka: navigator.clipboard (bezpieczny kontekst) albo tymczasowe pole + execCommand. */
+  function copyText(text, done) {
+    if (!text) return;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () { announce(done); }, function () { copyLegacy(text, done); });
+    } else {
+      copyLegacy(text, done);
+    }
+  }
+
+  function copyLegacy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    announce(ok ? done : 'Nie udało się skopiować – zaznacz i skopiuj tekst ręcznie');
+  }
+
   function copySignature(btn) {
     var text = btn.getAttribute('data-sig');
-    if (!text || !navigator.clipboard) return;
-    navigator.clipboard.writeText(text).then(function () {
-      var live = document.getElementById('e-live');
-      if (live) { live.textContent = 'Skopiowano sygnaturę ' + text; }
-    });
+    copyText(text, 'Skopiowano sygnaturę ' + text);
+  }
+
+  /* data-action="copy" data-text="…": np. kod błędu dla administratora na stronie 500 (bez skryptów inline – CSP). */
+  function copyGeneric(btn) {
+    var text = btn.getAttribute('data-text');
+    copyText(text, 'Skopiowano: ' + text);
+    var label = btn.getAttribute('data-done');
+    if (label) { var prev = btn.textContent; btn.textContent = label; setTimeout(function () { btn.textContent = prev; }, 2000); }
   }
 
   document.addEventListener('keydown', function (ev) {
@@ -59,6 +93,8 @@
     var action = el.getAttribute('data-action');
     if (action === 'toggle-nav') { ev.preventDefault(); toggleNav(); }
     else if (action === 'copy-sig') { ev.preventDefault(); copySignature(el); }
+    else if (action === 'copy') { ev.preventDefault(); copyGeneric(el); }
+    else if (action === 'reload') { ev.preventDefault(); window.location.reload(); }
   });
 
   if (document.readyState === 'loading') {

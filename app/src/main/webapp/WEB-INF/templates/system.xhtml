@@ -10,6 +10,8 @@
   <f:facet name="first"><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></f:facet>
   <title><ui:insert name="title">Komunikat</ui:insert> – #{msg['app.name']}</title>
   <h:outputStylesheet library="css" name="eskarga.css" />
+  <!-- zachowania bez skryptów inline (CSP): kopiowanie kodu błędu, „spróbuj ponownie”, skróty -->
+  <h:outputScript library="js" name="eskarga.js" target="body" />
 </h:head>
 <h:body styleClass="e-app">
   <ui:param name="bare" value="#{empty bare ? false : bare}" />
@@ -25,6 +27,7 @@
       </div>
       <ui:include src="/WEB-INF/includes/footer.xhtml" />
     </main>
+    <div id="e-live" class="sr" aria-live="polite"></div>
   </div>
 </h:body>
 </html>
