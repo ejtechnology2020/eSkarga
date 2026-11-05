@@ -616,3 +616,9 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
 - Decyzja użytkownika (05.11.2026): logowanie dev przez Jakarta Security bez PKCE (wariant 1 z ADR 0002, `ESKARGA_PKCE=`); mechanizm Elytron OIDC z PKCE S256 – zadanie przed TEST.
 - 05.11.2026: wariant 1 niewykonalny – polityka klientów realmu id-users wymusza PKCE (pkce-enforcer) dla wszystkich klientów; do realizacji wariant 2 (ADR 0002).
 - 05.11.2026: zrealizowany wariant 2 (ADR 0002) – Elytron OIDC z PKCE S256 (`WEB-INF/oidc.json`, `ElytronTokens`), `default.acr.values=mfa` w kliencie Keycloaka; weryfikacja logowania na środowisku dev w toku.
+- 05.11.2026 – logowanie przez ID-users potwierdzone na środowisku dev (Windows, Docker Desktop, Keycloak ID-users 26.7.2): Elytron OIDC
+  z PKCE S256, wyzwalacz `/callback` (adres z rejestru ID-users), klient `eskarga` z `private_key_jwt` (własny dostawca `jwt-eskarga`,
+  klucz PEM i `kid` z rejestracji T-037 projektu id, `aud` = publiczny adres tokenu). Do sprawdzenia: role na pulpicie dla kont z
+  `ESKARGA_UZYTKOWNICY`, MFA (`default.acr.values=mfa`), wylogowanie, tokeny usługi dokumentów i workerów (`private_key_jwt`),
+  kontenery `tsa` (kod 127) i `softhsm` (kod 255) zatrzymane przy starcie.
+
