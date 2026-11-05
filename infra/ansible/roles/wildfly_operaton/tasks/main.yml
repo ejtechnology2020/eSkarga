@@ -1,6 +1,7 @@
 - name: Pakiety systemowe
   ansible.builtin.apt:
-    name: [openjdk-21-jre-headless, fonts-liberation, ocrmypdf, tesseract-ocr-pol, softhsm2, unzip]
+    # JDK (nie JRE): moduł mybatis dystrybucji Operaton wymaga jdk.attach i jdk.jdi
+    name: [openjdk-21-jdk-headless, fonts-liberation, ocrmypdf, tesseract-ocr-pol, softhsm2, unzip]
     state: present
     update_cache: true
 - name: Użytkownik usługi

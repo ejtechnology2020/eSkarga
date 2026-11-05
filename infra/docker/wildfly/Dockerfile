@@ -1,7 +1,8 @@
 # Dystrybucja Operaton dla WildFly (podsystem silnika współdzielonego, D9). Obraz tylko dla dev/test (D11).
 # Archiwum operaton-bpm-wildfly-<wersja>.tar.gz (zasoby wydania GitHub) zawiera server/wildfly-<wersja WildFly>/ – ten katalog
 # staje się OPERATON_HOME. Suma SHA-256 z checksums_sha256.txt wydania; przy zmianie wersji podaj obie wartości (compose/.env).
-FROM eclipse-temurin:21-jre
+# JDK, nie JRE: moduł org.mybatis.mybatis dystrybucji wymaga jdk.attach i jdk.jdi (ModuleLoadError: jdk.attach przy wdrażaniu WAR-a)
+FROM eclipse-temurin:21-jdk
 ARG OPERATON_VERSION=2.2.0
 ARG OPERATON_SHA256=6bc09729936ccf735c6352fe2d0f89cf3ca89d4d1aee9ad973d4d909d4297a0e
 ARG OPERATON_DIST_URL=https://github.com/operaton/operaton/releases/download/v${OPERATON_VERSION}/operaton-bpm-wildfly-${OPERATON_VERSION}.tar.gz
