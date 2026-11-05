@@ -693,6 +693,20 @@ public class JpaViewData implements ViewData {
     }
 
     @Override
+    public List<pl.ejtechnology.tk.eSkarga.web.model.ScanRow> scansOf(String registerNo) {
+        List<pl.ejtechnology.tk.eSkarga.web.model.ScanRow> out = new ArrayList<>();
+        if (registerNo == null || registerNo.isBlank()) {
+            return out;
+        }
+        incoming.byRegisterNo(registerNo).ifPresent(l -> {
+            for (var s : incoming.scans(l.getId())) {
+                out.add(new pl.ejtechnology.tk.eSkarga.web.model.ScanRow(s.getId(), s.getFileName(), s.getContentType(), s.getSizeBytes()));
+            }
+        });
+        return out;
+    }
+
+    @Override
     public java.util.Map<String, Integer> dictionaryCounts() {
         return java.util.Map.of("sady", dictionaries.courts().size(), "organy", dictionaries.authorities().size(),
                 "typyPism", dictionaries.letterTypes().size(), "wzorce", dictionaries.reviewStandards().size());

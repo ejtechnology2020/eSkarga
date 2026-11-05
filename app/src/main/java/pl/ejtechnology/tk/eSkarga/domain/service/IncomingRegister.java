@@ -91,6 +91,10 @@ public class IncomingRegister {
         return null;
     }
 
+    public java.util.Optional<IncomingScan> scan(long id) {
+        return java.util.Optional.ofNullable(em.find(IncomingScan.class, id));
+    }
+
     public List<IncomingScan> scans(long letterId) {
         return em.createQuery("select s from IncomingScan s where s.letter.id = :id order by s.id", IncomingScan.class).setParameter("id", letterId).getResultList();
     }

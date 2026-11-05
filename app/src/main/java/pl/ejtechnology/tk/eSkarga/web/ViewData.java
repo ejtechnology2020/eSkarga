@@ -105,6 +105,9 @@ public interface ViewData {
 
     List<DictionaryRow> reviewStandards();
 
+    /** Skany pisma z rejestracji wpływu (po numerze dziennika); w demo pusta lista. */
+    List<pl.ejtechnology.tk.eSkarga.web.model.ScanRow> scansOf(String registerNo);
+
     /** Liczby pozycji słowników do nawigacji S-24 (klucze: sady, organy, typyPism, wzorce). */
     java.util.Map<String, Integer> dictionaryCounts();
 

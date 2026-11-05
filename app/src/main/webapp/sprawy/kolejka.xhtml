@@ -36,16 +36,35 @@
         </p:splitterPanel>
         <p:splitterPanel size="45" minSize="30">
           <section class="pane" aria-labelledby="h-skan" style="flex: 1;">
-            <div class="pane-h"><b id="h-skan">#{kolejka.selected.nr} · skan</b><span class="mut">strona 1 z 2 + koperta</span><span class="sp"></span>
-              <button type="button" class="ibtn" aria-label="Pomniejsz">−</button><b>100 %</b><button type="button" class="ibtn" aria-label="Powiększ">+</button><button type="button" class="btn s">Koperta</button></div>
-            <div class="viewer">
+            <div class="pane-h"><b id="h-skan">#{kolejka.selected.nr} · skan</b>
+              <span class="mut" jsf:rendered="#{currentUser.demo}" xmlns:jsf="jakarta.faces">strona 1 z 2 + koperta</span>
+              <span class="mut" jsf:rendered="#{not currentUser.demo}" xmlns:jsf="jakarta.faces">#{kolejka.skany.size()} plik(ów)</span><span class="sp"></span>
+              <h:panelGroup rendered="#{currentUser.demo}"><button type="button" class="ibtn" aria-label="Pomniejsz">−</button><b>100 %</b><button type="button" class="ibtn" aria-label="Powiększ">+</button><button type="button" class="btn s">Koperta</button></h:panelGroup>
+            </div>
+            <!-- z bazą: faktyczne skany z rejestracji (IncomingScanServlet); pierwszy PDF w podglądzie, wszystkie do pobrania -->
+            <h:panelGroup rendered="#{not currentUser.demo}" layout="block" styleClass="viewer">
+              <h:panelGroup rendered="#{empty kolejka.selected}" layout="block" style="padding: 16px;"><p class="mut">Wybierz pismo z kolejki.</p></h:panelGroup>
+              <h:panelGroup rendered="#{not empty kolejka.selected and empty kolejka.skany}" layout="block" style="padding: 16px;"><p class="mut">Pismo #{kolejka.selected.nr} nie ma skanu (zarejestrowano tylko metadane).</p></h:panelGroup>
+              <h:panelGroup rendered="#{not empty kolejka.pierwszyPdf}" layout="block">
+                <tk:pdfViewer src="#{request.contextPath}/wplyw/skan/#{kolejka.pierwszyPdf.id}" title="Skan pisma #{kolejka.selected.nr}: #{kolejka.pierwszyPdf.nazwa}"
+                              downloadUrl="#{request.contextPath}/wplyw/skan/#{kolejka.pierwszyPdf.id}?pobierz=1" />
+              </h:panelGroup>
+              <h:panelGroup rendered="#{not empty kolejka.skany}" layout="block" style="padding: 8px 16px;">
+                <ul class="col gap4" style="list-style: none; margin: 0; padding: 0;">
+                  <ui:repeat value="#{kolejka.skany}" var="sk">
+                    <li><h:outputLink value="#{request.contextPath}/wplyw/skan/#{sk.id}?pobierz=1">#{sk.nazwa}</h:outputLink> <span class="mut">· #{sk.rozmiarTekst()}#{sk.pdf() ? '' : ' · TIFF (do pobrania)'}</span></li>
+                  </ui:repeat>
+                </ul>
+              </h:panelGroup>
+            </h:panelGroup>
+            <div class="viewer" jsf:rendered="#{currentUser.demo}" xmlns:jsf="jakarta.faces">
               <tk:paper label="Skan pisma #{kolejka.selected.nr}, strona 1">
                 <p class="r">Przykładowo, dnia 31.10.2026 r.</p>
                 <p class="ind">Trybunał Konstytucyjny<br />w Warszawie</p>
                 <p>Sygn. akt <span class="hl">Ts 312/26</span></p>
                 <p>Skarżący: Jan Przykładowy<br />Pełnomocnik: adw. Anna Testowa</p>
                 <h2>PISMO PROCESOWE</h2>
-                <p>W wykonaniu <span class="hl">zarządzenia z dnia 28.10.2026 r.</span> o usunięciu braków formalnych skargi konstytucyjnej, doręczonego w dniu 02.11.2026 r., w załączeniu przedkładam <span class="hl">pełnomocnictwo szczególne</span> do sporządzenia i wniesienia skargi konstytucyjnej.</p>
+                <p>W wykonaniu <span class="hl">zarządzenia z dnia 28.10.2026 r.</span> o usunięciu braków formalnych skargi konstytucyjnej, doręczonego w dniu 02.11.2026 r., w załączeniu przedkładam <span class="hl">pełnomocnictwo</span>.</p>
                 <p>Załącznik: pełnomocnictwo z dnia 30.10.2026 r.</p>
                 <p class="sign">adw. Anna Testowa</p>
               </tk:paper>

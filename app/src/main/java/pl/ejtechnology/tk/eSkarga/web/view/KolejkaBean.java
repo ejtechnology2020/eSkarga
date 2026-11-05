@@ -65,6 +65,21 @@ public class KolejkaBean implements Serializable {
 
     public void select(QueueItem it) {
         selected = it;
+        skany = null;
+    }
+
+    private transient List<pl.ejtechnology.tk.eSkarga.web.model.ScanRow> skany;
+
+    /** Skany wybranego pisma (z bazy); pierwszy PDF jest podglądem, pozostałe do pobrania. */
+    public List<pl.ejtechnology.tk.eSkarga.web.model.ScanRow> getSkany() {
+        if (skany == null) {
+            skany = selected == null ? List.of() : data.scansOf(selected.nr());
+        }
+        return skany;
+    }
+
+    public pl.ejtechnology.tk.eSkarga.web.model.ScanRow getPierwszyPdf() {
+        return getSkany().stream().filter(pl.ejtechnology.tk.eSkarga.web.model.ScanRow::pdf).findFirst().orElse(null);
     }
 
     /** UC-02: kwalifikacja pisma; założenie sprawy w S-07, pismo do sprawy = kolejne karty + komunikat do procesu, pismo ogólne = rejestr z terminem odpowiedzi. */

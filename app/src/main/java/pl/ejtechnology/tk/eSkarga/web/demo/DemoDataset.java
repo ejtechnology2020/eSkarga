@@ -565,6 +565,11 @@ public class DemoDataset implements Serializable, pl.ejtechnology.tk.eSkarga.web
                 new TemplateRow("Zarządzenie o usunięciu braków", "zarządzenie", "v3", "02.03.2026", "archiwalna", Tone.OFF, false));
     }
 
+    public List<pl.ejtechnology.tk.eSkarga.web.model.ScanRow> scansOf(String registerNo) {
+        return List.of();
+    }
+
+    @Override
     public java.util.Map<String, Integer> dictionaryCounts() {
         return java.util.Map.of("sady", 312, "organy", 48, "typyPism", 27, "wzorce", 64);
     }
