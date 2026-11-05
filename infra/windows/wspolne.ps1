@@ -276,8 +276,9 @@ function Test-Artefakty {
 # Build Mavena: lokalnie (JDK 21 + mvn w PATH) albo w kontenerze maven:3.9-eclipse-temurin-21
 # z zależnościami w wolumenie eskarga-m2 (nie trzeba instalować Javy). Zwraca kod wyjścia.
 function Build-Maven([switch]$Testy, [switch]$WDockerze) {
-  $cele = @('-B', '-DskipTests', 'package')
-  if ($Testy) { $cele = @('-B', 'verify') }
+  # clean: maven-dependency-plugin dopisuje biblioteki do workers\target\lib bez czyszczenia – stare wersje zostawałyby w obrazie
+  $cele = @('-B', 'clean', '-DskipTests', 'package')
+  if ($Testy) { $cele = @('-B', 'clean', 'verify') }
   if (-not $WDockerze -and (Test-Polecenie 'mvn') -and (Test-Polecenie 'java')) {
     Write-Krok ('mvn ' + ($cele -join ' ') + ' (lokalny JDK)')
     Push-Location $Script:Repo

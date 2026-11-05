@@ -2,7 +2,7 @@
 
 ```bash
 cp infra/docker/.env.example infra/docker/.env   # uzupełnij hasła
-mvn -B -DskipTests package
+mvn -B clean -DskipTests package
 docker compose -f infra/docker/compose.yml up -d --build
 docker compose -f infra/docker/compose.yml logs -f app
 ```
