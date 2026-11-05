@@ -2,6 +2,8 @@ package pl.ejtechnology.tk.eSkarga.security;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import jakarta.inject.Inject;
 import jakarta.security.enterprise.AuthenticationStatus;
@@ -26,6 +28,7 @@ import pl.ejtechnology.tk.eSkarga.audit.AuditService;
  */
 public class LoginFilter implements Filter {
 
+    private static final Logger LOG = Logger.getLogger(LoginFilter.class.getName());
     public static final String ANONYMOUS = "anonymous";
     static final String FORBIDDEN_PAGE = "/blad/403.xhtml";
 
@@ -56,8 +59,13 @@ public class LoginFilter implements Filter {
             AuthenticationStatus status = securityContext.authenticate(req, resp, AuthenticationParameters.withParams().newAuthentication(false));
             if (status == AuthenticationStatus.SUCCESS) {
                 chain.doFilter(request, response);
-            } else if (status != AuthenticationStatus.SEND_CONTINUE && !resp.isCommitted()) {
-                resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            } else if (status != AuthenticationStatus.SEND_CONTINUE) {
+                // SEND_FAILURE/NOT_DONE: mechanizm OIDC nie przejął żądania (brak mechanizmu w wdrożeniu, błąd metadanych dostawcy itp.)
+                LOG.log(Level.WARNING, "Logowanie OIDC nie zostało rozpoczęte dla {0}: status {1}, principal {2}, providerUri {3}",
+                        new Object[] {path, status, req.getUserPrincipal(), settings.getProviderUri()});
+                if (!resp.isCommitted()) {
+                    resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Logowanie przez ID-users niedostępne (status " + status + ") – szczegóły w logu serwera");
+                }
             }
             return;   // SEND_CONTINUE: przekierowanie do Keycloaka ID-users już wysłane
         }
