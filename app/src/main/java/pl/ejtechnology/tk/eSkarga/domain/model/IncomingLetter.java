@@ -21,6 +21,8 @@ import pl.ejtechnology.tk.eSkarga.domain.LetterQualification;
 /** Pismo wpływające – wpis dziennika wpływu (FR-01 – FR-03, UC-01). Wpis nie jest aktualizowany poza kwalifikacją. */
 @Entity
 @Table(name = "incoming_letter")
+// rola aplikacji ma UPDATE tylko na kolumnach qualification i case_file_id (V5.1, UC-02) – Hibernate aktualizuje wyłącznie zmienione kolumny
+@org.hibernate.annotations.DynamicUpdate
 public class IncomingLetter {
 
     @Id
