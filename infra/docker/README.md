@@ -117,3 +117,10 @@ Rozwiązywanie problemów na Windows:
 Diagnostyka: `infra\windows\logi.cmd app`, filtr `Select-String "oidc|OIDC|bez ról|ELY"` – w dev logger
 `org.wildfly.security.http.oidc` ma poziom DEBUG (CLI przy starcie kontenera), więc widać każdy krok mechanizmu.
 
+## Wdrażanie WAR-ów (dev)
+
+Katalogi `app/target` i `docs-service/target` są montowane do kontenera `app` tylko do odczytu, a `entrypoint.sh` kopiuje z nich
+WAR-y do `standalone/deployments/` przy każdym starcie. Po `mvn package` wystarczy `docker compose … restart app`
+(`infra\windows\wdroz.cmd`). Pojedyncze pliki nie są montowane celowo: `mvn clean` usuwa WAR w trakcie builda, skaner WildFly
+zgłaszał `WFLYDS0008 … FileNotFoundException` i cofał wdrożenie, a po restarcie kontener wciąż widział skasowany plik.
+

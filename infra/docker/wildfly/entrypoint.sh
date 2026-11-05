@@ -2,6 +2,18 @@
 # Konfiguruje źródło danych EskargaDS (schematy repertorium + operaton w jednej bazie, D1) i startuje WildFly.
 set -e
 cd "$OPERATON_HOME"
+# WAR-y z katalogów target/ (wolumeny tylko do odczytu) kopiowane do deployments/ przy każdym starcie – restart kontenera
+# po buildzie wdraża nową wersję; stare znaczniki skanera (.deployed/.failed/.undeployed) usuwane, żeby wdrożenie ruszyło na pewno.
+for war in /opt/eskarga/wary/app/eskarga.war /opt/eskarga/wary/docs/eskarga-docs-service.war; do
+  nazwa=$(basename "$war")
+  if [ -f "$war" ]; then
+    rm -f "standalone/deployments/$nazwa".*
+    cp "$war" "standalone/deployments/$nazwa"
+    echo "Wdrażam $nazwa ($(stat -c %s "$war") B, $(date -r "$war" +%FT%T))"
+  else
+    echo "UWAGA: brak $war – zbuduj artefakty (mvn -B package / infra\windows\buduj.cmd)" >&2
+  fi
+done
 # Konfiguracja przez CLI przy każdym starcie (skrypt idempotentny, embed-server ~5 s) – zmiany w eskarga-datasource.cli
 # (wolumen) działają bez odtwarzania kontenera; błąd CLI zatrzymuje start (set -e).
 bin/jboss-cli.sh --file=/opt/operaton/eskarga-datasource.cli \

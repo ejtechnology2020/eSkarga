@@ -2,8 +2,9 @@
 .SYNOPSIS
   Przebudowuje artefakty Mavenem i wdraża je ponownie po zmianach w kodzie.
 .DESCRIPTION
-  WAR-y aplikacji i usługi dokumentów są montowane z app\target i docs-service\target – po buildzie
-  wystarczy restart WildFly. Workery są kopiowane do obrazu – ich obraz jest budowany ponownie.
+  WAR-y aplikacji i usługi dokumentów są kopiowane przy starcie kontenera z app\target i docs-service\target
+  (katalogi montowane tylko do odczytu) – po buildzie wystarczy restart WildFly. Workery są kopiowane do obrazu –
+  ich obraz jest budowany ponownie.
 .PARAMETER TylkoApp
   Tylko WildFly (aplikacja i usługa dokumentów), bez workerów.
 .PARAMETER Testy

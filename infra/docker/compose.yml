@@ -10,7 +10,7 @@ name: ${COMPOSE_PROJECT_NAME:-eskarga}
 
 services:
   app:
-    # Dystrybucja Operaton dla WildFly 41 (silnik współdzielony) + WAR aplikacji montowany do deployments/
+    # Dystrybucja Operaton dla WildFly 41 (silnik współdzielony) + WAR-y kopiowane do deployments/ przy starcie (z target/)
     build:
       context: ./wildfly          # Dockerfile kopiuje entrypoint.sh i module-postgresql.xml względem tego katalogu
       args:
@@ -56,8 +56,10 @@ services:
       - "${PORT_APP:-8082}:8080"          # aplikacja /eskarga, Cockpit /operaton (ID-users zajmuje 8080)
       - "${PORT_APP_ADMIN:-9992}:9990"    # konsola WildFly (tylko dev; ID-users zajmuje 9990)
     volumes:
-      - ../../app/target/eskarga.war:/opt/operaton/standalone/deployments/eskarga.war:ro
-      - ../../docs-service/target/eskarga-docs-service.war:/opt/operaton/standalone/deployments/eskarga-docs-service.war:ro
+      # katalogi target/ (nie pojedyncze pliki): mvn clean usuwa WAR w trakcie builda, a montowany plik wskazywałby skasowany
+      # i-węzeł – skaner WildFly cofał wdrożenie (WFLYDS0008 FileNotFoundException). entrypoint.sh kopiuje WAR-y przy każdym starcie.
+      - ../../app/target:/opt/eskarga/wary/app:ro
+      - ../../docs-service/target:/opt/eskarga/wary/docs:ro
       - ./wildfly/eskarga-datasource.cli:/opt/operaton/eskarga-datasource.cli:ro
     depends_on:
       db:
