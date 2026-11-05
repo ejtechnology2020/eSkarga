@@ -13,6 +13,7 @@ import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Typed;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
@@ -62,6 +63,7 @@ import pl.ejtechnology.tk.eSkarga.web.model.UserRow;
  */
 @Named("demo")
 @ApplicationScoped
+@Typed(DemoDataset.class)   // ViewData dostarcza tylko producent (ViewDataProducer) – bez dwuznaczności w CDI
 public class DemoDataset implements Serializable, pl.ejtechnology.tk.eSkarga.web.ViewData {
 
     public static final LocalDate TODAY = LocalDate.of(2026, 11, 3);

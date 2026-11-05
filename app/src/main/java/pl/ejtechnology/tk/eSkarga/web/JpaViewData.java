@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Typed;
 import jakarta.inject.Inject;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditEvent;
@@ -98,6 +99,7 @@ import pl.ejtechnology.tk.eSkarga.web.model.UserRow;
  * Każde zapytanie o sprawę przechodzi przez {@link CaseAccessPolicy} (D4). Teksty wskaźników pochodzą z {@link Fmt}.
  */
 @Dependent
+@Typed(JpaViewData.class)   // ViewData dostarcza tylko producent (ViewDataProducer)
 public class JpaViewData implements ViewData {
 
     @Inject CaseFileService cases;

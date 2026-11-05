@@ -2,6 +2,7 @@ package pl.ejtechnology.tk.eSkarga.domain.docket;
 
 import java.time.LocalDate;
 
+import jakarta.ejb.LocalBean;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
@@ -17,6 +18,7 @@ import pl.ejtechnology.tk.eSkarga.domain.DocketSymbol;
  * z wpisem do repertorium i startem procesu (D1).
  */
 @Stateless
+@LocalBean   // wstrzykiwany także przez klasę (CaseFileService, ZalozenieBean), nie tylko przez DocketCounterRepository
 public class DocketNumberService implements DocketCounterRepository {
 
     @PersistenceContext(unitName = "repertorium")
