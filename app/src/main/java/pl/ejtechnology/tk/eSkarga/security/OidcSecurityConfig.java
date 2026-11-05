@@ -13,6 +13,9 @@ import jakarta.enterprise.context.ApplicationScoped;
  * {@code ESKARGA_OIDC_*} podstawiane przez serwer; role {@code resource_access.<client>.roles} stają się rolami kontenera
  * ({@code use-resource-role-mappings}), a tokeny czyta {@link ElytronTokens}. Logowanie wymusza {@link LoginFilter}
  * (w trybie demo nieaktywny; metadane dostawcy są pobierane leniwie, więc bez IdP nic nie jest odpytywane).
+ *
+ * <p>Uwaga do {@code oidc.json}: parser Elytrona odrzuca nieznane pola (także komentarze w stylu {@code _komentarz}) –
+ * plik zawiera wyłącznie klucze z {@code OidcJsonConfiguration}; wartości {@code ${env.X:domyślna}} podstawia serwer.
  */
 @DeclareRoles({"TK_REFERENT", "TK_ASYSTENT", "TK_SEDZIA", "TK_PREZES", "TK_KIEROWNIK", "TK_BIURO_PODAWCZE",
         "TK_ARCHIWISTA", "TK_ADMIN"})
