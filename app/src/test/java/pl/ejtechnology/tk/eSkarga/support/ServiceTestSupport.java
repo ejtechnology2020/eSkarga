@@ -144,7 +144,7 @@ public abstract class ServiceTestSupport {
 
     @BeforeAll
     static void startDb() {
-        db = new JpaTestSupport();
+        db = JpaTestSupport.create();   // H2 albo PostgreSQL z rolą aplikacji (-Deskarga.test.jdbcUrl=…)
         clock = new AppClock(Clock.fixed(TODAY.atTime(9, 0).atZone(AppClock.WARSAW).toInstant(), AppClock.WARSAW));
         ClockUtil.setCurrentTime(Date.from(clock.instant()));
         store = new InMemoryDocumentStore();

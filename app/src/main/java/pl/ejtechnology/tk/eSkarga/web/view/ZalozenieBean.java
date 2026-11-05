@@ -239,6 +239,15 @@ public class ZalozenieBean implements Serializable {
     public String getPismoOpis() { return pismoOpis; }
     public String getPismoNadawca() { return pismoNadawca; }
     public int getPismoSkany() { return pismoSkany; }
+
+    /** Skany pisma źródłowego (z bazy) do podglądu w panelu bocznym; w demo pusta lista. */
+    public List<pl.ejtechnology.tk.eSkarga.web.model.ScanRow> getSkanyPisma() {
+        return settings.isDemo() || pismo == null ? List.of() : data.scansOf(pismo);
+    }
+
+    public pl.ejtechnology.tk.eSkarga.web.model.ScanRow getPierwszyPdf() {
+        return getSkanyPisma().stream().filter(pl.ejtechnology.tk.eSkarga.web.model.ScanRow::pdf).findFirst().orElse(null);
+    }
     public boolean isBrakPisma() { return brakPisma; }
     /** Podtytuł ekranu: rodzaj pisma i skarżący. */
     public String getPodtytul() {

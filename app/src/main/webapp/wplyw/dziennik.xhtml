@@ -67,6 +67,22 @@
             <h:panelGroup rendered="#{empty dziennik.selected}" layout="block" styleClass="pane-b"><p class="mut">Brak pism w dzienniku za wybrany okres. Zarejestruj pismo, żeby zobaczyć tu jego podgląd.</p></h:panelGroup>
             <h:panelGroup rendered="#{not empty dziennik.selected}" layout="block" styleClass="col" style="gap: 0;">
             <div class="pane-h"><div class="pane-tt"><b id="h-pv" class="mono">#{dziennik.selected.nr}</b><span class="mut">#{dziennik.selected.nadawca} · #{dziennik.selected.strony} str. + koperta</span></div><span class="sp"></span><button type="button" class="ibtn q" aria-label="Zamknij podgląd">×</button></div>
+            <!-- z bazą: faktyczne skany z rejestracji (IncomingScanServlet); w demo plansza z makiety -->
+            <h:panelGroup rendered="#{not currentUser.demo}" layout="block" styleClass="viewer min520">
+              <h:panelGroup rendered="#{empty dziennik.skany}" layout="block" style="padding: 16px;"><p class="mut">Pismo #{dziennik.selected.nr} nie ma skanu (zarejestrowano tylko metadane).</p></h:panelGroup>
+              <h:panelGroup rendered="#{not empty dziennik.pierwszyPdf}" layout="block">
+                <tk:pdfViewer src="#{request.contextPath}/wplyw/skan/#{dziennik.pierwszyPdf.id}" title="Skan pisma #{dziennik.selected.nr}: #{dziennik.pierwszyPdf.nazwa}"
+                              downloadUrl="#{request.contextPath}/wplyw/skan/#{dziennik.pierwszyPdf.id}?pobierz=1" />
+              </h:panelGroup>
+              <h:panelGroup rendered="#{not empty dziennik.skany}" layout="block" style="padding: 8px 16px;">
+                <ul class="col gap4" style="list-style: none; margin: 0; padding: 0;">
+                  <ui:repeat value="#{dziennik.skany}" var="sk">
+                    <li><h:outputLink value="#{request.contextPath}/wplyw/skan/#{sk.id}?pobierz=1">#{sk.nazwa}</h:outputLink> <span class="mut">· #{sk.rozmiarTekst()}#{sk.pdf() ? '' : ' · TIFF (do pobrania)'}</span></li>
+                  </ui:repeat>
+                </ul>
+              </h:panelGroup>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{currentUser.demo}">
             <div class="viewer min520" style="padding: 16px;">
               <tk:paper label="Podgląd pisma #{dziennik.selected.nr}, strona 1" styleClass="sm">
                 <p class="r">Przykładowo, #{fmt.date(dziennik.selected.wniesienie)} r.</p>
@@ -76,6 +92,7 @@
                 <p>Treść warstwy tekstowej (OCR) dokumentu pojawi się tutaj po przetworzeniu skanu przez usługę dokumentów…</p>
               </tk:paper>
             </div>
+            </h:panelGroup>
             <div class="pane-b" style="flex: 0;">
               <dl class="dl"><dt>Kanał</dt><dd>#{msg['channel.'.concat(dziennik.selected.kanal)]}</dd><dt>Załączniki</dt><dd>#{dziennik.selected.zalaczniki}</dd>
                 <dt>Kwalifikacja</dt><dd>#{empty dziennik.selected.kwalifikacja ? 'oczekuje · referent Wydziału Weryfikacyjnego' : dziennik.selected.kwalifikacja}</dd></dl>

@@ -69,8 +69,8 @@ public class JudgeAssignmentService {
         act.setDocument(order);
         em.persist(act);
         em.persist(new CaseAssignment(cf, judgeUserId, AssignmentRole.JUDGE, today));
-        CaseFileVersion v = cases.changeStatus(caseId, CaseStatus.WE_WSTEPNEJ_KONTROLI, actingUserId);
-        v.setJudgeUserId(judgeUserId);
+        // sędzia ustawiany przed zapisem wersji – wersje wpisu są tylko dopisywane (NFR-01)
+        CaseFileVersion v = cases.changeStatus(caseId, CaseStatus.WE_WSTEPNEJ_KONTROLI, actingUserId, nv -> nv.setJudgeUserId(judgeUserId));
         // zadanie „Wyznacz sędziego” w procesie → sędzia staje się assignee zadania kontroli (${sedziaId})
         Task task = taskService.createTaskQuery().processInstanceBusinessKey(cf.getDocket().format()).taskDefinitionKey("T_Wyznacz").singleResult();
         if (task != null) {

@@ -25,6 +25,37 @@ public final class JpaTestSupport implements AutoCloseable {
         this("rep" + System.nanoTime());
     }
 
+    /** Właściwości systemowe kierujące testy serwisów na prawdziwy PostgreSQL z rolą aplikacji (zamiast H2). */
+    public static final String PROP_URL = "eskarga.test.jdbcUrl";
+    public static final String PROP_USER = "eskarga.test.user";
+    public static final String PROP_PASSWORD = "eskarga.test.password";
+    public static final String PROP_MIGRATION_USER = "eskarga.test.migrationUser";
+    public static final String PROP_MIGRATION_PASSWORD = "eskarga.test.migrationPassword";
+
+    /**
+     * Baza dla klasy testowej: H2 w pamięci (domyślnie) albo – gdy ustawiono {@value #PROP_URL} – PostgreSQL z rolą aplikacji
+     * (bez praw DDL, jak w WildFly), ze schematem odtwarzanym rolą migracji przed każdą klasą ({@code clean} + {@code migrate}
+     * z obu lokalizacji migracji i nadaniami dla {@code ${app_role}}). Tak samo działają ITy z Testcontainers; lokalnie:
+     * {@code mvn -pl app test -Deskarga.test.jdbcUrl=jdbc:postgresql://localhost:5432/eskarga_it?currentSchema=repertorium
+     * -Deskarga.test.user=eskarga_app -Deskarga.test.password=… -Deskarga.test.migrationUser=eskarga_migration -Deskarga.test.migrationPassword=…}.
+     */
+    public static JpaTestSupport create() {
+        String url = System.getProperty(PROP_URL);
+        if (url == null || url.isBlank()) {
+            return new JpaTestSupport();
+        }
+        String migUser = System.getProperty(PROP_MIGRATION_USER);
+        if (migUser != null && !migUser.isBlank()) {
+            Flyway flyway = Flyway.configure().dataSource(url, migUser, System.getProperty(PROP_MIGRATION_PASSWORD, "")).schemas("repertorium").defaultSchema("repertorium")
+                    .locations("classpath:db/migration", "classpath:db/migration-postgresql")
+                    .placeholders(Map.of("app_role", System.getProperty(PROP_USER, "eskarga_app")))
+                    .cleanDisabled(false).load();
+            flyway.clean();
+            flyway.migrate();
+        }
+        return new JpaTestSupport(url, "org.postgresql.Driver", System.getProperty(PROP_USER, "eskarga_app"), System.getProperty(PROP_PASSWORD, ""), false);
+    }
+
     public JpaTestSupport(String dbName) {
         this("jdbc:h2:mem:" + dbName + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=YEAR,DAY,VALUE,KEY;DB_CLOSE_DELAY=-1",
                 "org.h2.Driver", "sa", "", true);

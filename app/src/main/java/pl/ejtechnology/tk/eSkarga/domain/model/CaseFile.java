@@ -26,6 +26,8 @@ import pl.ejtechnology.tk.eSkarga.domain.DocketSymbol;
  */
 @Entity
 @Table(name = "case_file", uniqueConstraints = @UniqueConstraint(name = "uq_case_file_docket", columnNames = {"docket_symbol", "docket_number", "docket_year"}))
+// rola aplikacji ma UPDATE tylko na process_instance_id (V7.2) – identyfikator procesu znany dopiero po starcie (D1); reszta wpisu niezmienna (NFR-01)
+@org.hibernate.annotations.DynamicUpdate
 public class CaseFile {
 
     @Id
@@ -54,6 +56,7 @@ public class CaseFile {
     private Instant createdAt = Instant.now();
 
     @OneToMany(mappedBy = "caseFile", cascade = CascadeType.PERSIST)
+    @jakarta.persistence.OrderBy("version ASC")   // PostgreSQL nie gwarantuje kolejności bez ORDER BY (H2 zwracał po id) – historia wersji od v1
     private List<CaseFileVersion> versions = new ArrayList<>();
 
     protected CaseFile() {

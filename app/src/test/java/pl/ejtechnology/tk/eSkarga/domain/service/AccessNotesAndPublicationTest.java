@@ -99,7 +99,7 @@ class AccessNotesAndPublicationTest extends ServiceTestSupport {
     @Test
     void publikacjaDokumentuZArt80WymagaAnonimizacji() {
         CaseFile cf = caseWithTeam();
-        run(s -> s.cases.require(cf.getId()).current().setFlagAnonymise(true));
+        run(s -> s.cases.changeStatus(cf.getId(), s.cases.require(cf.getId()).current().getStatus(), REFERENT, v -> v.setFlagAnonymise(true)));   // nowa wersja z flagą (NFR-01)
         long docId = tx(s -> s.cases.documents(s.cases.require(cf.getId())).get(0).getId());
         Publication p = tx(s -> s.access.queueForPublication(docId, REFERENT));
         run(s -> assertThat(s.access.pendingPublications()).extracting(Publication::getId).contains(p.getId()));

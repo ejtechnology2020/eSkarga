@@ -48,12 +48,14 @@ class ArchiveReportTemplateTest extends ServiceTestSupport {
             var ns = store.put("akta/" + cf.getId() + "/notatka.pdf", new ByteArrayInputStream(note), note.length, "application/pdf", false);
             notatka.attachFile(ns.key(), ns.sha256());
             s.em.persist(notatka);
-            CaseFileVersion v = s.cases.changeStatus(cf.getId(), mode == ClosingMode.NADANIE_BIEGU ? CaseStatus.ZAKONCZONA_NADANO_BIEG : CaseStatus.ZAKONCZONA_ODMOWA_PRAWOMOCNA, "sedzia");
-            v.setClosingMode(mode);
-            v.setClosedOn(closedOn);
-            if (mode == ClosingMode.NADANIE_BIEGU) {
-                v.setRelatedDocket("SK 9/26");
-            }
+            // pola wersji ustawiane przed zapisem – wersje wpisu są tylko dopisywane (NFR-01, rola aplikacji bez UPDATE)
+            s.cases.changeStatus(cf.getId(), mode == ClosingMode.NADANIE_BIEGU ? CaseStatus.ZAKONCZONA_NADANO_BIEG : CaseStatus.ZAKONCZONA_ODMOWA_PRAWOMOCNA, "sedzia", v -> {
+                v.setClosingMode(mode);
+                v.setClosedOn(closedOn);
+                if (mode == ClosingMode.NADANIE_BIEGU) {
+                    v.setRelatedDocket("SK 9/26");
+                }
+            });
         });
         return cf;
     }

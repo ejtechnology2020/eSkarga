@@ -102,7 +102,19 @@
         </div>
         <aside class="side" aria-label="Pismo źródłowe">
           <section class="card np"><div class="pane-h"><b class="mono">#{zalozenie.pismo}</b><span class="mut">#{zalozenie.pismoNadawca}</span></div>
-            <h:panelGroup rendered="#{not currentUser.demo}" layout="block" styleClass="viewer min420 pad14"><p class="mut">Skany pisma: #{zalozenie.pismoSkany}. Po założeniu sprawy staną się pierwszymi kartami akt.</p></h:panelGroup>
+            <h:panelGroup rendered="#{not currentUser.demo}" layout="block" styleClass="viewer min420">
+              <h:panelGroup rendered="#{empty zalozenie.skanyPisma}" layout="block" style="padding: 16px;"><p class="mut">Pismo nie ma skanu (zarejestrowano tylko metadane).</p></h:panelGroup>
+              <h:panelGroup rendered="#{not empty zalozenie.pierwszyPdf}" layout="block">
+                <tk:pdfViewer src="#{request.contextPath}/wplyw/skan/#{zalozenie.pierwszyPdf.id}" title="Skan pisma #{zalozenie.pismo}: #{zalozenie.pierwszyPdf.nazwa}"
+                              downloadUrl="#{request.contextPath}/wplyw/skan/#{zalozenie.pierwszyPdf.id}?pobierz=1" />
+              </h:panelGroup>
+              <h:panelGroup rendered="#{not empty zalozenie.skanyPisma}" layout="block" style="padding: 8px 16px;">
+                <p class="mut">Skany pisma: #{zalozenie.pismoSkany}. Po założeniu sprawy staną się pierwszymi kartami akt.</p>
+                <ul class="col gap4" style="list-style: none; margin: 0; padding: 0;">
+                  <ui:repeat value="#{zalozenie.skanyPisma}" var="sk"><li><h:outputLink value="#{request.contextPath}/wplyw/skan/#{sk.id}?pobierz=1">#{sk.nazwa}</h:outputLink> <span class="mut">· #{sk.rozmiarTekst()}</span></li></ui:repeat>
+                </ul>
+              </h:panelGroup>
+            </h:panelGroup>
             <div class="viewer min420 pad14" jsf:rendered="#{currentUser.demo}" xmlns:jsf="jakarta.faces"><tk:paper label="Podgląd pisma DW 2026/04809" styleClass="sm"><p class="r">Przykładowo, 29.10.2026 r.</p><h2 class="fs15">SKARGA KONSTYTUCYJNA</h2><p>Wnoszę o stwierdzenie niezgodności art. 394¹ § 1 k.p.c. z art. 45 ust. 1 i art. 78 Konstytucji…</p></tk:paper></div>
           </section>
         </aside>

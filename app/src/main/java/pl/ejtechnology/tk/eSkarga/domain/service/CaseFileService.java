@@ -186,9 +186,21 @@ public class CaseFileService {
     /** Zmiana statusu = nowa wersja wpisu (NFR-01). */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public CaseFileVersion changeStatus(long caseId, CaseStatus status, String userId) {
+        return changeStatus(caseId, status, userId, null);
+    }
+
+    /**
+     * Nowa wersja wpisu z dodatkowymi polami ustawionymi PRZED zapisem ({@code init}): wersje są tylko dopisywane (NFR-01, rola
+     * aplikacji bez UPDATE na {@code case_file_version}), więc zmiana po {@code persist} kończyłaby się odmową bazy.
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public CaseFileVersion changeStatus(long caseId, CaseStatus status, String userId, java.util.function.Consumer<CaseFileVersion> init) {
         CaseFile cf = require(caseId);
         CaseFileVersion v = cf.current().next(status, userId);
         reNumber(cf, v);
+        if (init != null) {
+            init.accept(v);
+        }
         em.persist(cf.addVersion(v));
         audit.record(userId, null, "zmiana statusu: " + status, null, cf.getDocket().format(), null);
         return v;

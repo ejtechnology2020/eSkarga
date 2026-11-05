@@ -37,7 +37,21 @@ public class DziennikBean implements Serializable {
 
     public List<IncomingLetterRow> getRows() { return rows; }
     public IncomingLetterRow getSelected() { return selected; }
-    public void setSelected(IncomingLetterRow selected) { this.selected = selected; }
+    public void setSelected(IncomingLetterRow selected) { this.selected = selected; skany = null; }
+
+    private transient List<pl.ejtechnology.tk.eSkarga.web.model.ScanRow> skany;
+
+    /** Skany wybranego pisma z rejestracji (z bazy); w demo pusta lista – podgląd z makiety. */
+    public List<pl.ejtechnology.tk.eSkarga.web.model.ScanRow> getSkany() {
+        if (skany == null) {
+            skany = selected == null ? List.of() : data.scansOf(selected.nr());
+        }
+        return skany;
+    }
+
+    public pl.ejtechnology.tk.eSkarga.web.model.ScanRow getPierwszyPdf() {
+        return getSkany().stream().filter(pl.ejtechnology.tk.eSkarga.web.model.ScanRow::pdf).findFirst().orElse(null);
+    }
     public LocalDate getOd() { return od; }
     public void setOd(LocalDate od) { this.od = od; }
     public LocalDate getDoDnia() { return doDnia; }
