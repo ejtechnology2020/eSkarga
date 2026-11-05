@@ -107,11 +107,13 @@ Rozwiązywanie problemów na Windows:
 
 ## Logowanie przez ID-users – jak to działa i gdzie szukać
 
-1. Strona `*.xhtml` bez zalogowanego użytkownika → `LoginFilter` zapisuje adres w sesji i przekierowuje na `/eskarga/logowanie`.
-2. `/logowanie` jest jedynym zasobem chronionym w `web.xml`; mechanizm Elytron OIDC (`WEB-INF/oidc.json`) odsyła przeglądarkę
-   do `http://localhost:8180/realms/id-users/protocol/openid-connect/auth?...&code_challenge_method=S256`.
-3. Po zalogowaniu (i MFA – klient `eskarga` ma `default.acr.values=mfa`) Keycloak wraca na `/eskarga/logowanie?code=...`,
-   Elytron wymienia kod na tokeny, a serwlet przekierowuje na zapamiętany adres (domyślnie pulpit).
+1. Strona `*.xhtml` bez zalogowanego użytkownika → `LoginFilter` zapisuje adres w sesji i przekierowuje na `/eskarga/callback`
+   (adres zwrotny zarejestrowany w ID-users; rejestr ID-users synchronizuje go do Keycloaka i nadpisuje inne wartości).
+2. `/callback` jest zasobem chronionym w `web.xml`; mechanizm Elytron OIDC (`WEB-INF/oidc.json`) odsyła przeglądarkę
+   do `http://localhost:8180/realms/id-users/protocol/openid-connect/auth?...&redirect_uri=.../eskarga/callback&code_challenge_method=S256`.
+3. Po zalogowaniu (i MFA – klient `eskarga` ma `default.acr.values=mfa`) Keycloak wraca na `/eskarga/callback?code=...`,
+   Elytron wymienia kod na tokeny, a serwlet przekierowuje na zapamiętany adres (domyślnie pulpit). Wylogowanie: `/wyloguj`
+   (Elytron, `end_session` w ID-users) → powrót na `/eskarga/` (adres po wylogowaniu z rejestru ID-users) → strona „sesja zakończona”.
 4. Brak ról w tokenie → strona 403 i wpis `WARNING … bez ról eSkargi` w logu z zawartością `resource_access`/`realm_access`.
 
 Uwierzytelnienie klienta `eskarga` przy wymianie kodu na token: jeśli eSkarga została zarejestrowana w ID-users narzędziem projektu

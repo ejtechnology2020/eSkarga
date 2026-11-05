@@ -133,3 +133,10 @@ rejestrowany w ID-users: `http://host.docker.internal:8082/eskarga/oidc/backchan
   `resource_access.eskarga.roles` na role kontenera), z `SecurityContext` jako zapasem. `/wyloguj` (`logout-path`) dołączony do
   ograniczenia bezpieczeństwa – mechanizm obsługuje wylogowanie RP-initiated tylko na zasobie chronionym; `LogoutFallbackServlet`
   kończy sesję lokalną, gdy mechanizm nie przejął żądania (demo, brak sesji OIDC).
+- **Uzupełnienie 05.11.2026 – adresy z rejestru ID-users**: po ponownej rejestracji narzędziem projektu id Keycloak odrzucił
+  `redirect_uri=/eskarga/logowanie` („Nieprawidłowy parametr: redirect_uri”) – rejestr ID-users jest źródłem prawdy o kliencie
+  i synchronizuje `redirectUris=[<baza>/callback]` oraz adres po wylogowaniu `<baza>/`. eSkarga trzyma się tych adresów:
+  wyzwalaczem logowania i adresem zwrotnym jest `/callback` (`LoginTriggerServlet`, dawny `OidcCallbackServlet` scalony),
+  `post-logout-redirect-uri` = `<baza>/`, a `LogoutBean` ustawia ciasteczko `ESKARGA_WYLOGOWANO`, po którym `LoginFilter`
+  pokazuje stronę „sesja zakończona” zamiast od razu logować ponownie. Skrypt dev rejestruje te same adresy (plus `/*` i `/+`).
+

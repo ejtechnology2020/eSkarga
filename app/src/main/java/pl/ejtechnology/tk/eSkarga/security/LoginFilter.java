@@ -11,6 +11,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -20,8 +21,10 @@ import pl.ejtechnology.tk.eSkarga.audit.AuditService;
  * Wymuszenie logowania przez ID-users (tryb {@code oidc}, D4): strony Facelets wymagają uwierzytelnionego użytkownika
  * z co najmniej jedną rolą eSkargi. Mechanizm Elytron OIDC ({@code WEB-INF/oidc.json}) startuje dopiero przy żądaniu zasobu
  * chronionego – bez tego filtra strony renderowały się dla podmiotu anonimowego (Elytron zgłasza go jako principal „anonymous”)
- * z domyślną rolą referenta. Anonim jest przekierowywany na {@link LoginTriggerServlet} ({@code /logowanie}, jedyny zasób
- * z ograniczeniem bezpieczeństwa), a po zalogowaniu wraca na żądany adres. W trybie demo filtr nic nie robi (ADR 0004).
+ * z domyślną rolą referenta. Anonim jest przekierowywany na {@link LoginTriggerServlet} ({@code /callback}, zasób
+ * z ograniczeniem bezpieczeństwa), a po zalogowaniu wraca na żądany adres. Zaraz po wylogowaniu (ciasteczko
+ * {@value #LOGGED_OUT_COOKIE} z {@code LogoutBean}; ID-users wraca na {@code <baza>/}) pokazuje stronę „sesja zakończona”
+ * zamiast od razu logować ponownie. W trybie demo filtr nic nie robi (ADR 0004).
  * Strony błędów i zasoby JSF są dostępne bez logowania.
  */
 public class LoginFilter implements Filter {
@@ -29,6 +32,22 @@ public class LoginFilter implements Filter {
     private static final Logger LOG = Logger.getLogger(LoginFilter.class.getName());
     public static final String ANONYMOUS = "anonymous";
     static final String FORBIDDEN_PAGE = "/blad/403.xhtml";
+    static final String LOGGED_OUT_PAGE = "/blad/sesja.xhtml";
+    /** Ciasteczko ustawiane przed wylogowaniem OIDC (LogoutBean): po powrocie z ID-users na stronę główną pokaż „sesja zakończona”. */
+    public static final String LOGGED_OUT_COOKIE = "ESKARGA_WYLOGOWANO";
+
+    static boolean justLoggedOut(HttpServletRequest req) {
+        Cookie[] cookies = req.getCookies();
+        if (cookies == null) {
+            return false;
+        }
+        for (Cookie c : cookies) {
+            if (LOGGED_OUT_COOKIE.equals(c.getName()) && "1".equals(c.getValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Inject
     OidcSettings settings;
@@ -53,7 +72,16 @@ public class LoginFilter implements Filter {
         }
         if (!authenticated(req.getUserPrincipal())) {
             // Mechanizm Elytron OIDC wysyła wyzwanie (302 do Keycloaka ID-users) tylko dla zasobu z ograniczeniem bezpieczeństwa –
-            // programowe req.authenticate() kończyło się UT010032 bez przekierowania. Zapamiętujemy cel i idziemy na /logowanie.
+            // programowe req.authenticate() kończyło się UT010032 bez przekierowania. Zapamiętujemy cel i idziemy na /callback.
+            if (justLoggedOut(req)) {
+                Cookie wyczysc = new Cookie(LOGGED_OUT_COOKIE, "");
+                wyczysc.setPath(req.getContextPath() + "/");
+                wyczysc.setMaxAge(0);
+                wyczysc.setHttpOnly(true);
+                resp.addCookie(wyczysc);
+                resp.sendRedirect(req.getContextPath() + LOGGED_OUT_PAGE);
+                return;
+            }
             String target = req.getRequestURI().substring(req.getContextPath().length());
             if (req.getQueryString() != null && !req.getQueryString().isBlank()) {
                 target = target + "?" + req.getQueryString();

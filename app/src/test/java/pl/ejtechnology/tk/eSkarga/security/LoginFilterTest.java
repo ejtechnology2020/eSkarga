@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
 
-/** Wymuszenie logowania ID-users na stronach Facelets (D4, T-004): anonim → chroniony /logowanie (wyzwanie OIDC), zalogowany bez ról → 403. */
+/** Wymuszenie logowania ID-users na stronach Facelets (D4, T-004): anonim → chroniony /callback (wyzwanie OIDC), zalogowany bez ról → 403. */
 class LoginFilterTest {
 
     private final LoginFilter filter = new LoginFilter();
@@ -52,7 +52,7 @@ class LoginFilterTest {
         when(req.getSession(true)).thenReturn(session);
         filter.doFilter(req, resp, chain);
         verify(session).setAttribute(LoginTriggerServlet.TARGET_ATTRIBUTE, "/sprawy/repertorium.xhtml?rok=2026");
-        verify(resp).sendRedirect("/eskarga/logowanie");
+        verify(resp).sendRedirect("/eskarga/callback");
         verify(req, never()).authenticate(any());
         verify(chain, never()).doFilter(any(), any());
         assertThat(LoginFilter.authenticated(anon)).isFalse();
@@ -69,7 +69,7 @@ class LoginFilterTest {
         when(obcy.getAttribute(LoginTriggerServlet.TARGET_ATTRIBUTE)).thenReturn("//zly.example/x");
         assertThat(LoginTriggerServlet.target(obcy)).isEqualTo("/pulpit.xhtml");
         HttpSession petla = mock(HttpSession.class);
-        when(petla.getAttribute(LoginTriggerServlet.TARGET_ATTRIBUTE)).thenReturn("/logowanie");
+        when(petla.getAttribute(LoginTriggerServlet.TARGET_ATTRIBUTE)).thenReturn("/callback");
         assertThat(LoginTriggerServlet.target(petla)).isEqualTo("/pulpit.xhtml");
     }
 
@@ -101,5 +101,16 @@ class LoginFilterTest {
         filter.doFilter(req, resp, chain);
         verify(chain).doFilter(req, resp);
         verify(req, never()).authenticate(any());
+    }
+
+    @Test
+    void poWylogowaniuStronaSesjaZakonczonaZamiastLogowania() throws Exception {
+        when(req.getUserPrincipal()).thenReturn(null);
+        when(req.getContextPath()).thenReturn("/eskarga");
+        when(req.getCookies()).thenReturn(new jakarta.servlet.http.Cookie[] {new jakarta.servlet.http.Cookie(LoginFilter.LOGGED_OUT_COOKIE, "1")});
+        filter.doFilter(req, resp, chain);
+        verify(resp).sendRedirect("/eskarga/blad/sesja.xhtml");
+        verify(resp).addCookie(any());
+        verify(chain, never()).doFilter(any(), any());
     }
 }

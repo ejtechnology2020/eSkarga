@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <ui:composition template="/WEB-INF/templates/system.xhtml"
                 xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core" xmlns:ui="jakarta.faces.facelets" xmlns:tk="jakarta.faces.composite/tk">
-  <!-- Błąd zwrócony przez ID-users na /callback (error, error_description) – bez danych sesji; przyczyna oczyszczona w OidcCallbackServlet. -->
+  <!-- Błąd zwrócony przez ID-users na /callback (error, error_description) – bez danych sesji; przyczyna oczyszczona w LoginTriggerServlet. -->
   <ui:param name="bare" value="#{true}" />
   <ui:define name="title">Logowanie nie powiodło się</ui:define>
   <ui:define name="content">

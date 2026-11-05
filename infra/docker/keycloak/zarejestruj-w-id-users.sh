@@ -119,9 +119,9 @@ if [[ -n "${ESKARGA_PKCE-S256}" ]]; then echo "PKCE klienta eskarga: wymagane ${
 admin PUT "/clients/$ID" "{
   \"clientId\":\"eskarga\",\"enabled\":true,\"publicClient\":false,\"standardFlowEnabled\":true,\"directAccessGrantsEnabled\":false,
   \"serviceAccountsEnabled\":true,\"fullScopeAllowed\":false,\"secret\":$(json_str "${OIDC_CLIENT_SECRET:?brak OIDC_CLIENT_SECRET}"),
-  \"redirectUris\":[$(json_str "$PUBLICZNY/*")],\"webOrigins\":[$(json_str "${PUBLICZNY%/eskarga}")],
+  \"redirectUris\":[$(json_str "$PUBLICZNY/callback"),$(json_str "$PUBLICZNY/*")],\"webOrigins\":[$(json_str "${PUBLICZNY%/eskarga}")],
   \"attributes\":{\"pkce.code.challenge.method\":$(json_str "${ESKARGA_PKCE-S256}"),\"backchannel.logout.url\":$(json_str "$BACKCHANNEL"),
-    \"backchannel.logout.session.required\":\"true\",\"post.logout.redirect.uris\":$(json_str "$PUBLICZNY/+"),
+    \"backchannel.logout.session.required\":\"true\",\"post.logout.redirect.uris\":$(json_str "$PUBLICZNY/##$PUBLICZNY/+"),
     \"acr.loa.map\":\"{\\\"haslo\\\":1,\\\"mfa\\\":2,\\\"wysoki\\\":3}\",\"default.acr.values\":\"mfa\"}
 }"
 # metoda uwierzytelnienia klienta – skrypt jej nie zmienia: rejestracja narzędziem projektu id (aplikacje:eskarga) daje client-jwt
