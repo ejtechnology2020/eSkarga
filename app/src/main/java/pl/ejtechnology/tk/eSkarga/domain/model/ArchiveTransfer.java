@@ -11,6 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /** Przekazanie akt do archiwum zakładowego (FR-34, UC-21): numer spisu, kategoria, paczka z sumą kontrolną. */
 @Entity
@@ -40,6 +42,7 @@ public class ArchiveTransfer {
     @Column(name = "package_key", length = 400)
     private String packageKey;
 
+    @JdbcTypeCode(SqlTypes.CHAR)   // PostgreSQL zgłasza bpchar jako CHAR – bez tego hbm2ddl=validate oczekuje VARCHAR
     @Column(name = "package_sha256", columnDefinition = "CHAR(64)")
     private String packageSha256;
 

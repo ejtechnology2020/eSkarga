@@ -8,6 +8,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * Wpis dziennika zdarzeń (NFR-02): kto, rola, co, obiekt, sprawa, czas, adres, skrót poprzedniego wpisu i własny skrót
@@ -43,9 +45,11 @@ public class AuditEvent {
     @Column(name = "remote_addr", length = 45)
     private String remoteAddr;
 
+    @JdbcTypeCode(SqlTypes.CHAR)   // PostgreSQL zgłasza bpchar jako CHAR – bez tego hbm2ddl=validate oczekuje VARCHAR
     @Column(name = "prev_hash", nullable = false, columnDefinition = "CHAR(64)")
     private String prevHash;
 
+    @JdbcTypeCode(SqlTypes.CHAR)   // PostgreSQL zgłasza bpchar jako CHAR – bez tego hbm2ddl=validate oczekuje VARCHAR
     @Column(name = "hash", nullable = false, columnDefinition = "CHAR(64)")
     private String hash;
 

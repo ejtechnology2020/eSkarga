@@ -132,10 +132,11 @@
 
     <!-- Testy -->
     <dependency>
-      <!-- JPA w testach jednostkowych na H2 (ADR 0011); na WildFly dostawcę JPA daje serwer -->
+      <!-- Dostawca JPA: na WildFly daje go serwer (provided); w testach jednostkowych na H2 (ADR 0011). Zakres provided zamiast
+           test, bo encje używają @JdbcTypeCode (kolumny CHAR(64) skrótów – hbm2ddl=validate na PostgreSQL). -->
       <groupId>org.hibernate.orm</groupId>
       <artifactId>hibernate-core</artifactId>
-      <scope>test</scope>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.wiremock</groupId>

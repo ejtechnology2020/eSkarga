@@ -14,6 +14,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import pl.ejtechnology.tk.eSkarga.domain.DocumentKind;
 
@@ -55,6 +57,7 @@ public class CaseDocument {
     @Column(name = "storage_key", length = 400)
     private String storageKey;
 
+    @JdbcTypeCode(SqlTypes.CHAR)   // PostgreSQL zgłasza bpchar jako CHAR – bez tego hbm2ddl=validate oczekuje VARCHAR
     @Column(name = "sha256", columnDefinition = "CHAR(64)")
     private String sha256;
 

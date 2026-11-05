@@ -134,7 +134,8 @@ class ArchiveReportTemplateTest extends ServiceTestSupport {
         assertThat(sum.medianDays()).isLessThanOrEqualTo(sum.p90Days());
         run(s -> {
             assertThat(s.reports.countByStatus(CaseStatus.ZAREJESTROWANA)).isGreaterThanOrEqualTo(1);
-            assertThat(s.reports.backlog(0, TODAY.plusDays(1))).isNotEmpty();
+            // createdAt wersji to techniczny Instant.now() (nie zegar testowy) – limit względem rzeczywistej daty
+            assertThat(s.reports.backlog(0, LocalDate.now(pl.ejtechnology.tk.eSkarga.web.AppClock.WARSAW).plusDays(1))).isNotEmpty();
             assertThat(s.reports.appealsUpheldRatio()).isEqualTo(0.0);
         });
         assertThat(ReportService.percentile(List.of(5L, 1L, 9L, 3L), 50)).isEqualTo(3L);
