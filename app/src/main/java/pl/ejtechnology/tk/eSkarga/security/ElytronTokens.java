@@ -17,6 +17,9 @@ import pl.ejtechnology.tk.eSkarga.common.security.JwtRs256Verifier;
  */
 public final class ElytronTokens {
 
+    /** Nazwa atrybutu żądania/sesji z kontekstem Elytron OIDC. */
+    public static final String ATTRIBUTE = "org.wildfly.security.http.oidc.OidcSecurityContext";
+
     private ElytronTokens() {
     }
 
@@ -25,10 +28,10 @@ public final class ElytronTokens {
             return Optional.empty();
         }
         try {
-            Object attr = req.getAttribute(OidcSecurityContext.class.getName());
+            Object attr = req.getAttribute(ATTRIBUTE);
             if (attr == null) {
                 HttpSession session = req.getSession(false);
-                attr = session == null ? null : session.getAttribute(OidcSecurityContext.class.getName());
+                attr = session == null ? null : session.getAttribute(ATTRIBUTE);
             }
             return attr instanceof OidcSecurityContext ctx ? Optional.of(ctx) : Optional.empty();
         } catch (RuntimeException | NoClassDefFoundError e) {

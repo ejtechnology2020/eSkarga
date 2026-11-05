@@ -75,6 +75,13 @@ public class LoginFilter implements Filter {
             }
         }
         if (currentUser.getRoles().isEmpty()) {
+            // diagnostyka (bez tokenów): czy kontekst Elytron OIDC jest widoczny i jakie role niesie token dostępu
+            var ctx = ElytronTokens.context(req);
+            var claims = ElytronTokens.accessTokenClaims(req);
+            LOG.log(Level.WARNING, "Zalogowany {0} bez ról eSkargi: kontekst OIDC {1}, claims tokenu {2}, resource_access {3}, realm_access {4}, oczekiwana ścieżka ról {5}",
+                    new Object[] {req.getUserPrincipal().getName(), ctx.isPresent() ? "obecny" : "BRAK (atrybut żądania/sesji " + ElytronTokens.ATTRIBUTE + ")",
+                            claims.isPresent() ? "odczytane" : "brak", claims.map(c -> String.valueOf(c.get("resource_access"))).orElse("-"),
+                            claims.map(c -> String.valueOf(c.get("realm_access"))).orElse("-"), settings.getRolesClaim()});
             audit.recordDenial(req.getUserPrincipal().getName(), null, "odmowa: brak ról eSkargi w tokenie ID-users", path, null, req.getRemoteAddr());
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
             req.getRequestDispatcher(FORBIDDEN_PAGE).forward(req, resp);
