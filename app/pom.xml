@@ -116,6 +116,11 @@
 
     <!-- Widżet PDF (T-034, ADR 0007) i edytor szablonów (T-026a) jako webjary serwowane przez JSF -->
     <dependency>
+      <!-- eksport repertorium do PDF (S-08) – ten sam silnik co usługa dokumentów (ADR 0001) -->
+      <groupId>io.github.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-pdfbox</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.webjars.npm</groupId>
       <artifactId>pdfjs-dist</artifactId>
     </dependency>
@@ -191,6 +196,19 @@
 
   <build>
     <finalName>eskarga</finalName>
+    <resources>
+      <!-- tylko eskarga-build.properties z podstawianiem ${…} (wersja, commit, czas budowy – stopka); reszta zasobów bez filtrowania -->
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+        <excludes><exclude>eskarga-build.properties</exclude></excludes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes><include>eskarga-build.properties</include></includes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

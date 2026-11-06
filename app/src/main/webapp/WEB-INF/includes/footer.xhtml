@@ -4,7 +4,7 @@
                 xmlns:ui="jakarta.faces.facelets">
   <!-- Stopka: wersja systemu i środowisko; „TEST” jako wyraźny znacznik poza produkcją. -->
   <footer class="e-foot">
-    <span>#{msg['app.name']} · #{fmt.msg('app.version', appInfo.version)}</span>
+    <span>#{msg['app.name']} · #{fmt.msg('app.version', appInfo.version)} <span class="mono mut" title="commit · czas budowy">(#{appInfo.build})</span></span>
     <span class="#{appInfo.footerEnvClass}">#{msg['app.env.'.concat(appInfo.environment)]}</span>
     <span class="sp"></span>
     <!-- identyfikator ekranu z inwentarza briefu (S-01…S-27) – przeniesiony z nagłówka widoku do stopki (05.11.2026) -->

@@ -89,9 +89,9 @@
               <ui:repeat value="#{akta.spis}" var="pg" varStatus="st">
                 <li id="#{pg.id}">
                   <span class="when">#{empty pg.data ? '—' : fmt.date(pg.data)}</span>
-                  <span class="rail" aria-hidden="true"><h:panelGroup rendered="#{not pg.niejawny}"><i class="#{pg.nowy ? 'cur' : ''}"></i><s jsf:rendered="#{not st.last}"></s></h:panelGroup><h:panelGroup rendered="#{pg.niejawny}"><tk:icon name="lock" small="true" color="#3E4553" /></h:panelGroup></span>
+                  <span class="rail" aria-hidden="true"><h:panelGroup rendered="#{not pg.isNiejawny()}"><i class="#{pg.nowy ? 'cur' : ''}"></i><s jsf:rendered="#{not st.last}"></s></h:panelGroup><h:panelGroup rendered="#{pg.isNiejawny()}"><tk:icon name="lock" small="true" color="#3E4553" /></h:panelGroup></span>
                   <span class="what">
-                    <p:commandLink action="#{akta.open(pg)}" update="@form:akta-body" styleClass="case link #{pg eq akta.dokument ? 'on' : ''} #{pg.niejawny ? 'secret' : ''}" pt:aria-current="#{pg eq akta.dokument}" process="@this">
+                    <p:commandLink action="#{akta.open(pg)}" update="@form:akta-body" styleClass="case link #{pg eq akta.dokument ? 'on' : ''} #{pg.isNiejawny() ? 'secret' : ''}" pt:aria-current="#{pg eq akta.dokument}" process="@this">
                       <span class="h"><b>#{pg.tytul} <h:outputText rendered="#{pg.nowy}" styleClass="tag new" value="nowy" /></b><b>#{pg.karty}</b></span>
                       <span class="mut">#{pg.opis}</span>
                     </p:commandLink>
@@ -158,7 +158,7 @@
                   <dt>Dokument</dt><dd>#{akta.dokument.tytul}</dd><dt>Karty</dt><dd>#{akta.dokument.karty}</dd>
                   <dt>Data wpływu</dt><dd>#{fmt.date(akta.dokument.data)}</dd><dt>Data wniesienia</dt><dd>13.10.2026 (stempel)</dd>
                   <dt>Kanał</dt><dd>poczta</dd><dt>Nadawca</dt><dd>#{akta.anon('adw. Anna Testowa')}</dd>
-                  <dt>Klauzula</dt><dd>#{akta.dokument.niejawny ? 'zastrzeżone' : 'brak'}</dd><dt>Wersja zanonimizowana</dt><dd>nie</dd>
+                  <dt>Klauzula</dt><dd>#{akta.dokument.isNiejawny() ? 'zastrzeżone' : 'brak'}</dd><dt>Wersja zanonimizowana</dt><dd>nie</dd>
                   <dt>Skrót SHA-256</dt><dd class="mono">9f3c…1a7e</dd>
                 </dl>
               </p:tab>

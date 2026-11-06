@@ -19,7 +19,7 @@ jobs:
       - name: Czcionki do testów PDF/A (Liberation)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-liberation
       - name: Build i testy
-        run: mvn -B -ntp verify
+        run: mvn -B -ntp verify -Deskarga.build.commit=${GITHUB_SHA::7}
       - name: Artefakty z sumami kontrolnymi
         run: |
           mkdir -p dist

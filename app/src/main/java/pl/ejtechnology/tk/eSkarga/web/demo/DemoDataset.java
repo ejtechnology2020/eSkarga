@@ -161,6 +161,11 @@ public class DemoDataset implements Serializable, pl.ejtechnology.tk.eSkarga.web
         return new ArrayList<>(cases.values());
     }
 
+    @Override
+    public List<CaseSummary> casesIn(pl.ejtechnology.tk.eSkarga.domain.DocketSymbol symbol, int year) {
+        return cases.values().stream().filter(c -> c.sygnatura().symbol() == symbol && c.sygnatura().year() == year).toList();
+    }
+
     public Person personFor(AppRole role) {
         return persons.getOrDefault(role, persons.get(AppRole.TK_REFERENT));
     }

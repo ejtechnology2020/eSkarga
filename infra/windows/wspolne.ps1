@@ -279,6 +279,13 @@ function Build-Maven([switch]$Testy, [switch]$WDockerze) {
   # clean: maven-dependency-plugin dopisuje biblioteki do workers\target\lib bez czyszczenia – stare wersje zostawałyby w obrazie
   $cele = @('-B', 'clean', '-DskipTests', 'package')
   if ($Testy) { $cele = @('-B', 'clean', 'verify') }
+  # identyfikator wersji w stopce aplikacji (eskarga-build.properties): skrócony commit, gdy jest git
+  if (Test-Polecenie 'git') {
+    $ErrorActionPreference = 'Continue'
+    $commit = (& git -C $Script:Repo rev-parse --short HEAD 2> $null)
+    $ErrorActionPreference = 'Stop'
+    if ($LASTEXITCODE -eq 0 -and $commit) { $cele += "-Deskarga.build.commit=$($commit.Trim())" }
+  }
   if (-not $WDockerze -and (Test-Polecenie 'mvn') -and (Test-Polecenie 'java')) {
     Write-Krok ('mvn ' + ($cele -join ' ') + ' (lokalny JDK)')
     Push-Location $Script:Repo

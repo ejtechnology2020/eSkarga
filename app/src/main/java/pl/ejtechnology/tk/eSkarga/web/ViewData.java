@@ -41,6 +41,9 @@ public interface ViewData {
 
     List<CaseSummary> cases();
 
+    /** Wpisy repertorium danego symbolu i roku (S-08, eksport roczny do PDF) – po filtrze dostępu (D4). */
+    List<CaseSummary> casesIn(pl.ejtechnology.tk.eSkarga.domain.DocketSymbol symbol, int year);
+
     Integer menuCounter(Screen s, AppRole role);
 
     List<KpiTile> kpisFor(AppRole role);

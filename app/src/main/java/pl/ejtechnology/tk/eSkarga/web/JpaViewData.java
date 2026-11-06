@@ -152,6 +152,11 @@ public class JpaViewData implements ViewData {
         return out;
     }
 
+    @Override
+    public List<CaseSummary> casesIn(DocketSymbol symbol, int year) {
+        return cases.inDocket(symbol, year).stream().filter(this::canRead).map(this::summary).toList();
+    }
+
     private boolean canRead(CaseFile cf) {
         return CaseAccessPolicy.canReadCase(user.getLogin(), user.getRoles(), caseAccess.assignment(cf));
     }

@@ -11,15 +11,15 @@
   <h:panelGroup rendered="#{not empty doc}">
   <div class="pane-h">
     <div class="pane-tt"><b>#{doc.tytul}</b>
-      <span class="mut"><h:outputText rendered="#{not doc.niejawny}" value="#{doc.karty} · v1 z 1 · skan z OCR · #{doc.opis}" /><h:outputText rendered="#{doc.niejawny}" value="dokument niejawny · tylko metadane" /></span></div>
+      <span class="mut"><h:outputText rendered="#{not doc.isNiejawny()}" value="#{doc.karty} · v1 z 1 · skan z OCR · #{doc.opis}" /><h:outputText rendered="#{doc.isNiejawny()}" value="dokument niejawny · tylko metadane" /></span></div>
     <span class="sp"></span>
-    <h:panelGroup rendered="#{not doc.niejawny}">
+    <h:panelGroup rendered="#{not doc.isNiejawny()}">
       <div class="row" role="group" aria-label="Powiększenie"><button type="button" class="ibtn" aria-label="Pomniejsz">−</button><b>100 %</b><button type="button" class="ibtn" aria-label="Powiększ">+</button></div>
       <button type="button" class="btn s">Pobierz</button><button type="button" class="btn s">Drukuj</button><button type="button" class="btn s">Porównaj wersje</button>
       <p:commandButton rendered="#{showSplit}" value="Podziel widok" action="#{akta.toggleSplit}" update="akta-body" styleClass="s" process="@this" />
     </h:panelGroup>
   </div>
-  <h:panelGroup rendered="#{not doc.niejawny}">
+  <h:panelGroup rendered="#{not doc.isNiejawny()}">
     <div class="pane-sub"><span>karta akt #{doc.karty.replace('k. ', '')} · <b style="color: #171B24;">strona 1 z 14</b></span><span class="sp"></span><button type="button" class="btn s q" aria-expanded="false">Pokaż miniatury stron</button></div>
     <h:panelGroup rendered="#{not currentUser.demo and not empty doc}" layout="block" styleClass="viewer">
       <tk:pdfViewer src="#{request.contextPath}/akta/dokument/#{doc.id}" title="#{doc.tytul}" pageFrom="#{doc.karty.replaceAll('[^0-9].*', '').replace('k', '')}"
@@ -54,7 +54,7 @@
       <p class="mut" jsf:rendered="#{akta.zespolSedziego}" xmlns:jsf="jakarta.faces">Zaznaczenia i komentarze widzi tylko zespół sędziego. Nie trafiają do akt jawnych.</p>
     </div>
   </h:panelGroup>
-  <h:panelGroup rendered="#{doc.niejawny}" layout="block" styleClass="viewer">
+  <h:panelGroup rendered="#{doc.isNiejawny()}" layout="block" styleClass="viewer">
     <tk:empty icon="lock" title="Dokument z klauzulą — treść dostępna w kancelarii niejawnej" text="System przechowuje wyłącznie metadane. Kopia w kancelarii niejawnej, poz. 14/2026.">
       <dl class="dl" style="text-align: left;"><dt>Rodzaj</dt><dd>załącznik do skargi</dd><dt>Klauzula</dt><dd>zastrzeżone</dd><dt>Wpływ</dt><dd>14.10.2026 · poczta</dd><dt>Przechowanie</dt><dd>kancelaria niejawna, poz. 14/2026</dd></dl>
     </tk:empty>

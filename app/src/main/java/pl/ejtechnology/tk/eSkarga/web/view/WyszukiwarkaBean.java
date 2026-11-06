@@ -23,25 +23,59 @@ public class WyszukiwarkaBean implements Serializable {
     @Inject
     private ViewData data;
 
-    private String q = "Testowa";
+    // formularz startuje pusty (bez danych przykładowych); zapytanie może przyjść z paska górnego (?q=)
+    private String q = "";
     private int tab;
     private String repertorium = "Ts i Tw";
-    private String rok = "2026";
+    private String rok = "";
+    private List<CaseSummary> cases;
+    private List<SearchHit> hits;
 
+    /** Wyszukiwanie w indeksie (OpenSearch) z filtrem dostępu, z zapasem w bazie (JpaViewData.searchCases); w demo – zestaw przykładowy. */
     public void search() {
-        // wyszukiwanie w OpenSearch + filtr CaseAccessPolicy (T-032); w demo – zestaw przykładowy
+        cases = null;
+        hits = null;
+    }
+
+    /** Czy jest co pokazać: zapytanie niepuste (pusty formularz nie pokazuje „brak wyników”). */
+    public boolean isSearched() {
+        return q != null && !q.isBlank();
     }
 
     public List<CaseSummary> getCases() {
-        return data.searchCases(q);
+        if (cases == null) {
+            cases = isSearched() ? data.searchCases(q.trim()).stream().filter(this::matchesFilters).toList() : List.of();
+        }
+        return cases;
     }
 
     public List<SearchHit> getHits() {
-        return data.searchHits(q);
+        if (hits == null) {
+            hits = isSearched() ? data.searchHits(q.trim()).stream().filter(h -> h.sprawa() == null || matchesFilters(h.sprawa())).toList() : List.of();
+        }
+        return hits;
+    }
+
+    /** Liczba spraw, w których są trafienia w dokumentach (nagłówek zakładki „Dokumenty”). */
+    public long getHitCases() {
+        return getHits().stream().map(SearchHit::sprawa).filter(java.util.Objects::nonNull).distinct().count();
     }
 
     public boolean isEmptyResult() {
-        return getCases().isEmpty() && getHits().isEmpty();
+        return isSearched() && getCases().isEmpty() && getHits().isEmpty();
+    }
+
+    private boolean matchesFilters(CaseSummary c) {
+        return matchesFilters(c.sygnatura());
+    }
+
+    private boolean matchesFilters(pl.ejtechnology.tk.eSkarga.domain.DocketNumber dn) {
+        if (dn == null) {
+            return true;
+        }
+        boolean symbolOk = repertorium == null || repertorium.isBlank() || repertorium.equals("Ts i Tw") || dn.symbol().code().equalsIgnoreCase(repertorium);
+        boolean yearOk = rok == null || rok.isBlank() || String.valueOf(dn.year()).equals(rok);
+        return symbolOk && yearOk;
     }
 
     public String getQ() {
@@ -49,6 +83,10 @@ public class WyszukiwarkaBean implements Serializable {
     }
 
     public void setQ(String q) {
+        if (q == null || !q.equals(this.q)) {
+            cases = null;
+            hits = null;
+        }
         this.q = q;
     }
 
@@ -66,6 +104,8 @@ public class WyszukiwarkaBean implements Serializable {
 
     public void setRepertorium(String repertorium) {
         this.repertorium = repertorium;
+        cases = null;
+        hits = null;
     }
 
     public String getRok() {
@@ -74,6 +114,8 @@ public class WyszukiwarkaBean implements Serializable {
 
     public void setRok(String rok) {
         this.rok = rok;
+        cases = null;
+        hits = null;
     }
 
     public void clear() {

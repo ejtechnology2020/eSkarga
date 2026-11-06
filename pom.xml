@@ -24,6 +24,9 @@
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <!-- identyfikator zbudowanej wersji w stopce (AppInfo): commit podają skrypty buduj.ps1 i CI (-Deskarga.build.commit=…) -->
+    <eskarga.build.commit>lokalnie</eskarga.build.commit>
+    <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
 
     <!-- Platforma -->
     <jakartaee.version>11.0.0</jakartaee.version>

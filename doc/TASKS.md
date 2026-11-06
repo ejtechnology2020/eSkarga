@@ -659,3 +659,11 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   (encje z EJB czytane po zamknięciu transakcji) – wersje inicjalizowane w `CaseFileService` (`byDocket`, `inDocket`, `search`, `related`),
   `JpaViewData` z `@Transactional`; test `sprawyZRepertoriumMajaWersjeDostepnePoZakonczeniuTransakcji`. Szybkie wyszukiwanie: ikona lupy
   nachodziła na podpowiedź – reguła motywu saga `body input:not(…)` nadpisywała odstęp (`.e-qs .wrap input`, pomiar w Chromium).
+- 06.11.2026 – S-01/S-14: `PropertyNotFoundException` dla `t.sprawa.readOnly` i `pg.niejawny` – Jakarta EL 6 (`RecordELResolver`) zna tylko
+  komponenty rekordów; w stronach składnia metody (`isReadOnly()`, `isNiejawny()`), test `RecordAccessorsInElTest`. Nakładka na motyw saga
+  z prefiksem `body` (biały tekst przycisków `.q`, jednakowa gęstość tabeli – pomiar w Chromium), przełączniki Ts/Tw i Kompaktowa/Wygodna.
+  S-08: „Eksport roczny do PDF” naprawdę generuje PDF (`RepertoriumPdfServlet`, OpenHTMLtoPDF, PDF/A z Liberation gdy są czcionki, audyt).
+  S-02: formularz startuje pusty, filtry repertorium/rok działają, liczba spraw z trafień z danych. Pulpit bez liczb z makiety.
+  Kod błędu `RTS-500-…` (S-26) zapisywany do logu (`pl.ejtechnology.tk.eSkarga.blad`, z wyjątkiem) i audytu. Stopka: commit i czas budowy
+  (`eskarga-build.properties`, `-Deskarga.build.commit` z buduj.ps1 i CI).
+

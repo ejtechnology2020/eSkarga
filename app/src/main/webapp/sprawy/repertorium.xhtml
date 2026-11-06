@@ -20,7 +20,8 @@
       </div>
       <div class="fld" style="flex-direction: row; align-items: center; gap: 8px;"><p:outputLabel for="rok" value="Rok" />
         <p:selectOneMenu id="rok" value="#{repertoriumWidok.rok}" styleClass="w120"><f:selectItem itemLabel="2026" itemValue="2026" /><f:selectItem itemLabel="2025" itemValue="2025" /><p:ajax update="@all" /></p:selectOneMenu></div>
-      <button type="button" class="btn">Eksport roczny do PDF</button>
+      <!-- eksport: serwlet /sprawy/repertorium/pdf (role S-08, filtr dostępu, audyt) – zwykły odnośnik, plik do pobrania -->
+      <h:outputLink value="#{request.contextPath}/sprawy/repertorium/pdf?symbol=#{repertoriumWidok.symbol}&amp;rok=#{repertoriumWidok.rok}" styleClass="btn">Eksport roczny do PDF</h:outputLink>
       <h:link outcome="/sprawy/zalozenie" styleClass="btn p" value="Załóż sprawę" rendered="#{currentUser.hasRole('ref')}" />
     </h:form>
   </ui:define>

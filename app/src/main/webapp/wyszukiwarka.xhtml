@@ -32,7 +32,7 @@
           </p:selectOneMenu></div>
         <div class="fld"><p:outputLabel for="f-rok" value="Rok" />
           <p:selectOneMenu id="f-rok" value="#{wyszukiwarka.rok}">
-            <f:selectItem itemLabel="2026" itemValue="2026" /><f:selectItem itemLabel="2025" itemValue="2025" />
+            <f:selectItem itemLabel="#{msg['common.all']}" itemValue="" /><f:selectItem itemLabel="2026" itemValue="2026" /><f:selectItem itemLabel="2025" itemValue="2025" />
           </p:selectOneMenu></div>
         <div class="fld"><p:outputLabel for="f-st" value="Status" />
           <p:selectOneMenu id="f-st"><f:selectItem itemLabel="#{msg['common.all']}" itemValue="" /></p:selectOneMenu></div>
@@ -47,7 +47,7 @@
     </h:form>
 
     <h:panelGroup id="wyniki" layout="block" styleClass="col gap12">
-      <h:panelGroup rendered="#{wyszukiwarka.emptyResult}">
+      <h:panelGroup rendered="#{wyszukiwarka.searched and wyszukiwarka.emptyResult}">
         <section class="tw">
           <tk:empty icon="search" title="Brak wyników dla „#{wyszukiwarka.q}”"
                     text="Sprawdź pisownię sygnatury (np. „Ts 312/26”) albo usuń filtr roku i statusu.">
@@ -55,7 +55,7 @@
           </tk:empty>
         </section>
       </h:panelGroup>
-      <h:panelGroup rendered="#{not wyszukiwarka.emptyResult}">
+      <h:panelGroup rendered="#{wyszukiwarka.searched and not wyszukiwarka.emptyResult}">
         <p:tabView id="tabs" activeIndex="#{wyszukiwarka.tab}" dynamic="false">
           <p:tab title="Sprawy #{wyszukiwarka.cases.size()}">
             <section aria-label="Wyniki: sprawy" class="col gap12">
@@ -67,7 +67,7 @@
           </p:tab>
           <p:tab title="Dokumenty #{wyszukiwarka.hits.size()}">
             <section class="tw" aria-label="Wyniki: dokumenty">
-              <div class="tt"><b>#{wyszukiwarka.hits.size()} trafienia w 3 sprawach</b><span class="mut">dla „#{wyszukiwarka.q}” · pogrupowane według dokumentu</span><span class="sp"></span><button type="button" class="btn s">#{msg['common.exportCsv']}</button></div>
+              <div class="tt"><b>#{wyszukiwarka.hits.size()} trafień w #{wyszukiwarka.hitCases} sprawach</b><span class="mut">dla „#{wyszukiwarka.q}” · pogrupowane według dokumentu</span><span class="sp"></span><button type="button" class="btn s">#{msg['common.exportCsv']}</button></div>
               <ul class="list-plain">
                 <ui:repeat value="#{wyszukiwarka.hits}" var="hit">
                   <li class="hit">

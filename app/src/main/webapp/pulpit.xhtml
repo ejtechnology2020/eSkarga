@@ -16,10 +16,10 @@
   <ui:define name="actions">
     <h:panelGroup rendered="#{pulpit.isRole('ref')}">
       <h:link outcome="/rejestry/ekspedycja" styleClass="btn" value="Zarejestruj zwrotkę" />
-      <h:link outcome="/sprawy/kolejka" styleClass="btn p" value="Otwórz kolejkę pism · 4" />
+      <h:link outcome="/sprawy/kolejka" styleClass="btn p" value="Otwórz kolejkę pism · #{pulpit.queueSize}" />
     </h:panelGroup>
     <h:panelGroup rendered="#{pulpit.judgeTeam}">
-      <h:link outcome="/sprawy/repertorium" styleClass="btn" value="Sprawy sędziego · 2" />
+      <h:link outcome="/sprawy/repertorium" styleClass="btn" value="Sprawy sędziego · #{pulpit.judgeCases}" />
       <h:link outcome="/akta/podglad" styleClass="btn p" value="Otwórz akta Ts 312/26"><f:param name="sygnatura" value="Ts 312/26" /></h:link>
     </h:panelGroup>
     <h:panelGroup rendered="#{pulpit.isRole('pre')}">
@@ -86,7 +86,7 @@
               <p:column headerText="Sygnatura" sortBy="#{t.sprawa.sygnaturaText()}" filterBy="#{t.sprawa.sygnaturaText()}" filterMatchMode="contains">
                 <h:panelGroup rendered="#{not empty t.sprawa}">
                   <tk:sig value="#{t.sprawa.sygnatura}" />
-                  <h:panelGroup rendered="#{not t.sprawa.readOnly and t.sprawa.flagi.size() gt 0}"><br /><tk:flags value="#{t.sprawa.flagi}" /></h:panelGroup>
+                  <h:panelGroup rendered="#{not t.sprawa.isReadOnly() and t.sprawa.flagi.size() gt 0}"><br /><tk:flags value="#{t.sprawa.flagi}" /></h:panelGroup>
                 </h:panelGroup>
                 <h:outputText rendered="#{empty t.sprawa}" styleClass="mut" value="—" />
               </p:column>
@@ -117,7 +117,7 @@
       <aside class="side" aria-label="Powiadomienia i skróty">
         <h:panelGroup rendered="#{pulpit.isRole('ref') or pulpit.isRole('bp') or pulpit.isRole('kie')}">
           <section class="card" aria-labelledby="h-pow">
-            <div class="card-h"><h2 id="h-pow">Nowe w moich sprawach</h2><a href="#">Wszystkie (3)</a></div>
+            <div class="card-h"><h2 id="h-pow">Nowe w moich sprawach</h2><h:link outcome="/admin/dziennik" value="#{msg['common.all']} (#{pulpit.notifications.size()})" rendered="#{pulpit.isRole('adm') or pulpit.isRole('kie')}" /><h:outputText value="#{msg['common.all']} (#{pulpit.notifications.size()})" styleClass="mut" rendered="#{not (pulpit.isRole('adm') or pulpit.isRole('kie'))}" /></div>
             <tk:timeline value="#{pulpit.notifications}" />
           </section>
           <section class="card" aria-labelledby="h-skr">

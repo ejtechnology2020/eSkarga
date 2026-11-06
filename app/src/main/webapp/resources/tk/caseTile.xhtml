@@ -31,7 +31,7 @@
         </h:panelGroup>
         <dt>Sędzia</dt><dd>#{empty cc.attrs.value.sedzia ? 'oczekuje na wyznaczenie' : cc.attrs.value.sedzia}</dd>
       </dl>
-      <h:panelGroup rendered="#{not empty cc.attrs.value.flagi and cc.attrs.value.flagi.size() gt 0 and not cc.attrs.value.readOnly}" layout="block" styleClass="row">
+      <h:panelGroup rendered="#{not empty cc.attrs.value.flagi and cc.attrs.value.flagi.size() gt 0 and not cc.attrs.value.isReadOnly()}" layout="block" styleClass="row">
         <tk:flags value="#{cc.attrs.value.flagi}" />
       </h:panelGroup>
     </article>

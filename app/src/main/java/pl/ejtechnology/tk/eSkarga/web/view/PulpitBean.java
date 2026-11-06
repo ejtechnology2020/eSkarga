@@ -94,6 +94,17 @@ public class PulpitBean implements Serializable {
         return role;
     }
 
+    /** Liczba pism w kolejce kwalifikacji (przycisk „Otwórz kolejkę pism”) – z danych, nie z makiety. */
+    public int getQueueSize() {
+        return data.queue().size();
+    }
+
+    /** Sprawy, w których zalogowany jest sędzią (przycisk „Sprawy sędziego”). */
+    public long getJudgeCases() {
+        String login = currentUser.getLogin();
+        return data.cases().stream().filter(c -> login != null && login.equals(c.sedzia())).count();
+    }
+
     public boolean isRole(String code) {
         return role == AppRole.fromShortCode(code);
     }
