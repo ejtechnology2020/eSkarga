@@ -42,6 +42,8 @@ class EngineAuthorizationsTest {
         try {
             assertThat(engine.getAuthorizationService().isUserAuthorized("admin.wszystko", List.of(EngineAuthorizations.APP_GROUP), Permissions.CREATE, Resources.PROCESS_INSTANCE)).isTrue();
             assertThat(engine.getAuthorizationService().isUserAuthorized("ktos", List.of(), Permissions.CREATE, Resources.PROCESS_INSTANCE)).isFalse();
+            // wyliczenie tabeli decyzyjnej (wymogi formalne w aktach) – CREATE_INSTANCE na definicji decyzji
+            assertThat(engine.getAuthorizationService().isUserAuthorized("admin.wszystko", List.of(EngineAuthorizations.APP_GROUP), Permissions.CREATE_INSTANCE, Resources.DECISION_DEFINITION)).isTrue();
         } finally {
             engine.getIdentityService().clearAuthentication();
         }

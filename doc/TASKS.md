@@ -669,4 +669,7 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
 - 06.11.2026 – widżet PDF: przełącznik dokumentów pisma (chipy `.pdfv-doc` z `docs`/`docBase` w `tk:pdfViewer`; kolejka S-06, dziennik S-04,
   założenie S-07 – kilka skanów jednego wpływu, TIFF jako plik do pobrania), dokument otwierany w tym samym widżecie (`open()`),
   dopasowanie automatyczne ≤ 100 % (ręczne powiększenie do 300 %, „Dopasuj” wraca do auto). Testy `widget`: przełączanie i limit 100 %.
+- 06.11.2026 – S-14: „does not have CREATE_INSTANCE permission on resource Dec_WymogiFormalne (DecisionDefinition)” – grupa aplikacji
+  w Operatonie nie miała uprawnień do tabel decyzyjnych DMN; `EngineAuthorizations` nadaje też DECISION_DEFINITION
+  i DECISION_REQUIREMENTS_DEFINITION (uzupełniane przy wdrożeniu, idempotentnie). Kod RTS-500 z logu potwierdzony w praktyce.
 

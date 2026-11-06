@@ -22,8 +22,10 @@ public final class EngineAuthorizations {
     private static final Logger LOG = Logger.getLogger(EngineAuthorizations.class.getName());
     /** Grupa silnika nadawana każdemu uwierzytelnionemu użytkownikowi eSkargi (obok grup kandydatów zadań). */
     public static final String APP_GROUP = "tk-eskarga";
+    // także tabele decyzyjne DMN (Dec_WymogiFormalne w aktach S-14 – CREATE_INSTANCE na DECISION_DEFINITION) i wymagania decyzyjne
     static final List<Resource> RESOURCES = List.of(Resources.PROCESS_DEFINITION, Resources.PROCESS_INSTANCE, Resources.TASK,
-            Resources.DEPLOYMENT, Resources.HISTORIC_PROCESS_INSTANCE, Resources.HISTORIC_TASK, Resources.FILTER);
+            Resources.DEPLOYMENT, Resources.HISTORIC_PROCESS_INSTANCE, Resources.HISTORIC_TASK, Resources.FILTER,
+            Resources.DECISION_DEFINITION, Resources.DECISION_REQUIREMENTS_DEFINITION);
 
     private EngineAuthorizations() {
     }
