@@ -37,15 +37,32 @@
     root.querySelector('.pdfv-count').textContent = String(pdf.numPages);
     const rendered = new Map();
 
+    // Skala początkowa: strona dopasowana do szerokości panelu (brief §4.3 – podgląd w panelu kolejki, dziennika, akt),
+    // dopóki użytkownik nie zmieni powiększenia ręcznie; po zmianie rozmiaru panelu (splitter) dopasowanie liczone ponownie.
+    const base = (await pdf.getPage(1)).getViewport({ scale: 1.33 });
+    let autoFit = true;
+    function fitScale() {
+      const w = scroll.clientWidth - 2 * (parseFloat(getComputedStyle(scroll).paddingLeft) || 0) - 2;
+      return w > 100 ? Math.max(0.5, Math.min(3, w / base.width)) : 1.0;
+    }
+    scale = fitScale();
+    root.querySelector('.pdfv-zoom').textContent = Math.round(scale * 100) + ' %';
+
     const holders = [];
     for (let i = 1; i <= pdf.numPages; i++) {
       const holder = document.createElement('div');
       holder.className = 'pdfv-pg';
       holder.dataset.page = String(i);
       holder.setAttribute('aria-label', 'Karta ' + (pageFrom + i - 1) + ', strona ' + i);
-      holder.style.minHeight = '400px';
+      holder.style.minHeight = Math.floor(base.height * scale) + 'px';
       pagesEl.appendChild(holder);
       holders.push(holder);
+    }
+    if (window.ResizeObserver) {
+      let ostatnia = scroll.clientWidth;
+      new ResizeObserver(function () {
+        if (autoFit && Math.abs(scroll.clientWidth - ostatnia) > 8) { ostatnia = scroll.clientWidth; setScale(fitScale()); }
+      }).observe(scroll);
     }
 
     async function render(i, force) {
@@ -133,9 +150,9 @@
       const btn = ev.target.closest('[data-act]');
       if (!btn) { return; }
       switch (btn.dataset.act) {
-        case 'zoom-in': setScale(scale + SCALE_STEP); break;
-        case 'zoom-out': setScale(scale - SCALE_STEP); break;
-        case 'fit': setScale((scroll.clientWidth - 32) / (holders[0].firstChild ? holders[0].firstChild.width / scale : 800)); break;
+        case 'zoom-in': autoFit = false; setScale(scale + SCALE_STEP); break;
+        case 'zoom-out': autoFit = false; setScale(scale - SCALE_STEP); break;
+        case 'fit': autoFit = true; setScale(fitScale()); break;
         case 'prev': goTo(current - 1); break;
         case 'next': goTo(current + 1); break;
         case 'print': window.open(root.dataset.src, '_blank', 'noopener'); break;
@@ -151,8 +168,8 @@
       if (ev.target.tagName === 'INPUT') { return; }
       if (ev.key === 'j' || ev.key === 'J') { goTo(current + 1); ev.preventDefault(); }
       if (ev.key === 'k' || ev.key === 'K') { goTo(current - 1); ev.preventDefault(); }
-      if (ev.key === '+' || ev.key === '=') { setScale(scale + SCALE_STEP); ev.preventDefault(); }
-      if (ev.key === '-') { setScale(scale - SCALE_STEP); ev.preventDefault(); }
+      if (ev.key === '+' || ev.key === '=') { autoFit = false; setScale(scale + SCALE_STEP); ev.preventDefault(); }
+      if (ev.key === '-') { autoFit = false; setScale(scale - SCALE_STEP); ev.preventDefault(); }
       if (ev.key === '/') { root.querySelector('.pdfv-q').focus(); ev.preventDefault(); }
     });
     if (root.dataset.canHighlight === 'true') {

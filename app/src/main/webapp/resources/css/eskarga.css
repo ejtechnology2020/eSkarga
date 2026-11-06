@@ -597,7 +597,8 @@ mark{background:#FFE9A8;color:var(--ink);padding:0 2px}
 .term .b{font-weight:700}
 
 /* Widżet PDF (T-034) */
-.pdfv { display: flex; flex-direction: column; min-height: 420px; border: 1px solid var(--line, #d9dde3); border-radius: 6px; background: #f3f4f6; }
+.pdfv { display: flex; flex-direction: column; width: 100%; box-sizing: border-box; min-height: 420px; height: clamp(420px, calc(100vh - 230px), 1100px);
+  border: 1px solid var(--line, #d9dde3); border-radius: 6px; background: #f3f4f6; } /* stała wysokość: strony przewijane w widżecie, nie cała strona; szerokość panelu (align-items:center w .viewer) */
 .pdfv-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 10px; background: #fff; border-bottom: 1px solid var(--line, #d9dde3); }
 .pdfv-num { width: 3.5em; }
 .pdfv-scroll { flex: 1; overflow: auto; padding: 12px; outline-offset: -2px; }

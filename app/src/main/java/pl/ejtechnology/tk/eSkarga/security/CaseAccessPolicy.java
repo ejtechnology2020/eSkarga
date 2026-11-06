@@ -36,8 +36,10 @@ public final class CaseAccessPolicy {
     /** Czy użytkownik może czytać akta jawne sprawy. */
     public static boolean canReadCase(String userId, Set<AppRole> roles, CaseAssignment assignment) {
         Objects.requireNonNull(roles);
-        if (roles.contains(AppRole.TK_ADMIN)) {
-            return false; // administrator techniczny nie czyta akt (macierz ról §9.2)
+        // administrator techniczny nie czyta akt (macierz ról §9.2) – ale rola TK_ADMIN nie odbiera dostępu osobie, która ma
+        // z ID-users także rolę merytoryczną (np. referent + administrator na jednym koncie); liczą się pozostałe role
+        if (roles.contains(AppRole.TK_ADMIN) && roles.stream().allMatch(r -> r == AppRole.TK_ADMIN)) {
+            return false;
         }
         if (roles.contains(AppRole.TK_REFERENT) || roles.contains(AppRole.TK_KIEROWNIK) || roles.contains(AppRole.TK_PREZES)
                 || roles.contains(AppRole.TK_ARCHIWISTA)) {

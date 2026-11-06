@@ -37,6 +37,11 @@ class CaseAccessPolicyTest {
     @Test
     void technicalAdministratorDoesNotReadCaseFiles() {
         assertThat(CaseAccessPolicy.canReadCase("aadmin", Set.of(AppRole.TK_ADMIN), ts312)).isFalse();
+        // konto z rolą administratora i rolami merytorycznymi z ID-users czyta akta według tych ról (nie odmowa dla wszystkich)
+        assertThat(CaseAccessPolicy.canReadCase("admin.wszystko", Set.of(AppRole.TK_ADMIN, AppRole.TK_REFERENT), ts312)).isTrue();
+        assertThat(CaseAccessPolicy.canReadCase("admin.wszystko", Set.of(AppRole.TK_ADMIN, AppRole.TK_ASYSTENT), ts312)).isFalse();
+        assertThat(CaseAccessPolicy.canReadCase("asia", Set.of(AppRole.TK_ADMIN, AppRole.TK_ASYSTENT),
+                new CaseAccessPolicy.CaseAssignment("sedzia1", Set.of("asia"), Set.of()))).isTrue();
     }
 
     @Test

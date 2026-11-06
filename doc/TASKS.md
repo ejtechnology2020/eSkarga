@@ -651,3 +651,7 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   w trybie OIDC (`ui-tests/tests/e2e`, `infra\windows\testy-gui.cmd`) – do uruchomienia na dev przez użytkownika. Widżet PDF: po podmianie
   AJAX nie montował się (`pfAjaxComplete` to zdarzenie jQuery, nie DOM) – MutationObserver + jQuery; test w Chromium bez WildFly
   (`ui-tests` projekt `widget`, zadanie CI `widget`). ADR 0020 (dopisek).
+- 06.11.2026 – po założeniu sprawy „Brak sprawy Ts 1/26 albo brak dostępu” i puste repertorium: `CaseAccessPolicy.canReadCase` odmawiał każdemu
+  z rolą `TK_ADMIN` w zbiorze ról (konto `admin.wszystko` ma wszystkie role) – teraz `TK_ADMIN` wyłącza dostęp tylko jako jedyna rola.
+  Widżet PDF: skala początkowa dopasowana do szerokości panelu (ResizeObserver po zmianie rozmiaru, przycisk „Dopasuj”), stała wysokość
+  widżetu (strony przewijane w nim, nie na całej stronie), `width:100%` w `.viewer`; test `widget` sprawdza szerokość i wysokość.

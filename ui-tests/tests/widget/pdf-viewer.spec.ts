@@ -41,6 +41,10 @@ async function serwer(): Promise<{ url: string; zamknij: () => void }> {
     const url = new URL(req.url!, 'http://x');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', csp);
+    if (url.pathname === '/eskarga/resources/css/eskarga.css') {
+      res.writeHead(200, { 'Content-Type': 'text/css' });
+      return res.end(readFileSync(resolve(APP, 'resources/css/eskarga.css')));
+    }
     if (url.pathname === '/eskarga/resources/js/pdf-viewer.js') {
       res.writeHead(200, { 'Content-Type': 'text/javascript' });
       return res.end(readFileSync(resolve(APP, 'resources/js/pdf-viewer.js')));
@@ -66,7 +70,7 @@ async function serwer(): Promise<{ url: string; zamknij: () => void }> {
       const body = ajax ? '<div id="cel"></div>' : widget;
       const wstaw = ajax ? `<script nonce="abc123">setTimeout(function () { document.getElementById('cel').innerHTML = ${JSON.stringify(widget)}; }, 300);</script>` : '';
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(`<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>widżet PDF</title></head><body>${body}<script src="/eskarga/resources/js/pdf-viewer.js"></script>${wstaw}</body></html>`);
+      return res.end(`<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>widżet PDF</title><link rel="stylesheet" href="/eskarga/resources/css/eskarga.css"></head><body><div class="viewer" style="width: 720px">${body}</div><script src="/eskarga/resources/js/pdf-viewer.js"></script>${wstaw}</body></html>`);
     }
     res.writeHead(404);
     res.end();
@@ -90,6 +94,18 @@ async function sprawdzRender(page: Page): Promise<void> {
     return n;
   });
   expect(ciemne, 'strona narysowana na canvas (ciemne piksele tekstu)').toBeGreaterThan(100);
+  // dopasowanie do panelu: strona wypełnia szerokość obszaru przewijania (nie wychodzi poza panel, nie jest miniaturą),
+  // a widżet ma ograniczoną wysokość – strony przewijają się w nim, nie rozciągają całej strony
+  const miary = await page.evaluate(() => {
+    const c = document.querySelector<HTMLCanvasElement>('.pdfv-pg canvas')!;
+    const s = document.querySelector<HTMLElement>('.pdfv-scroll')!;
+    const w = document.querySelector<HTMLElement>('.pdfv')!;
+    return { canvas: c.getBoundingClientRect().width, scroll: s.clientWidth, widget: w.getBoundingClientRect().height, okno: window.innerHeight, przewija: s.scrollHeight > s.clientHeight };
+  });
+  expect(miary.canvas, 'strona nie szersza niż panel').toBeLessThanOrEqual(miary.scroll);
+  expect(miary.canvas, 'strona dopasowana do szerokości panelu').toBeGreaterThan(miary.scroll * 0.85);
+  expect(miary.widget, 'widżet nie wyższy niż okno').toBeLessThanOrEqual(miary.okno);
+  expect(miary.przewija, 'strona A4 przewija się w widżecie').toBeTruthy();
   expect(bledy, 'bez błędów CSP/MIME w konsoli').toEqual([]);
 }
 
