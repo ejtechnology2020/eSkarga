@@ -252,12 +252,26 @@ public class CaseFileService {
     public Optional<CaseFile> byDocket(DocketNumber docket) {
         return em.createQuery("select c from CaseFile c where c.docketSymbol = :s and c.docketNumber = :n and c.docketYear = :y", CaseFile.class)
                 .setParameter("s", docket.symbol().code()).setParameter("n", docket.number()).setParameter("y", docket.year())
-                .getResultStream().findFirst();
+                .getResultStream().findFirst().map(CaseFileService::withVersions);
     }
 
     public List<CaseFile> inDocket(DocketSymbol symbol, int year) {
-        return em.createQuery("select c from CaseFile c where c.docketSymbol = :s and c.docketYear = :y order by c.docketNumber desc", CaseFile.class)
-                .setParameter("s", symbol.code()).setParameter("y", year).getResultList();
+        return withVersions(em.createQuery("select c from CaseFile c where c.docketSymbol = :s and c.docketYear = :y order by c.docketNumber desc", CaseFile.class)
+                .setParameter("s", symbol.code()).setParameter("y", year).getResultList());
+    }
+
+    /**
+     * Wersje wpisu ładowane w transakcji usługi: wołający (beany widoków, serwlety) czyta {@link CaseFile#current()} już po jej
+     * zakończeniu, a leniwa kolekcja bez sesji kończyła się {@code LazyInitializationException} (repertorium S-08, akta S-14).
+     */
+    private static CaseFile withVersions(CaseFile cf) {
+        org.hibernate.Hibernate.initialize(cf.getVersions());
+        return cf;
+    }
+
+    private static List<CaseFile> withVersions(List<CaseFile> list) {
+        list.forEach(CaseFileService::withVersions);
+        return list;
     }
 
     public List<CaseDocument> documents(CaseFile cf) {
@@ -286,15 +300,15 @@ public class CaseFileService {
             return byDocket(dn).map(List::of).orElse(List.of());
         } catch (IllegalArgumentException notADocket) {
             String like = "%" + q.toLowerCase() + "%";
-            return em.createQuery("select distinct c from CaseFile c left join Party p on p.caseFile = c left join CaseFileVersion v on v.caseFile = c "
+            return withVersions(em.createQuery("select distinct c from CaseFile c left join Party p on p.caseFile = c left join CaseFileVersion v on v.caseFile = c "
                             + "where lower(p.displayName) like :q or lower(v.reviewSubject) like :q or lower(v.reviewStandard) like :q order by c.id desc", CaseFile.class)
-                    .setParameter("q", like).setMaxResults(limit).getResultList();
+                    .setParameter("q", like).setMaxResults(limit).getResultList());
         }
     }
 
     /** Podpowiedzi powiązań (FR-05): ten sam skarżący/pełnomocnik albo przepis. */
     public List<CaseFile> related(String partyName, String reviewAct) {
-        return em.createQuery("select distinct p.caseFile from Party p where lower(p.displayName) = lower(:n)", CaseFile.class)
-                .setParameter("n", partyName).getResultList();
+        return withVersions(em.createQuery("select distinct p.caseFile from Party p where lower(p.displayName) = lower(:n)", CaseFile.class)
+                .setParameter("n", partyName).getResultList());
     }
 }

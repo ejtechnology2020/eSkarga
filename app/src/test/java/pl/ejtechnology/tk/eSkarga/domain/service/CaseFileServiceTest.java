@@ -54,6 +54,22 @@ class CaseFileServiceTest extends ServiceTestSupport {
         assertThat(engine.getRuntimeService().getVariable(pi.getId(), ProcessVariables.SYGNATURA)).isEqualTo(cf.getDocket().format());
     }
 
+    /** S-08/S-14: beany widoków czytają wersje wpisu po zakończeniu transakcji usługi – wersje muszą być załadowane w jej obrębie. */
+    @Test
+    void sprawyZRepertoriumMajaWersjeDostepnePoZakonczeniuTransakcji() {
+        long letterId = tx(s -> registerLetter(s)).getId();
+        CaseFile created = tx(s -> createCase(s, letterId));
+
+        var inDocket = tx(s -> s.cases.inDocket(DocketSymbol.TS, 2026));
+        assertThat(inDocket).isNotEmpty();
+        assertThat(inDocket.get(0).current().getStatus()).isEqualTo(CaseStatus.ZAREJESTROWANA);   // poza transakcją, bez sesji
+
+        CaseFile byDocket = tx(s -> s.cases.byDocket(created.getDocket()).orElseThrow());
+        assertThat(byDocket.current().getVersion()).isEqualTo(1);
+        java.util.List<CaseFile> found = tx(s -> s.cases.search(created.getDocket().format(), 10));
+        assertThat(found).singleElement().satisfies(c -> assertThat(c.current()).isNotNull());
+    }
+
     @Test
     void bladStartuProcesuWycofujeWpisINieZuzywaNumeru() {
         long letterId = tx(s -> registerLetter(s)).getId();

@@ -40,9 +40,11 @@ p,li,dd{max-width:80ch}
 .e-brand{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:700;font-size:16px;color:var(--ink);text-decoration:none}
 .e-brand .logo{width:24px;height:24px;border-radius:6px;background:var(--acc)}
 .e-qs{display:flex;align-items:center;gap:6px}
-.e-qs input{min-height:44px;width:300px;padding:0 14px 0 40px;border:2px solid var(--edge);border-radius:8px;background:#fff}
+/* .e-qs .wrap input (nie .e-qs input): motyw saga ma regułę body input:not(…) o wyższej specyficzności, która nadpisywała lewy odstęp
+   na 8px – ikona lupy (absolute, left 12px) nachodziła na podpowiedź */
+.e-qs .wrap input{min-height:44px;width:300px;padding:0 14px 0 40px;border:2px solid var(--edge);border-radius:8px;background:#fff;font-size:14px}
 .e-qs .wrap{position:relative;display:flex;align-items:center}
-.e-qs .wrap .ico{position:absolute;left:12px;color:var(--mut)}
+.e-qs .wrap .ico{position:absolute;left:12px;color:var(--mut);pointer-events:none}
 .e-user{display:flex;align-items:center;gap:10px}
 .e-user .who{display:flex;flex-direction:column;line-height:1.3}
 .e-user .who small{color:var(--mut);font-size:13px}
@@ -362,7 +364,7 @@ select.in{appearance:auto}
   .e-navwrap{flex-basis:76px}
   .e-nav .grp-h,.e-nav ul,.e-nav .foot{display:none}
   .e-nav a.gi{display:flex}
-  .e-qs input{width:220px}
+  .e-qs .wrap input{width:260px;padding-right:8px}
   .e-main{padding:12px 16px 0}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

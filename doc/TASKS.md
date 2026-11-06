@@ -655,3 +655,7 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   z rolą `TK_ADMIN` w zbiorze ról (konto `admin.wszystko` ma wszystkie role) – teraz `TK_ADMIN` wyłącza dostęp tylko jako jedyna rola.
   Widżet PDF: skala początkowa dopasowana do szerokości panelu (ResizeObserver po zmianie rozmiaru, przycisk „Dopasuj”), stała wysokość
   widżetu (strony przewijane w nim, nie na całej stronie), `width:100%` w `.viewer`; test `widget` sprawdza szerokość i wysokość.
+- 06.11.2026 – repertorium dla konta bez roli administratora: `LazyInitializationException` na `CaseFile.versions` w `JpaViewData.summary`
+  (encje z EJB czytane po zamknięciu transakcji) – wersje inicjalizowane w `CaseFileService` (`byDocket`, `inDocket`, `search`, `related`),
+  `JpaViewData` z `@Transactional`; test `sprawyZRepertoriumMajaWersjeDostepnePoZakonczeniuTransakcji`. Szybkie wyszukiwanie: ikona lupy
+  nachodziła na podpowiedź – reguła motywu saga `body input:not(…)` nadpisywała odstęp (`.e-qs .wrap input`, pomiar w Chromium).

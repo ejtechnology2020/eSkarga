@@ -100,6 +100,8 @@ import pl.ejtechnology.tk.eSkarga.web.model.UserRow;
  */
 @Dependent
 @Typed(JpaViewData.class)   // ViewData dostarcza tylko producent (ViewDataProducer)
+@jakarta.transaction.Transactional   // jedna transakcja na wywołanie: encje z usług EJB pozostają zarządzane, więc leniwe relacje
+                                     // (wersje wpisu, dokumenty) czytane przy budowie modeli widoków nie kończą się LazyInitializationException
 public class JpaViewData implements ViewData {
 
     @Inject CaseFileService cases;
