@@ -477,6 +477,16 @@ public class DemoDataset implements Serializable, pl.ejtechnology.tk.eSkarga.web
                 new ProcessStep("Nadanie dalszego biegu albo odmowa", null, null, false, false, null, 5));
     }
 
+    public List<pl.ejtechnology.tk.eSkarga.web.model.NoteRow> notes(String sygnatura) {
+        return List.of(
+                new pl.ejtechnology.tk.eSkarga.web.model.NoteRow(1L, "Notatka asystenta do sędziego", "Pełnomocnictwo szczególne (k. 2) nie obejmuje sporządzenia skargi – proponuję wezwanie do usunięcia braku.", "Tomasz Próbny", dt(2026, 10, 31, 14, 5)),
+                new pl.ejtechnology.tk.eSkarga.web.model.NoteRow(2L, "Zaznaczenia w skardze", "k. 1, k. 3, k. 9 – wzorzec kontroli wskazany tylko ogólnie.", "Tomasz Próbny", dt(2026, 10, 27, 11, 50)));
+    }
+
+    public boolean canReadNotes(String sygnatura) {
+        return true;   // w demo zakładka pokazuje dane przykładowe; dostęp w trybie OIDC rozstrzyga NoteService (FR-24)
+    }
+
     public List<ChecklistItem> checklist(String sygnatura) {
         return List.of(
                 new ChecklistItem("Sporządzenie przez adwokata lub radcę prawnego", "art. 44 ust. 1", ChecklistItem.State.SPELNIONY, "adw. Anna Testowa", false, "k. 1"),

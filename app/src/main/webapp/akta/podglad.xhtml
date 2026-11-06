@@ -80,8 +80,8 @@
         <section class="card np fx1" aria-label="Spis akt">
           <div class="tabs" role="tablist" aria-label="Rodzaj akt" style="padding: 0 10px;">
             <p:commandButton value="Akta jawne · #{akta.jawne}" action="#{akta.setNotatki(false)}" update="akta-body" styleClass="q" pt:role="tab" pt:aria-selected="#{not akta.notatki}" process="@this" />
-            <p:commandButton value="Notatki wewnętrzne · 2" action="#{akta.setNotatki(true)}" update="akta-body" styleClass="q tab-note" pt:role="tab" pt:aria-selected="#{akta.notatki}" process="@this"
-                             disabled="#{not akta.zespolSedziego}" title="#{akta.zespolSedziego ? '' : 'Dostępne dla zespołu sędziego'}" rendered="#{not akta.anonim}" />
+            <p:commandButton value="Notatki wewnętrzne · #{akta.notatkiLista.size()}" action="#{akta.setNotatki(true)}" update="akta-body" styleClass="q tab-note" pt:role="tab" pt:aria-selected="#{akta.notatki}" process="@this"
+                             disabled="#{not akta.notatkiDostepne}" title="#{akta.notatkiDostepne ? '' : 'Dostępne dla zespołu sędziego'}" rendered="#{not akta.anonim}" />
           </div>
           <h:panelGroup rendered="#{not akta.notatki}">
             <div class="row mut jbetween" style="padding: 8px 14px;"><span>Tom I · k. 1–29</span><span><span class="kbd">J</span>/<span class="kbd">K</span> dokument</span></div>
@@ -100,11 +100,33 @@
               </ui:repeat>
             </ol>
           </h:panelGroup>
-          <h:panelGroup rendered="#{akta.notatki}" layout="block" style="padding: 12px;">
+          <h:panelGroup id="notatki" rendered="#{akta.notatki}" layout="block" style="padding: 12px;">
+            <!-- FR-24: notatki zespołu sędziego z NoteService (poza zespołem usługa zwraca pustą listę); nigdy w aktach jawnych ani w eksporcie -->
             <ol class="tl doc" aria-label="Notatki wewnętrzne">
-              <li><span class="when">31.10.2026</span><span class="rail" aria-hidden="true"><span class="dot-note"></span></span><span class="what"><a class="case link" href="#"><span class="h"><b>Notatka asystenta do sędziego</b><b>N-1</b></span><span class="mut">notatka wewnętrzna · Tomasz Próbny · nieprzeczytana</span></a></span></li>
-              <li><span class="when">27.10.2026</span><span class="rail" aria-hidden="true"><span class="dot-note"></span></span><span class="what"><a class="case link" href="#"><span class="h"><b>Zaznaczenia w skardze</b><b>3</b></span><span class="mut">k. 1, k. 3, k. 9 · widoczne tylko dla zespołu sędziego</span></a></span></li>
+              <ui:repeat value="#{akta.notatkiLista}" var="n" varStatus="ns">
+                <li>
+                  <span class="when">#{fmt.date(n.data.toLocalDate())}</span>
+                  <span class="rail" aria-hidden="true"><span class="dot-note"></span></span>
+                  <span class="what">
+                    <span class="case link"><span class="h"><b>#{n.tytul}</b><b>N-#{akta.notatkiLista.size() - ns.index}</b></span>
+                      <span class="mut">notatka wewnętrzna · #{n.autor} · #{fmt.dateTime(n.data)}</span></span>
+                    <p class="note-body">#{n.tresc}</p>
+                  </span>
+                </li>
+              </ui:repeat>
             </ol>
+            <p class="mut" jsf:rendered="#{empty akta.notatkiLista}">Brak notatek wewnętrznych w tej sprawie.</p>
+            <div class="fld" jsf:rendered="#{not akta.readOnly}">
+              <p:outputLabel for="nt-tytul" value="Tytuł notatki" />
+              <p:inputText id="nt-tytul" value="#{akta.nowaNotatkaTytul}" maxlength="300" />
+            </div>
+            <div class="fld" jsf:rendered="#{not akta.readOnly}">
+              <p:outputLabel for="nt-tresc" value="Treść" />
+              <p:inputTextarea id="nt-tresc" value="#{akta.nowaNotatkaTresc}" rows="3" />
+            </div>
+            <div class="row" jsf:rendered="#{not akta.readOnly}">
+              <p:commandButton id="nt-dodaj" value="Dodaj notatkę" action="#{akta.dodajNotatke}" process="@this nt-tytul nt-tresc" update=":af:akta-body :growl" styleClass="p" />
+            </div>
             <p class="hint">Notatki wewnętrzne nie trafiają do akt jawnych ani do eksportu (FR-24).</p>
           </h:panelGroup>
         </section>

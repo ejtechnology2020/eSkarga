@@ -60,6 +60,8 @@ public class AktaBean implements Serializable {
     private boolean split;
     private int panelTab;
     private boolean notatki;
+    private String nowaNotatkaTytul;
+    private String nowaNotatkaTresc;
 
     @PostConstruct
     void init() {
@@ -214,6 +216,44 @@ public class AktaBean implements Serializable {
     public List<ChecklistItem> getLista() { return data.checklist(sygnatura); }
 
     public java.util.Map<String, String> getUwagi() { return uwagi; }
+
+    /** Notatki wewnętrzne sprawy (FR-24) – poza zespołem sędziego pusta lista. */
+    public List<pl.ejtechnology.tk.eSkarga.web.model.NoteRow> getNotatkiLista() { return data.notes(sygnatura); }
+
+    /** Zakładka „Notatki wewnętrzne” aktywna tylko dla zespołu sędziego sprawy (w demo – w widoku asystenta/sędziego). */
+    public boolean isNotatkiDostepne() {
+        return settings.isDemo() ? isZespolSedziego() : data.canReadNotes(sygnatura);
+    }
+
+    public String getNowaNotatkaTytul() { return nowaNotatkaTytul; }
+    public void setNowaNotatkaTytul(String v) { nowaNotatkaTytul = v; }
+    public String getNowaNotatkaTresc() { return nowaNotatkaTresc; }
+    public void setNowaNotatkaTresc(String v) { nowaNotatkaTresc = v; }
+
+    /** FR-24: nowa notatka zespołu sędziego – zapis w usłudze notatek (audyt), nigdy w aktach jawnych ani w eksporcie. */
+    public void dodajNotatke() {
+        FacesContext fc = FacesContext.getCurrentInstance();
+        if (settings.isDemo()) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Tryb demo: notatka nie jest zapisywana.", null));
+            return;
+        }
+        String tytul = nowaNotatkaTytul == null ? "" : nowaNotatkaTytul.trim();
+        String tresc = nowaNotatkaTresc == null ? "" : nowaNotatkaTresc.trim();
+        if (tytul.isEmpty() || tresc.isEmpty()) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_WARN, "Podaj tytuł i treść notatki.", null));
+            return;
+        }
+        try {
+            var cf = cases.byDocket(pl.ejtechnology.tk.eSkarga.domain.DocketNumber.parse(sygnatura)).orElseThrow(() -> new IllegalArgumentException("Brak sprawy " + sygnatura));
+            notes.addNote(cf.getId(), tytul, tresc, currentUser.getLogin(), currentUser.getRoles());
+            nowaNotatkaTytul = null;
+            nowaNotatkaTresc = null;
+            notatki = true;
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Dodano notatkę wewnętrzną.", null));
+        } catch (RuntimeException e) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się dodać notatki.", e.getMessage()));
+        }
+    }
 
     /** UC-06: ocena wymogu (SPELNIONY / BRAK / DO_SPRAWDZENIA) z uwagą – zapis w usłudze listy kontrolnej, audyt. */
     public void ocen(String kod, String stan) {

@@ -225,6 +225,7 @@ select.in{appearance:auto}
 .in.bad{border-color:var(--err);background:#FFFBFA}
 .in[readonly]{background:var(--soft);border-style:dashed}
 .hint{font-size:13px;color:var(--mut)}
+.tl.doc .note-body{margin:4px 0 0;font-size:13px;white-space:pre-wrap;color:var(--ink)}
 .ferr{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--err-ink)}
 .chkl{display:flex;align-items:center;gap:10px;min-height:44px}
 .chkl input{width:22px;height:22px;accent-color:var(--acc);flex:none}

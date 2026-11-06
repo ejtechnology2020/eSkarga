@@ -119,6 +119,7 @@ public class JpaViewData implements ViewData {
     @Inject TemplateService templates;
     @Inject DictionaryService dictionaries;
     @Inject pl.ejtechnology.tk.eSkarga.domain.service.UserDirectoryService directory;
+    @Inject pl.ejtechnology.tk.eSkarga.domain.service.NoteService notes;
     @Inject HolidayService holidays;
     @Inject CaseAccessService caseAccess;
     @Inject AuditService audit;
@@ -624,6 +625,31 @@ public class JpaViewData implements ViewData {
             out.add(new pl.ejtechnology.tk.eSkarga.web.model.DraftRow(act.getDocument().getId(), kind, act.getDocument().getTitle(), act.getAuthorUserId(), at(act.getActedOn())));
         }
         return out;
+    }
+
+    /** Notatki wewnętrzne (FR-24): usługa sama odmawia poza zespołem sędziego (pusta lista), autor po nazwie z rejestru S-22. */
+    @Override
+    public List<pl.ejtechnology.tk.eSkarga.web.model.NoteRow> notes(String sygnatura) {
+        Optional<CaseFile> cfo = readable(sygnatura);
+        if (cfo.isEmpty()) {
+            return List.of();
+        }
+        Map<String, String> names = new java.util.HashMap<>();
+        for (var k : directory.all()) {
+            if (k.getDisplayName() != null && !k.getDisplayName().isBlank()) {
+                names.put(k.getLogin(), k.getDisplayName());
+            }
+        }
+        List<pl.ejtechnology.tk.eSkarga.web.model.NoteRow> out = new ArrayList<>();
+        for (var n : notes.notes(cfo.get().getId(), user.getLogin(), user.getRoles())) {
+            out.add(new pl.ejtechnology.tk.eSkarga.web.model.NoteRow(n.getId(), n.getTitle(), n.getBody(), names.getOrDefault(n.getAuthorUserId(), n.getAuthorUserId()), at(n.getCreatedAt())));
+        }
+        return out;
+    }
+
+    @Override
+    public boolean canReadNotes(String sygnatura) {
+        return readable(sygnatura).map(cf -> notes.canRead(cf, user.getLogin(), user.getRoles())).orElse(false);
     }
 
     @Override

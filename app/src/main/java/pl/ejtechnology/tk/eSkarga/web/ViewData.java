@@ -85,6 +85,12 @@ public interface ViewData {
     /** Projekty pism sprawy czekające na podpis sędziego (S-14 → S-16). */
     List<pl.ejtechnology.tk.eSkarga.web.model.DraftRow> drafts(String sygnatura);
 
+    /** Notatki wewnętrzne sprawy (FR-24) – tylko dla zespołu sędziego; poza zespołem pusta lista. Najnowsze pierwsze. */
+    List<pl.ejtechnology.tk.eSkarga.web.model.NoteRow> notes(String sygnatura);
+
+    /** Czy bieżący użytkownik należy do zespołu sędziego sprawy (notatki wewnętrzne i zaznaczenia, brief §5.2). */
+    boolean canReadNotes(String sygnatura);
+
     List<ProcessStep> processSteps(String sygnatura);
 
     List<ChecklistItem> checklist(String sygnatura);

@@ -8,7 +8,8 @@
     <cc:attribute name="value" required="true" type="pl.ejtechnology.tk.eSkarga.web.model.KpiTile" />
   </cc:interface>
   <cc:implementation>
-    <a class="#{cc.attrs.value.cssClass()}" href="#{empty cc.attrs.value.href ? '#' : cc.attrs.value.href}">
+    <!-- adresy ekranów są bez kontekstu (Screen.path) – dopisujemy #{request.contextPath}; kotwice (#zad) zostają -->
+    <a class="#{cc.attrs.value.cssClass()}" href="#{empty cc.attrs.value.href ? '#' : (cc.attrs.value.href.startsWith('/') ? request.contextPath : '')}#{empty cc.attrs.value.href ? '' : cc.attrs.value.href}">
       <span class="v">#{cc.attrs.value.value}</span>
       <span class="l">#{cc.attrs.value.label}</span>
       <span class="h">#{cc.attrs.value.hint}</span>

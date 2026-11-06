@@ -52,7 +52,7 @@ class JpaViewDataTest extends ServiceTestSupport {
         TaskBoardService board = Wiring.inject(new TaskBoardService(), engine.getTaskService(), s.cases, s.deliveries, s.caseAccess, clock);
         FormalRequirementsService req = Wiring.inject(new FormalRequirementsService(), engine.getDecisionService());
         return Wiring.inject(new JpaViewData(), s.cases, s.incoming, s.deliveries, s.appeals, s.generalLetters, s.access, s.documents, s.judges, board, s.reports,
-                s.archive, s.delegations, s.templates, s.dictionaries, s.holidays, s.caseAccess, s.audit, req, new TestUser(login, roles), clock, new Fmt(), s.search, s.checklist, s.letters);
+                s.archive, s.delegations, s.templates, s.dictionaries, s.holidays, s.caseAccess, s.audit, req, new TestUser(login, roles), clock, new Fmt(), s.search, s.checklist, s.letters, s.notes, s.directory);
     }
 
     @Test
@@ -102,6 +102,35 @@ class JpaViewDataTest extends ServiceTestSupport {
                 assertThat(d.status()).isEqualTo("ważne");
             });
             assertThat(admin.caseBy(cf.getDocket().format())).as("administrator techniczny nie czyta akt").isNull();
+        });
+    }
+
+    /** FR-24, S-14 zakładka „Notatki wewnętrzne”: zespół sędziego (sędzia, asystent, referent sprawy z rolą zespołu) widzi i dodaje notatki; referent – nie. */
+    @Test
+    void notatkiWewnetrzneWidocznePrzezViewDataTylkoDlaZespolu() {
+        long letterId = tx(s -> registerLetter(s)).getId();
+        CaseFile cf = tx(s -> createCase(s, letterId));
+        String sedzia = "sedzia.fikcyjny";
+        run(s -> {
+            CaseFile loaded = s.cases.require(cf.getId());
+            s.em.persist(new pl.ejtechnology.tk.eSkarga.domain.model.CaseAssignment(loaded, sedzia, pl.ejtechnology.tk.eSkarga.domain.model.AssignmentRole.JUDGE, TODAY));
+            s.directory.touch(sedzia, "sędzia TK Piotr Fikcyjny", Set.of(AppRole.TK_SEDZIA));
+            s.notes.addNote(cf.getId(), "Uwagi do skargi", "Brak wskazania wzorca kontroli.", sedzia, Set.of(AppRole.TK_SEDZIA));
+        });
+        run(s -> {
+            String syg = cf.getDocket().format();
+            JpaViewData judge = view(s, sedzia, EnumSet.of(AppRole.TK_SEDZIA));
+            assertThat(judge.canReadNotes(syg)).isTrue();
+            assertThat(judge.notes(syg)).singleElement().satisfies(n -> {
+                assertThat(n.tytul()).isEqualTo("Uwagi do skargi");
+                assertThat(n.tresc()).isEqualTo("Brak wskazania wzorca kontroli.");
+                assertThat(n.autor()).as("autor po nazwie z rejestru S-22").isEqualTo("sędzia TK Piotr Fikcyjny");
+                assertThat(n.data()).isNotNull();
+            });
+            JpaViewData referent = view(s, REFERENT, EnumSet.of(AppRole.TK_REFERENT));
+            assertThat(referent.caseBy(syg)).as("referent sprawy czyta akta").isNotNull();
+            assertThat(referent.canReadNotes(syg)).as("referent nie należy do zespołu sędziego").isFalse();
+            assertThat(referent.notes(syg)).isEmpty();
         });
     }
 }

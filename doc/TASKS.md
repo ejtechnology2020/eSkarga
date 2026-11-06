@@ -713,3 +713,13 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   `assign(...)` jednoetapowe zostaje dla API/testów. S-16 pokazuje sygnaturę, tytuł i skutki z dokumentu (nie z makiety).
   GUI UC-08: projekt + opcjonalny podpis (`ESKARGA_E2E_PODPIS=1` z działającym `podpis.cmd`).
 
+- T-035 – 06.11.2026 – zakładka „Notatki wewnętrzne” na S-14 była makietą (dwa wpisy na sztywno, licznik „· 2”, bez formularza):
+  `ViewData.notes/canReadNotes` (`JpaViewData` z `NoteService`, autor po nazwie z rejestru S-22; demo – dane przykładowe),
+  `AktaBean.dodajNotatke` (tytuł + treść, audyt, komunikat), lista z `NoteRow`, zakładka aktywna tylko dla zespołu sędziego
+  (`CaseAccessPolicy.canReadInternalNotes`), FR-24: nic w aktach jawnych. Testy: `JpaViewDataTest`, GUI UC-09 (procesy.spec.ts).
+- T-031 – 06.11.2026 – **naprawa:** usługa dokumentów nie miała `jboss-web.xml`, więc WildFly wdrażał WAR pod `/eskarga-docs-service`,
+  a aplikacja i workery wołają `/eskarga-docs/api` → każde wywołanie (szablony domyślne, render pism, przetwarzanie skanów) kończyło się
+  HTTP 404. Dodany `docs-service/src/main/webapp/WEB-INF/jboss-web.xml` (`/eskarga-docs`) i test `ContextRootTest`.
+- T-012/T-018 – 06.11.2026 – kafelek KPI (`tk:kpi`) dopisuje `request.contextPath` do adresów ekranów (link „Pisma do kwalifikacji”
+  prowadził do `/sprawy/kolejka.xhtml` bez `/eskarga`); `AppClock` zatrzymuje zegar (`ESKARGA_DEMO_TODAY`) tylko w trybie demo –
+  w trybie OIDC z `.env` dev zadanie z dziś pokazywało „3 dni oczekiwania” przy „czeka od dziś”.

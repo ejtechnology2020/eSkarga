@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Kontekst usługi dokumentów: aplikacja i workery wołają http://…:8080/eskarga-docs/api (ESKARGA_DOCS_URL, ESKARGA_DOCS_API);
+     bez tego wpisu WildFly wdrażałby WAR pod nazwą pliku (/eskarga-docs-service) i każde wywołanie kończyło się HTTP 404. -->
+<jboss-web xmlns="http://www.jboss.com/xml/ns/javaee">
+  <context-root>/eskarga-docs</context-root>
+</jboss-web>

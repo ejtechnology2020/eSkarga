@@ -188,6 +188,28 @@ test.describe.serial('Procesy eSkargi (OIDC)', () => {
     await expect(page.locator('body')).toContainText(/Lista kontrolna · 1 brak/);
   });
 
+  test('UC-09 S-14 notatki wewnętrzne: zespół sędziego dodaje notatkę, widoczna po odświeżeniu (FR-24)', async () => {
+    await page.goto(`/akta/podglad.xhtml?sygnatura=${encodeURIComponent(sygnatura)}`);
+    const zakladka = page.getByRole('tab', { name: /notatki wewnętrzne/i });
+    await expect(zakladka).toBeVisible();
+    // konto testowe założyło sprawę (referent sprawy) i ma rolę TK_SEDZIA → zespół sędziego (CaseAccessPolicy.canReadInternalNotes)
+    await expect(zakladka, 'zakładka aktywna dla zespołu sędziego').toBeEnabled();
+    await zakladka.click();
+    const tytul = `Uwagi asystenta ${Date.now()}`;
+    await page.fill(jsf('af:nt-tytul'), tytul);
+    await page.fill(jsf('af:nt-tresc'), 'Pełnomocnictwo szczególne nie obejmuje sporządzenia skargi (k. 2).');
+    await page.getByRole('button', { name: /dodaj notatkę/i }).click();
+    await expect(page.locator('ol[aria-label="Notatki wewnętrzne"]')).toContainText(tytul, { timeout: 30_000 });
+    await expect(page.locator('ol[aria-label="Notatki wewnętrzne"]')).toContainText(/notatka wewnętrzna · /);
+    await page.reload();
+    await expect(page.getByRole('tab', { name: /notatki wewnętrzne · [1-9]/i })).toBeVisible();
+    await page.getByRole('tab', { name: /notatki wewnętrzne/i }).click();
+    await expect(page.locator('ol[aria-label="Notatki wewnętrzne"]')).toContainText(tytul);
+    // FR-24: notatka nie trafia do spisu akt jawnych
+    await page.getByRole('tab', { name: /akta jawne/i }).click();
+    await expect(page.locator('ol[aria-label="Dokumenty"]')).not.toContainText(tytul);
+  });
+
   test('UC-10 przełącznik roli zmienia kontekst menu (gdy konto ma kilka ról)', async () => {
     await page.goto('/pulpit.xhtml');
     const rola = page.locator('#tb-rola');
