@@ -59,6 +59,18 @@ public class NoteService {
         return em.createQuery("select n from InternalNote n where n.caseFile = :c order by n.createdAt desc", InternalNote.class).setParameter("c", cf).getResultList();
     }
 
+    /** Notatki innych osób od {@code since} w sprawach, w których użytkownik jest w zespole sędziego (powiadomienia). */
+    public List<InternalNote> recentForTeam(String userId, Set<AppRole> roles, java.time.Instant since) {
+        List<InternalNote> out = new java.util.ArrayList<>();
+        for (InternalNote n : em.createQuery("select n from InternalNote n where n.createdAt > :s and n.authorUserId <> :u order by n.createdAt desc", InternalNote.class)
+                .setParameter("s", since).setParameter("u", userId).setMaxResults(50).getResultList()) {
+            if (canRead(n.getCaseFile(), userId, roles)) {
+                out.add(n);
+            }
+        }
+        return out;
+    }
+
     public List<Highlight> highlights(long documentId, String userId, Set<AppRole> roles) {
         CaseDocument doc = em.find(CaseDocument.class, documentId);
         if (!canRead(doc.getCaseFile(), userId, roles)) {

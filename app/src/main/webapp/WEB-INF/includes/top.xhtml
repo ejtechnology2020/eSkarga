@@ -25,11 +25,23 @@
       <h:commandButton value="Szukaj" action="#{quickSearch.go}" styleClass="sr" />
     </h:form>
     <span class="sp"></span>
-    <h:link outcome="/pulpit" styleClass="ibtn e-bell" pt:aria-label="#{fmt.msg('app.notifications', currentUser.notifications)}"
-            xmlns:pt="jakarta.faces.passthrough">
-      <tk:icon name="bell" />
-      <span class="cnt" aria-hidden="true">#{currentUser.notifications}</span>
-    </h:link>
+    <!-- powiadomienia zalogowanej osoby (NotificationsBean, sesja): licznik = nieobejrzane; panel otwierany przyciskiem (bez inline JS – CSP) -->
+    <h:form id="bellForm" styleClass="e-bellwrap" prependId="false" xmlns:pt="jakarta.faces.passthrough">
+      <p:commandLink id="bell" action="#{powiadomienia.toggle}" update="bellForm" process="@this" styleClass="ibtn e-bell q"
+                     pt:aria-label="#{fmt.msg('app.notifications', powiadomienia.count)}" pt:aria-expanded="#{powiadomienia.open}" pt:aria-controls="bell-panel" pt:role="button">
+        <tk:icon name="bell" />
+        <h:outputText styleClass="cnt" pt:aria-hidden="true" value="#{powiadomienia.count}" rendered="#{powiadomienia.count gt 0}" />
+      </p:commandLink>
+      <h:panelGroup id="bell-panel" layout="block" styleClass="e-notif" rendered="#{powiadomienia.open}" pt:role="region" pt:aria-label="Powiadomienia">
+        <div class="e-notif-h"><b>Powiadomienia</b><span class="sp"></span><p:commandLink action="#{powiadomienia.close}" update="bellForm" process="@this" styleClass="ibtn q" value="×" pt:aria-label="Zamknij powiadomienia" pt:role="button" /></div>
+        <ul class="e-notif-list" jsf:rendered="#{not empty powiadomienia.items}" xmlns:jsf="jakarta.faces">
+          <ui:repeat value="#{powiadomienia.items}" var="n">
+            <li><h:outputLink value="#{request.contextPath}#{n.url}"><span class="tag">#{n.rodzaj}</span><b>#{n.tytul}</b><span class="mut">#{n.opis} · #{fmt.dateTime(n.kiedy)}</span></h:outputLink></li>
+          </ui:repeat>
+        </ul>
+        <p class="mut e-notif-empty" jsf:rendered="#{empty powiadomienia.items}" xmlns:jsf="jakarta.faces">Brak nowych powiadomień: zadań od poprzedniego logowania, terminów w 2 dni, notatek zespołu ani spraw do wyznaczenia.</p>
+      </h:panelGroup>
+    </h:form>
     <h:panelGroup rendered="#{currentUser.multiRole}" styleClass="fld" layout="block" style="flex-direction: row; align-items: center; gap: 8px;">
       <h:outputLabel for="tb-rola" styleClass="mut" value="#{msg['app.role']}" style="font-weight: 600;" />
       <h:form id="rolaForm" prependId="false" style="display: contents;">

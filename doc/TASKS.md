@@ -740,3 +740,8 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
 - T-040 – 06.11.2026 – S-16 „Co podpisujesz” było makietą (tytuł, Ts 318/26, „Maria Makietowa”, martwy „podgląd PDF”): tytuł, karty,
   sprawa i strona z akt, „Podpisujesz jako” z ID-users (z adnotacją „za Prezesa”, BR-10), „podgląd PDF” rozwija widżet pdf.js
   z `DocumentServlet`, „otwórz w nowej karcie”; w demo dalej dane przykładowe.
+- UC-18 – 06.11.2026 – **Powiadomienia (dzwonek)** naprawdę liczone: `ViewData.notifications(since)` – nowe zadania od poprzedniego
+  logowania (czas z rejestru S-22, `LoginFilter.PREVIOUS_LOGIN_ATTRIBUTE`; pierwsze logowanie: 7 dni), terminy ≤ 2 dni i po terminie,
+  nowe notatki zespołu sędziego (`NoteService.recentForTeam`), sprawy do wyznaczenia (Prezes). `NotificationsBean` (sesja): licznik =
+  nieobejrzane, panel pod dzwonkiem z odnośnikami, otwarcie gasi licznik (klucze w sesji, bez tabeli w bazie), 0 = bez kółka.
+  Demo: dane przykładowe. Testy: `NotificationsBeanTest`, `JpaViewDataTest`, GUI UC-18.

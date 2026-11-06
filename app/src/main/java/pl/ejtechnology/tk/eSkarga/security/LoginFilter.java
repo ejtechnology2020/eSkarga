@@ -59,6 +59,8 @@ public class LoginFilter implements Filter {
     pl.ejtechnology.tk.eSkarga.domain.service.UserDirectoryService directory;
     /** Atrybut sesji: wpis do rejestru osób zrobiony (raz na sesję). */
     static final String SEEN_ATTRIBUTE = "eskarga.login.zapisany";
+    /** Czas poprzedniego logowania z rejestru S-22 (Instant) – „nowe od ostatniego logowania” w powiadomieniach; brak przy pierwszym logowaniu. */
+    public static final String PREVIOUS_LOGIN_ATTRIBUTE = "eskarga.login.poprzednie";
 
     /** Czy podmiot jest naprawdę uwierzytelniony (nie null i nie anonimowy podmiot kontenera). */
     public static boolean authenticated(Principal p) {
@@ -119,7 +121,10 @@ public class LoginFilter implements Filter {
         }
         try {
             String name = ElytronTokens.idTokenClaims(req).map(c -> c.containsKey("name") ? c.getString("name", null) : null).orElse(null);
-            directory.touch(req.getUserPrincipal().getName(), name, currentUser.getRoles());
+            var known = directory.touch(req.getUserPrincipal().getName(), name, currentUser.getRoles());
+            if (known.getPreviousLoginAt() != null) {
+                session.setAttribute(PREVIOUS_LOGIN_ATTRIBUTE, known.getPreviousLoginAt());
+            }
             session.setAttribute(SEEN_ATTRIBUTE, Boolean.TRUE);
         } catch (RuntimeException e) {
             LOG.log(Level.WARNING, "Nie udało się zapisać osoby w rejestrze użytkowników: " + e, e);

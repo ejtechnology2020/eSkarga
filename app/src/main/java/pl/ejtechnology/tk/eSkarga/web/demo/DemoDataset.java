@@ -286,6 +286,13 @@ public class DemoDataset implements Serializable, pl.ejtechnology.tk.eSkarga.web
                 new TimelineEntry(dt(2026, 11, 2, 11, 5), "Wpływ pisma", "DW 2026/04809 · zadanie grupy", null, false, true));
     }
 
+    public List<pl.ejtechnology.tk.eSkarga.web.model.NotificationItem> notifications(java.time.Instant since) {
+        return List.of(
+                new pl.ejtechnology.tk.eSkarga.web.model.NotificationItem("zadanie:demo-1", "Nowe zadanie", "Oceń pismo uzupełniające", "Ts 312/26 · DW 2026/04812", "/akta/podglad.xhtml?sygnatura=Ts%20312/26", dt(2026, 11, 3, 8, 42)),
+                new pl.ejtechnology.tk.eSkarga.web.model.NotificationItem("termin:demo-2", "Termin", "Usunięcie braków formalnych", "Ts 305/26 · do 05.11.2026 · za 2 dni", "/akta/podglad.xhtml?sygnatura=Ts%20305/26", dt(2026, 11, 2, 15, 10)),
+                new pl.ejtechnology.tk.eSkarga.web.model.NotificationItem("notatka:demo-3", "Notatka wewnętrzna", "Notatka asystenta do sędziego", "Ts 312/26 · Tomasz Próbny", "/akta/podglad.xhtml?sygnatura=Ts%20312/26", dt(2026, 10, 31, 14, 5)));
+    }
+
     public List<JudgeLoad> judgeLoads() {
         return List.of(
                 new JudgeLoad("sędzia TK Ewa Wzorcowa", "Ewa Wzorcowa", 3, 60, 1, null, "urlop 04–06.11.2026", Tone.WARN, false, true, null),

@@ -41,6 +41,10 @@ public class KnownUser {
     @Column(name = "login_count", nullable = false)
     private int loginCount;
 
+    /** Poprzednie logowanie (wartość sprzed {@link #seen}) – tylko na czas żądania logowania, do licznika powiadomień; nie w bazie. */
+    @jakarta.persistence.Transient
+    private Instant previousLoginAt;
+
     protected KnownUser() {
     }
 
@@ -58,9 +62,12 @@ public class KnownUser {
             this.displayName = displayName;
         }
         this.roles = roles;
+        this.previousLoginAt = this.lastLoginAt;
         this.lastLoginAt = now;
         this.loginCount++;
     }
+
+    public Instant getPreviousLoginAt() { return previousLoginAt; }
 
     public Long getId() { return id; }
     public String getLogin() { return login; }

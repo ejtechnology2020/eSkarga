@@ -272,6 +272,37 @@ public class JpaViewData implements ViewData {
         return out;
     }
 
+    @Override
+    public List<pl.ejtechnology.tk.eSkarga.web.model.NotificationItem> notifications(Instant since) {
+        List<pl.ejtechnology.tk.eSkarga.web.model.NotificationItem> out = new ArrayList<>();
+        for (TaskBoardService.Item i : board.tasksFor(user.getLogin(), user.getRoles())) {
+            String akta = Screen.S14.path() + "?sygnatura=" + i.docket().format().replace(" ", "%20");
+            if (i.createdAt() != null && i.createdAt().isAfter(since)) {
+                out.add(new pl.ejtechnology.tk.eSkarga.web.model.NotificationItem("zadanie:" + i.taskId(), "Nowe zadanie", i.name(), i.docket().format() + (i.group() ? " · zadanie grupy" : ""),
+                        actionUrl(i.taskKey(), i.docket()), at(i.createdAt())));
+            }
+            if (i.nearDeadline()) {
+                String kiedy = i.daysLeft() < 0 ? fmt.daysText(i.daysLeft()) : fmt.untilText(i.deadlineEnd(), clock.today());
+                out.add(new pl.ejtechnology.tk.eSkarga.web.model.NotificationItem("termin:" + i.taskId(), i.daysLeft() < 0 ? "Po terminie" : "Termin", i.name(), i.docket().format() + " · " + kiedy, akta,
+                        i.deadlineEnd().atStartOfDay()));
+            }
+        }
+        for (var n : notes.recentForTeam(user.getLogin(), user.getRoles(), since)) {
+            String syg = n.getCaseFile().getDocket().format();
+            out.add(new pl.ejtechnology.tk.eSkarga.web.model.NotificationItem("notatka:" + n.getId(), "Notatka wewnętrzna", n.getTitle(), syg + " · " + n.getAuthorUserId(),
+                    Screen.S14.path() + "?sygnatura=" + syg.replace(" ", "%20"), at(n.getCreatedAt())));
+        }
+        if (user.getRoles().contains(AppRole.TK_PREZES)) {
+            for (CaseFile cf : judges.awaiting()) {
+                String syg = cf.getDocket().format();
+                out.add(new pl.ejtechnology.tk.eSkarga.web.model.NotificationItem("wyznaczenie:" + cf.getId(), "Do wyznaczenia", "Wyznacz sędziego do wstępnej kontroli", syg,
+                        Screen.S17.path() + "?sygnatura=" + syg.replace(" ", "%20"), cf.getEnteredOn() == null ? clock.now() : cf.getEnteredOn().atStartOfDay()));
+            }
+        }
+        out.sort(java.util.Comparator.comparing(pl.ejtechnology.tk.eSkarga.web.model.NotificationItem::kiedy).reversed());
+        return out;
+    }
+
     static String groupLabel(String taskKey) {
         return switch (taskKey) {
             case "T_Wyznacz", "T_Skieruj" -> "Prezes TK";

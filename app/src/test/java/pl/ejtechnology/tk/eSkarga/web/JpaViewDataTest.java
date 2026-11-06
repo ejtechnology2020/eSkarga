@@ -88,6 +88,13 @@ class JpaViewDataTest extends ServiceTestSupport {
                 assertThat(t.grupowe()).isTrue();
             });
             assertThat(prezes.menuCounter(Screen.S01, AppRole.TK_PREZES)).isGreaterThanOrEqualTo(1);
+            assertThat(prezes.notifications(java.time.Instant.EPOCH)).as("Prezes: sprawa do wyznaczenia i nowe zadanie grupy w powiadomieniach")
+                    .anySatisfy(n -> assertThat(n.klucz()).startsWith("wyznaczenie:")).anySatisfy(n -> {
+                        assertThat(n.klucz()).startsWith("zadanie:");
+                        assertThat(n.url()).startsWith(Screen.S17.path());
+                    });
+            assertThat(prezes.notifications(java.time.Instant.now().plusSeconds(3600))).as("zadanie sprzed „od” nie jest nowe")
+                    .noneSatisfy(n -> assertThat(n.klucz()).startsWith("zadanie:"));
 
             JpaViewData asystent = view(s, "asystent.obcy", EnumSet.of(AppRole.TK_ASYSTENT));
             assertThat(asystent.caseBy(cf.getDocket().format())).as("asystent spoza zespołu nie widzi sprawy (D4)").isNull();
@@ -116,19 +123,28 @@ class JpaViewDataTest extends ServiceTestSupport {
             s.em.persist(new pl.ejtechnology.tk.eSkarga.domain.model.CaseAssignment(loaded, sedzia, pl.ejtechnology.tk.eSkarga.domain.model.AssignmentRole.JUDGE, TODAY));
             s.directory.touch(sedzia, "sędzia TK Piotr Fikcyjny", Set.of(AppRole.TK_SEDZIA));
             s.notes.addNote(cf.getId(), "Uwagi do skargi", "Brak wskazania wzorca kontroli.", sedzia, Set.of(AppRole.TK_SEDZIA));
+            s.em.persist(new pl.ejtechnology.tk.eSkarga.domain.model.CaseAssignment(loaded, "asystent.testowy", pl.ejtechnology.tk.eSkarga.domain.model.AssignmentRole.TEAM, TODAY));
+            s.notes.addNote(cf.getId(), "Pytanie asystenta", "Czy wzywać o pełnomocnictwo?", "asystent.testowy", Set.of(AppRole.TK_ASYSTENT));
         });
         run(s -> {
             String syg = cf.getDocket().format();
             JpaViewData judge = view(s, sedzia, EnumSet.of(AppRole.TK_SEDZIA));
             assertThat(judge.canReadNotes(syg)).isTrue();
-            assertThat(judge.notes(syg)).singleElement().satisfies(n -> {
+            assertThat(judge.notes(syg)).hasSize(2).first().satisfies(n -> assertThat(n.tytul()).as("najnowsza pierwsza").isEqualTo("Pytanie asystenta"));
+            assertThat(judge.notes(syg)).last().satisfies(n -> {
                 assertThat(n.tytul()).isEqualTo("Uwagi do skargi");
                 assertThat(n.tresc()).isEqualTo("Brak wskazania wzorca kontroli.");
                 assertThat(n.autor()).as("autor po nazwie z rejestru S-22").isEqualTo("sędzia TK Piotr Fikcyjny");
                 assertThat(n.data()).isNotNull();
             });
+            assertThat(judge.notifications(java.time.Instant.EPOCH)).as("sędzia: notatka asystenta tak, własna nie")
+                    .anySatisfy(n -> {
+                        assertThat(n.klucz()).startsWith("notatka:");
+                        assertThat(n.tytul()).isEqualTo("Pytanie asystenta");
+                    }).noneSatisfy(n -> assertThat(n.tytul()).isEqualTo("Uwagi do skargi"));
             JpaViewData referent = view(s, REFERENT, EnumSet.of(AppRole.TK_REFERENT));
             assertThat(referent.caseBy(syg)).as("referent sprawy czyta akta").isNotNull();
+            assertThat(referent.notifications(java.time.Instant.EPOCH)).noneSatisfy(n -> assertThat(n.klucz()).startsWith("notatka:"));
             assertThat(referent.canReadNotes(syg)).as("referent nie należy do zespołu sędziego").isFalse();
             assertThat(referent.notes(syg)).isEmpty();
         });

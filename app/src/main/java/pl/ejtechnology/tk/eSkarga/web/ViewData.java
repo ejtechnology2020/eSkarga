@@ -52,6 +52,9 @@ public interface ViewData {
 
     List<TimelineEntry> notificationsFor(AppRole role);
 
+    /** Powiadomienia zalogowanej osoby (dzwonek): nowe zadania od {@code since}, terminy ≤ 2 dni, nowe notatki zespołu, sprawy do wyznaczenia (Prezes). */
+    List<pl.ejtechnology.tk.eSkarga.web.model.NotificationItem> notifications(java.time.Instant since);
+
     List<JudgeLoad> judgeLoads();
 
     List<CaseSummary> searchCases(String query);

@@ -134,6 +134,22 @@ test.describe.serial('Procesy eSkargi (OIDC)', () => {
     await expect(page.locator('#upf')).toContainText('zarzadzenie-upowaznienie.pdf');
   });
 
+  test('UC-18 dzwonek powiadomień: Prezes widzi sprawę do wyznaczenia, licznik gaśnie po otwarciu panelu', async () => {
+    expect(sygnatura).toMatch(/Ts/);
+    await page.goto('/pulpit.xhtml');
+    const dzwonek = page.locator('#bell');
+    await expect(dzwonek).toBeVisible();
+    await expect(dzwonek.locator('.cnt'), 'licznik > 0 – sprawa czeka na wyznaczenie sędziego').toHaveText(/^[1-9]\d*$/);
+    await dzwonek.click();
+    const panel = page.locator('#bell-panel');
+    await expect(panel).toBeVisible({ timeout: 15_000 });
+    await expect(panel).toContainText('Do wyznaczenia');
+    await expect(panel).toContainText(sygnatura);
+    await expect(dzwonek.locator('.cnt'), 'po otwarciu panelu licznik znika').toHaveCount(0);
+    await page.reload();
+    await expect(page.locator('#bell .cnt'), 'obejrzane pozycje nie wracają w tej sesji').toHaveCount(0);
+  });
+
   test('UC-08 S-17 wyznaczenie sędziego: wybór sprawy i sędziego, zarządzenie z szablonu w aktach', async () => {
     expect(sygnatura).toMatch(/Ts/);
     await page.goto(`/czynnosci/wyznaczenie.xhtml?sygnatura=${encodeURIComponent(sygnatura)}`);
