@@ -681,4 +681,8 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   przełączniki gęstości (repertorium, dziennik, zażalenia, pulpit) aktualizują `@form`, widok wygodny wyraźniejszy (20px/15px); pulpit: chipy
   filtrów działają (Wszystkie / Terminy w 7 dni / Do przejęcia / Pilne) z liczbami z danych, przyciski akcji z liczbami zadań.
   Termin w „Moje zadania” jest wyliczany (najbliższy biegnący termin sprawy, inaczej „czeka od N dni”).
+- 06.11.2026 – S-17 „Wyznacz i podpisz zarządzenie”: `CharSequence.length() … this.text is null` – lista spraw oczekujących miała makietowe pola
+  wyboru bez wiązania, więc `sygnatura` była null i `DocketNumber.parse(null)` padał w Matcherze. Wybór sprawy przez `p:selectOneRadio`
+  (domyślnie pierwsza oczekująca), `DocketNumber.parse` odrzuca pusty tekst czytelnym wyjątkiem, baner upoważnienia i podgląd zarządzenia
+  z danych (daty, sygnatura, podpisujący) zamiast tekstów z makiety.
 

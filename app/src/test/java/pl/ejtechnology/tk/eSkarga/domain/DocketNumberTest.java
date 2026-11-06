@@ -34,6 +34,9 @@ class DocketNumberTest {
     @Test
     void rejectsGarbage() {
         assertThatThrownBy(() -> DocketNumber.parse("Testowa")).isInstanceOf(IllegalArgumentException.class);
+        // brak sygnatury (np. ekran bez wybranej sprawy) – czytelny wyjątek zamiast NullPointerException z Matchera
+        assertThatThrownBy(() -> DocketNumber.parse(null)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Brak sygnatury");
+        assertThatThrownBy(() -> DocketNumber.parse(" ")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> DocketNumber.parse("Xy 1/26")).isInstanceOf(IllegalArgumentException.class);
     }
 

@@ -27,6 +27,9 @@ public record DocketNumber(DocketSymbol symbol, int number, int year) implements
     }
 
     public static DocketNumber parse(String text) {
+        if (text == null || text.isBlank()) {
+            throw new IllegalArgumentException("Brak sygnatury");
+        }
         Matcher m = FORMAT.matcher(text);
         if (!m.matches()) {
             throw new IllegalArgumentException("Niepoprawna sygnatura: " + text);

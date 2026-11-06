@@ -75,13 +75,17 @@ public class WyznaczenieBean implements Serializable {
             return "/czynnosci/podpis.xhtml?faces-redirect=true&stan=1";
         }
         try {
-            var cf = cases.byDocket(DocketNumber.parse(sygnatura)).orElseThrow(() -> new IllegalArgumentException("Wybierz sprawę"));
+            String syg = getSygnatura();
+            if (syg == null || syg.isBlank()) {
+                throw new IllegalArgumentException("Wybierz sprawę oczekującą na wyznaczenie");
+            }
+            var cf = cases.byDocket(DocketNumber.parse(syg)).orElseThrow(() -> new IllegalArgumentException("Wybierz sprawę"));
             if (sedzia == null || sedzia.isBlank()) {
                 throw new IllegalArgumentException("Wybierz sędziego z listy");
             }
             judges.assign(cf.getId(), sedzia, currentUser.getLogin(), currentUser.getRoles());
-            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Sędzia wyznaczony.", getSedziaNazwa() + " · " + sygnatura));
-            return "/akta/podglad.xhtml?faces-redirect=true&sygnatura=" + sygnatura.replace(" ", "%20");
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Sędzia wyznaczony.", getSedziaNazwa() + " · " + syg));
+            return "/akta/podglad.xhtml?faces-redirect=true&sygnatura=" + syg.replace(" ", "%20");
         } catch (SecurityException e) {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Odmowa: brak ważnego upoważnienia (BR-10).", e.getMessage()));
         } catch (RuntimeException e) {
@@ -89,8 +93,28 @@ public class WyznaczenieBean implements Serializable {
         }
         return null;
     }
-    public String getSygnatura() { return sygnatura; }
+    /** Wybrana sprawa; bez wyboru – pierwsza oczekująca (poza demo), żeby „Wyznacz i podpisz” miało na czym działać. */
+    public String getSygnatura() {
+        if ((sygnatura == null || sygnatura.isBlank()) && !settings.isDemo()) {
+            List<CaseSummary> oczekujace = getOczekujace();
+            sygnatura = oczekujace.isEmpty() ? null : oczekujace.get(0).sygnaturaText();
+        }
+        return sygnatura;
+    }
     public void setSygnatura(String sygnatura) { this.sygnatura = sygnatura; }
+
+    public java.time.LocalDate getDzis() { return clock.today(); }
+
+    /** Upoważnienie ważne dziś (do banera): poza demo z rejestru upoważnień, w demo z danych przykładowych. */
+    public CaseAccessPolicy.Delegation getAktualneUpowaznienie() {
+        if (settings.isDemo()) {
+            return new CaseAccessPolicy.Delegation("mmakietowa", CaseAccessPolicy.FUNCTION_PRESIDENT, DemoDataset.d(2026, 10, 30), DemoDataset.d(2026, 12, 31), false);
+        }
+        java.time.LocalDate today = clock.today();
+        return delegations.policyDelegations(currentUser.getLogin()).stream()
+                .filter(d -> CaseAccessPolicy.FUNCTION_PRESIDENT.equals(d.function()) && d.validOn(today))
+                .sorted(java.util.Comparator.comparing(CaseAccessPolicy.Delegation::to).reversed()).findFirst().orElse(null);
+    }
 
     public List<JudgeLoad> getSedziowie() {
         return data.judgeLoads();
