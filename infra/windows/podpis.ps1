@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Podpis zarządzeń i postanowień na stacji dev (ADR 0008, D10) bez YubiKey: klucz testowy w PKCS#12 i aplikacja lokalna
   local-signer na http://127.0.0.1:17227 (CORS dla adresu eSkargi). Za pierwszym razem tworzy klucz, certyfikat i magazyn

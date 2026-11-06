@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Testy GUI eSkargi (Playwright) na działającym środowisku dev obok ID-users – procesy od końca do końca w trybie OIDC
   (logowanie z kodem jednorazowym, rejestracja pisma ze skanem, kolejka, założenie sprawy, akta, repertorium, dziennik,

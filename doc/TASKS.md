@@ -734,3 +734,6 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   kończył się HTTP 500 bez nich); `OpenHtmlToPdfRenderer` zgłasza czytelny błąd konfiguracji bez czcionek; `DocsErrorMapper` loguje
   każdy błąd 500 (także `Error`) z kodem `DOC-500-…` zwracanym aplikacji. **Commit w stopce**: `git-commit-id-maven-plugin` (JGit)
   zamiast `-Deskarga.build.commit` ze skryptów (stopka pokazywała „lokalnie”); `build.dirty` → gwiazdka przy commicie.
+- Infrastruktura – 06.11.2026 – `podpis.ps1` i `testy-gui.ps1` bez BOM UTF-8: Windows PowerShell 5.1 czytał je jako ANSI i parser
+  wywracał się na „–” i polskich znakach (`Missing argument in parameter list`). Dodany BOM; `WindowsScriptsEncodingTest` pilnuje
+  BOM w `.ps1` i samego ASCII w `.cmd`.
