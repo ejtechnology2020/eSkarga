@@ -22,7 +22,7 @@
   <ui:define name="actions">
     <h:form id="acts" styleClass="row">
       <h:panelGroup rendered="#{edytor.asystent}"><button type="button" class="btn">Zapisz projekt</button><p:commandButton value="Prześlij sędziemu" action="#{edytor.sendToJudge}" update="@all" styleClass="p" /></h:panelGroup>
-      <h:panelGroup rendered="#{edytor.sedzia}"><button type="button" class="btn">Zwróć z uwagami</button><h:link outcome="/czynnosci/podpis" styleClass="btn p" value="Zaakceptuj i podpisz"><f:param name="stan" value="1" /></h:link></h:panelGroup>
+      <h:panelGroup rendered="#{edytor.sedzia}"><button type="button" class="btn">Zwróć z uwagami</button><h:link outcome="/czynnosci/podpis" styleClass="btn p" value="Zaakceptuj i podpisz" rendered="#{currentUser.demo or not empty edytor.projektDokumentId}"><f:param name="stan" value="1" /><f:param name="dokument" value="#{edytor.projektDokumentId}" /><f:param name="rodzaj" value="#{edytor.projektRodzaj}" /></h:link><span class="mut" jsf:rendered="#{not currentUser.demo and empty edytor.projektDokumentId}" xmlns:jsf="jakarta.faces">Najpierw „Prześlij sędziemu” – projekt trafia do akt, podpis z zakładki Czynności w aktach (S-14).</span></h:panelGroup>
     </h:form>
   </ui:define>
   <ui:define name="banners">

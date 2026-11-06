@@ -45,6 +45,9 @@ public class EdytorBean implements Serializable {
 
     private String stan;
     private String rodzaj = "odmowa";
+    /** Ostatnio sporządzony projekt (poza demo): dokument i rodzaj do odnośnika „Zaakceptuj i podpisz” → S-16. */
+    private Long projektDokumentId;
+    private String projektRodzaj;
     private String podstawa = "pkt1";
     private boolean brakPelnomocnictwo = true;
     private boolean brakUzasadnienie;
@@ -83,7 +86,9 @@ public class EdytorBean implements Serializable {
                 extra.put("podstawaOdmowy", Integer.parseInt(digits.isEmpty() ? "3" : digits));
                 extra.put("uzasadnienie", uzasadnienieTekst == null || uzasadnienieTekst.isBlank() ? List.of(getUzasadnienie()) : List.of(uzasadnienieTekst.split("\\n\\n")));
                 extra.put("braki", getBraki().stream().filter(b -> b.wstawDoPisma() || b.stan() == ChecklistItem.State.BRAK).map(b -> b.wymog() + " (" + b.podstawa() + ")").toList());
-                letters.draft(cf.getId(), kind, extra, currentUser.getDisplayName(), currentUser.getLogin());
+                var act = letters.draft(cf.getId(), kind, extra, currentUser.getDisplayName(), currentUser.getLogin());
+                projektDokumentId = act.getDocument() == null ? null : act.getDocument().getId();
+                projektRodzaj = kind.name();
             } catch (RuntimeException e) {
                 FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się sporządzić projektu.", e.getMessage()));
                 return;
@@ -91,6 +96,8 @@ public class EdytorBean implements Serializable {
         }
         FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Projekt przesłany sędziemu.", settings.isDemo() ? "Wersja v3 z 3 · 03.11.2026 09:02." : "Projekt w aktach, czynność w stanie PROJEKT."));
     }
+    public Long getProjektDokumentId() { return projektDokumentId; }
+    public String getProjektRodzaj() { return projektRodzaj; }
     public String getSygnaturaParam() { return sygnaturaParam; }
     public void setSygnaturaParam(String s) { this.sygnaturaParam = s; }
     public String getUzasadnienieTekst() { return uzasadnienieTekst; }

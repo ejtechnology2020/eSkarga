@@ -52,7 +52,7 @@ class JpaViewDataTest extends ServiceTestSupport {
         TaskBoardService board = Wiring.inject(new TaskBoardService(), engine.getTaskService(), s.cases, s.deliveries, s.caseAccess, clock);
         FormalRequirementsService req = Wiring.inject(new FormalRequirementsService(), engine.getDecisionService());
         return Wiring.inject(new JpaViewData(), s.cases, s.incoming, s.deliveries, s.appeals, s.generalLetters, s.access, s.documents, s.judges, board, s.reports,
-                s.archive, s.delegations, s.templates, s.dictionaries, s.holidays, s.caseAccess, s.audit, req, new TestUser(login, roles), clock, new Fmt(), s.search, s.checklist);
+                s.archive, s.delegations, s.templates, s.dictionaries, s.holidays, s.caseAccess, s.audit, req, new TestUser(login, roles), clock, new Fmt(), s.search, s.checklist, s.letters);
     }
 
     @Test

@@ -208,6 +208,8 @@ public class AktaBean implements Serializable {
     public String getWidok() { return widok; }
     public void setWidok(String widok) { this.widok = widok; }
     public List<TimelineEntry> getCzynnosci() { return data.timeline(sygnatura); }
+    /** Projekty pism do podpisu (S-16) – odnośnik „Podpisz” dla sędziego i Prezesa. */
+    public List<pl.ejtechnology.tk.eSkarga.web.model.DraftRow> getProjekty() { return data.drafts(sygnatura); }
     public List<ProcessStep> getPrzebieg() { return data.processSteps(sygnatura); }
     public List<ChecklistItem> getLista() { return data.checklist(sygnatura); }
 

@@ -17,6 +17,7 @@ dependency-reduced-pom.xml
 
 # Środowisko dev – sekrety nigdy do repozytorium
 infra/docker/.env
+infra/docker/.local/        # klucze testowe podpisu, magazyn zaufania (infra\windows\podpis.cmd)
 *.env.local
 
 # Logi i pliki tymczasowe

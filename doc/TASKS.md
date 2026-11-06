@@ -701,4 +701,9 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   Akta bez parametru: komunikat raz, bez domyślnej Ts 312/26 poza demo; `deadline.none`; „strona 1 z 14” z makiety usunięte.
   GUI (Playwright, projekt `oidc`): UC-07 upoważnienie z aktem, UC-08 wyznaczenie sędziego z zarządzeniem z szablonu, UC-09 lista kontrolna.
   ID-users (gałąź `claude/windows-invoke-compose`): drugi składnik OTP albo klucz WebAuthn w podprzepływach LoA2/MFA.
+- 06.11.2026 – podpis na dev: `infra\windows\podpis.cmd` (klucz testowy PKCS#12, magazyn zaufania z certyfikatem TSA dev, uruchomienie
+  `local-signer --pkcs12 --origin`), Compose montuje `infra/docker/.local/podpis` i przekazuje `ESKARGA_DOCS_TRUSTSTOREPASSWORD`; obrazy `tsa`
+  i `softhsm` normalizują CRLF skryptów (kody 127/255 przy starcie na Windows sprzed `.gitattributes`). S-14 zakładka Czynności: projekty
+  w stanie PROJEKT z odnośnikiem „Podpisz” do S-16 (`?dokument=&rodzaj=`), edytor S-15 przekazuje identyfikator sporządzonego projektu
+  (dotąd S-16 nie dostawał dokumentu – podpis poza demo był niemożliwy). README: rozdział „Podpis … na dev”.
 

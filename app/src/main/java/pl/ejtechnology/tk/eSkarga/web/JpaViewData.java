@@ -123,6 +123,7 @@ public class JpaViewData implements ViewData {
     @Inject CaseAccessService caseAccess;
     @Inject AuditService audit;
     @Inject FormalRequirementsService requirements;
+    @Inject pl.ejtechnology.tk.eSkarga.domain.service.LetterService letters;
     @Inject pl.ejtechnology.tk.eSkarga.domain.service.ChecklistService checklist;
     @Inject CurrentUser user;
     @Inject pl.ejtechnology.tk.eSkarga.search.SearchService search;
@@ -598,6 +599,29 @@ public class JpaViewData implements ViewData {
             ChecklistItem.State stan = e == null ? ChecklistItem.State.DO_SPRAWDZENIA : ChecklistItem.State.valueOf(e.getState().name());
             out.add(new ChecklistItem(r.description(), r.legalBasis(), stan, e == null || e.getNote() == null ? "" : e.getNote(), e != null && stan == ChecklistItem.State.BRAK,
                     e == null || e.getPageRef() == null ? "" : e.getPageRef(), r.code()));
+        }
+        return out;
+    }
+
+    /** Projekty (PROJEKT) z plikiem w aktach – rodzaj pisma odtworzony z podtypu czynności (ODMOWA_PKT_n → POST_ODMOWA). */
+    @Override
+    public List<pl.ejtechnology.tk.eSkarga.web.model.DraftRow> drafts(String sygnatura) {
+        Optional<CaseFile> cfo = readable(sygnatura);
+        if (cfo.isEmpty()) {
+            return List.of();
+        }
+        List<pl.ejtechnology.tk.eSkarga.web.model.DraftRow> out = new ArrayList<>();
+        for (var act : letters.acts(cfo.get())) {
+            if (act.getStatus() != pl.ejtechnology.tk.eSkarga.domain.model.ActStatus.PROJEKT || act.getDocument() == null) {
+                continue;
+            }
+            String sub = act.getSubtype() == null ? "" : act.getSubtype();
+            String kind = sub.startsWith("ODMOWA") ? pl.ejtechnology.tk.eSkarga.domain.service.LetterKind.POST_ODMOWA.name()
+                    : java.util.Arrays.stream(pl.ejtechnology.tk.eSkarga.domain.service.LetterKind.values()).filter(k -> sub.equals(k.subtype())).map(Enum::name).findFirst().orElse(null);
+            if (kind == null) {
+                continue;
+            }
+            out.add(new pl.ejtechnology.tk.eSkarga.web.model.DraftRow(act.getDocument().getId(), kind, act.getDocument().getTitle(), act.getAuthorUserId(), at(act.getActedOn())));
         }
         return out;
     }

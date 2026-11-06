@@ -82,6 +82,9 @@ public interface ViewData {
 
     List<TimelineEntry> timeline(String sygnatura);
 
+    /** Projekty pism sprawy czekające na podpis sędziego (S-14 → S-16). */
+    List<pl.ejtechnology.tk.eSkarga.web.model.DraftRow> drafts(String sygnatura);
+
     List<ProcessStep> processSteps(String sygnatura);
 
     List<ChecklistItem> checklist(String sygnatura);

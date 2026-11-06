@@ -454,6 +454,11 @@ public class DemoDataset implements Serializable, pl.ejtechnology.tk.eSkarga.web
                         false, false, false));
     }
 
+    @Override
+    public List<pl.ejtechnology.tk.eSkarga.web.model.DraftRow> drafts(String sygnatura) {
+        return List.of();   // w demo podpis to makieta S-16 (?stan=)
+    }
+
     public List<TimelineEntry> timeline(String sygnatura) {
         return List.of(
                 new TimelineEntry(dt(2026, 11, 3, 8, 42), "Biuro podawcze", "zarejestrowało pismo DW 2026/04812 (k. 28–29)", "#", true, true),

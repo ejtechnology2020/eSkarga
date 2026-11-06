@@ -132,6 +132,18 @@
           <section class="card np" style="flex: 1;">
             <p:tabView id="panel" activeIndex="#{akta.panelTab}" styleClass="np" dynamic="false" pt:aria-label="Panel sprawy">
               <p:tab title="Czynności">
+                <!-- projekty pism w stanie PROJEKT → S-16 z identyfikatorem dokumentu i rodzajem pisma (dwuetapowy podpis, D10) -->
+                <h:panelGroup rendered="#{not empty akta.projekty}" layout="block" styleClass="col gap6" style="padding: 12px 14px 0;">
+                  <span class="lbl">Projekty do podpisu</span>
+                  <ui:repeat value="#{akta.projekty}" var="pr">
+                    <div class="row jbetween" style="gap: 8px; padding: 6px 0; border-bottom: 1px solid #D3D8E0;">
+                      <span><b>#{pr.tytul}</b><br /><span class="mut">#{pr.autor} · #{fmt.dateTime(pr.data)}</span></span>
+                      <h:link outcome="/czynnosci/podpis" styleClass="btn s p" value="Podpisz" rendered="#{currentUser.hasRole('sed') or currentUser.hasRole('pre')}">
+                        <f:param name="dokument" value="#{pr.dokumentId}" /><f:param name="rodzaj" value="#{pr.rodzaj}" /><f:param name="stan" value="1" />
+                      </h:link>
+                    </div>
+                  </ui:repeat>
+                </h:panelGroup>
                 <tk:timeline value="#{akta.czynnosci}" label="Oś czynności" styleClass="pad" />
               </p:tab>
               <p:tab title="Terminy">

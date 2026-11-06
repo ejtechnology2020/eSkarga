@@ -128,6 +128,28 @@ domyślnie `<ESKARGA_OIDC_ISSUER>/protocol/openid-connect/token`; Keycloak poró
 Diagnostyka: `infra\windows\logi.cmd app`, filtr `Select-String "oidc|OIDC|bez ról|ELY"` – w dev logger
 `org.wildfly.security.http.oidc` ma poziom DEBUG (CLI przy starcie kontenera), więc widać każdy krok mechanizmu.
 
+## Podpis zarządzeń i postanowień na dev (bez YubiKey)
+
+Podpis jest dwuetapowy (ADR 0008, D10): usługa dokumentów liczy skrót (DSS, PAdES), przeglądarka przekazuje go aplikacji lokalnej
+na `http://127.0.0.1:17227`, ta podpisuje kluczem sędziego i oddaje wartość podpisu; usługa składa podpis, dodaje znacznik czasu
+z TSA dev (B-T) i waliduje wynik – podpis jest przyjęty tylko, gdy walidacja daje TOTAL_PASSED, czyli certyfikat sędziego
+i certyfikat TSA muszą być w magazynie zaufania usługi dokumentów. Na dev zamiast YubiKey jest klucz testowy w PKCS#12:
+
+1. Zbuduj projekt (`infra\windows\buduj.cmd`, powstaje `local-signer\target\eskarga-local-signer.jar`) i uruchom środowisko
+   (`start.cmd`; kontener `tsa` musi działać – po zmianie obrazu `start.cmd -Przebuduj`).
+2. `infra\windows\podpis.cmd` – za pierwszym razem tworzy `infra\docker\.local\podpis\sedzia-test.p12` (klucz RSA, certyfikat
+   samopodpisany, dane fikcyjne), pobiera certyfikat TSA z `http://localhost:3180/tsa.crt`, buduje `truststore.p12` i wpisuje
+   `ESKARGA_DOCS_TRUSTSTORE=/opt/eskarga/podpis/truststore.p12` oraz hasło do `.env` (katalog `.local` jest montowany do kontenera `app`).
+3. Po pierwszym uruchomieniu zrestartuj aplikację: `infra\windows\wdroz.cmd -TylkoApp` (usługa dokumentów czyta magazyn zaufania przy starcie).
+4. `infra\windows\podpis.cmd` ponownie – uruchamia aplikację lokalną (`java -jar … --pkcs12 … --origin http://localhost:8082`);
+   zostaw okno otwarte. PIN klucza: parametr `-Pin` (domyślnie `123456`), trafia do niej zmienną `ESKARGA_SIGNER_PIN`.
+5. W eSkardze: akta sprawy → zakładka **Czynności** → „Podpisz” przy projekcie (projekt powstaje w edytorze S-15 przez „Prześlij
+   sędziemu”, np. zarządzenie o brakach z listy kontrolnej). Ekran S-16: krok 2 pobiera certyfikat z aplikacji lokalnej, krok 3 podpisuje.
+   Role: sędzia albo Prezes TK; sędzia musi być wyznaczony do sprawy (zespół).
+
+Na prawdziwej stacji: `java -jar eskarga-local-signer.jar --lib <libykcs11> --origin https://<adres eSkargi>` z kluczem w slocie PIV YubiKey,
+certyfikat z wewnętrznego CA TK w `ESKARGA_DOCS_TRUSTSTORE`.
+
 ## Wdrażanie WAR-ów (dev)
 
 Katalogi `app/target` i `docs-service/target` są montowane do kontenera `app` tylko do odczytu, a `entrypoint.sh` kopiuje z nich
