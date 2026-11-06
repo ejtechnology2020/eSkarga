@@ -182,7 +182,7 @@ public class DeliveryService {
         return null;
     }
 
-    Optional<ProceduralAct> actFor(CaseDocument doc) {
+    public Optional<ProceduralAct> actFor(CaseDocument doc) {
         return em.createQuery("select a from ProceduralAct a where a.document = :d", ProceduralAct.class).setParameter("d", doc).getResultStream().findFirst();
     }
 

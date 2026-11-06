@@ -688,4 +688,7 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
 - 06.11.2026 – po wdrożeniu przeglądarka używała starych `pdf-viewer.js`/`eskarga.css` (Faces: max-age 7 dni) – stąd „dopasowanie 107 %”
   i martwe chipy dokumentów przy nowych znacznikach. `VersionedResourceHandler` (faces-config) dokleja `v=<znacznik buildu>` do adresów
   zasobów bibliotek `js`, `css`, `tk`, `img`, `fonts`; test `VersionedResourceHandlerTest`.
+- 06.11.2026 – S-17: „Not a business method CaseFileService.lastPage … Do not call non-public methods on EJB's” – metody pakietowe usług EJB
+  wołane z innych usług przez proxy kontenera; wszystkie takie metody (`lastPage`, `actFor`, `nextRegisterNo`, `canRead`, `buildPackage`,
+  `nextTransferNo`) publiczne, test `EjbBusinessMethodsTest` (skan `@Stateless`/`@Singleton` w `target/classes`) pilnuje reguły.
 

@@ -152,7 +152,7 @@ public class IncomingRegister {
                 .setParameter("a", from).setParameter("b", to).getResultList();
     }
 
-    String nextRegisterNo(int year) {
+    public String nextRegisterNo(int year) {
         IncomingCounter counter = em.find(IncomingCounter.class, year, LockModeType.PESSIMISTIC_WRITE);
         if (counter == null) {
             // pierwsze pismo w roku: wstawienie odporne na wyścig równoległych rejestracji, potem blokada wiersza

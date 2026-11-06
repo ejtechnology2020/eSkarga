@@ -73,7 +73,7 @@ public class NoteService {
         return cf.getDocket().format() + ", k. " + karta;
     }
 
-    boolean canRead(CaseFile cf, String userId, Set<AppRole> roles) {
+    public boolean canRead(CaseFile cf, String userId, Set<AppRole> roles) {
         return CaseAccessPolicy.canReadInternalNotes(userId, roles, access.assignment(cf));
     }
 

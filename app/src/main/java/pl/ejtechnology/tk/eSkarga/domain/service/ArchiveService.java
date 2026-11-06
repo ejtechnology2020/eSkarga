@@ -123,7 +123,7 @@ public class ArchiveService {
     }
 
     /** Paczka: metadata.xml + SHA256SUMS + dokumenty jawne (bez notatek wewnętrznych i bez treści dokumentów niejawnych). */
-    byte[] buildPackage(CaseFile cf, List<CaseDocument> docs, ArchiveCategory cat, Integer retentionUntil) {
+    public byte[] buildPackage(CaseFile cf, List<CaseDocument> docs, ArchiveCategory cat, Integer retentionUntil) {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ZipOutputStream zip = new ZipOutputStream(bos, StandardCharsets.UTF_8)) {
             StringBuilder meta = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<akta xmlns=\"urn:tk:eskarga:archiwum:1\">\n");
             meta.append("  <sygnatura>").append(esc(cf.getDocket().format())).append("</sygnatura>\n");
@@ -163,7 +163,7 @@ public class ArchiveService {
         }
     }
 
-    String nextTransferNo() {
+    public String nextTransferNo() {
         int year = clock.today().getYear();
         Long count = em.createQuery("select count(t) from ArchiveTransfer t where t.transferNo like :y", Long.class).setParameter("y", "%/" + year).getSingleResult();
         return (count + 1) + "/" + year;

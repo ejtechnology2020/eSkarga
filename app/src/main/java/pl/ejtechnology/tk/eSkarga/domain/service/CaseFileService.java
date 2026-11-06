@@ -283,7 +283,7 @@ public class CaseFileService {
         return em.createQuery("select p from Party p where p.caseFile = :c order by p.id", Party.class).setParameter("c", cf).getResultList();
     }
 
-    int lastPage(CaseFile cf) {
+    public int lastPage(CaseFile cf) {
         Integer max = em.createQuery("select max(d.pageTo) from CaseDocument d where d.caseFile = :c and d.internalNote = false", Integer.class)
                 .setParameter("c", cf).getSingleResult();
         return max == null ? 0 : max;
