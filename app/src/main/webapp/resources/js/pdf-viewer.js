@@ -1,6 +1,7 @@
 /* Widżet PDF eSkarga (T-034, T-035). pdf.js ładowany jako moduł z własnej domeny (webjar), worker lokalny, isEvalSupported=false.
    Strony renderowane leniwie (IntersectionObserver) – dokument 200 stron otwiera się bez pobierania całości (HTTP Range).
-   Skróty (brief §6): J/K strona, +/- zoom, / szukaj, Esc zamyka wyszukiwanie. Nakładka zaznaczeń z data-highlights (JSON). */
+   Skróty (brief §6): J/K strona, +/- zoom, / szukaj, Esc zamyka wyszukiwanie. Nakładka zaznaczeń z data-highlights (JSON).
+   Kilka dokumentów jednego pisma: chipy .pdfv-doc[data-src] przełączają dokument w tym samym widżecie. Dopasowanie do panelu ≤ 100 %. */
 (function () {
   'use strict';
   const SCALE_STEP = 0.15;
@@ -24,52 +25,35 @@
     let pdf = null;
     let current = 1;
     let pdfjs;
+    let base = null;        // viewport pierwszej strony w skali 1.33 (do dopasowania)
+    let autoFit = true;     // dopasowanie do szerokości panelu, dopóki użytkownik nie zmieni powiększenia ręcznie
+    let holders = [];
+    let rendered = new Map();
+    let io = null;
+    let generation = 0;     // numer otwartego dokumentu – render strony poprzedniego dokumentu jest ignorowany
+
     try {
       pdfjs = await loadLib(root.dataset.lib);
       pdfjs.GlobalWorkerOptions.workerSrc = root.dataset.worker;
-      status.textContent = 'Ładowanie dokumentu…';
-      pdf = await pdfjs.getDocument({ url: root.dataset.src, isEvalSupported: false, disableAutoFetch: true, disableStream: false, rangeChunkSize: 65536 }).promise;
     } catch (e) {
       status.textContent = 'Nie udało się otworzyć dokumentu. ' + (e && e.message ? e.message : '');
       return;
     }
-    status.textContent = '';
-    root.querySelector('.pdfv-count').textContent = String(pdf.numPages);
-    const rendered = new Map();
 
-    // Skala początkowa: strona dopasowana do szerokości panelu (brief §4.3 – podgląd w panelu kolejki, dziennika, akt),
-    // dopóki użytkownik nie zmieni powiększenia ręcznie; po zmianie rozmiaru panelu (splitter) dopasowanie liczone ponownie.
-    const base = (await pdf.getPage(1)).getViewport({ scale: 1.33 });
-    let autoFit = true;
+    // Dopasowanie automatyczne nigdy nie przekracza 100 % (skala rzeczywista); większe powiększenie tylko ręcznie (+, Dopasuj wraca do auto).
     function fitScale() {
+      if (!base) { return 1.0; }
       const w = scroll.clientWidth - 2 * (parseFloat(getComputedStyle(scroll).paddingLeft) || 0) - 2;
-      return w > 100 ? Math.max(0.5, Math.min(3, w / base.width)) : 1.0;
-    }
-    scale = fitScale();
-    root.querySelector('.pdfv-zoom').textContent = Math.round(scale * 100) + ' %';
-
-    const holders = [];
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const holder = document.createElement('div');
-      holder.className = 'pdfv-pg';
-      holder.dataset.page = String(i);
-      holder.setAttribute('aria-label', 'Karta ' + (pageFrom + i - 1) + ', strona ' + i);
-      holder.style.minHeight = Math.floor(base.height * scale) + 'px';
-      pagesEl.appendChild(holder);
-      holders.push(holder);
-    }
-    if (window.ResizeObserver) {
-      let ostatnia = scroll.clientWidth;
-      new ResizeObserver(function () {
-        if (autoFit && Math.abs(scroll.clientWidth - ostatnia) > 8) { ostatnia = scroll.clientWidth; setScale(fitScale()); }
-      }).observe(scroll);
+      return w > 100 ? Math.max(0.5, Math.min(1.0, w / base.width)) : 1.0;
     }
 
     async function render(i, force) {
+      const gen = generation;
       const holder = holders[i - 1];
-      if (!force && rendered.get(i) === scale) { return; }
+      if (!holder || (!force && rendered.get(i) === scale)) { return; }
       rendered.set(i, scale);
       const page = await pdf.getPage(i);
+      if (gen !== generation) { return; }
       const viewport = page.getViewport({ scale: scale * 1.33 });
       holder.innerHTML = '';
       const canvas = document.createElement('canvas');
@@ -78,6 +62,7 @@
       holder.style.minHeight = canvas.height + 'px';
       holder.appendChild(canvas);
       await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
+      if (gen !== generation) { return; }
       const textLayer = document.createElement('div');
       textLayer.className = 'pdfv-text';
       textLayer.style.width = canvas.width + 'px';
@@ -105,23 +90,13 @@
       });
     }
 
-    const io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (en.isIntersecting) {
-          const i = parseInt(en.target.dataset.page, 10);
-          render(i, false);
-          if (en.intersectionRatio > 0.4) { setCurrent(i); }
-        }
-      });
-    }, { root: scroll, threshold: [0.1, 0.5] });
-    holders.forEach(function (h) { io.observe(h); });
-
     function setCurrent(i) {
       current = i;
       root.querySelector('.pdfv-num').value = String(i);
       root.querySelector('.pdfv-karta').textContent = String(pageFrom + i - 1);
     }
     function goTo(i) {
+      if (!pdf) { return; }
       i = Math.max(1, Math.min(pdf.numPages, i));
       holders[i - 1].scrollIntoView({ block: 'start' });
       setCurrent(i);
@@ -133,7 +108,7 @@
     }
     async function search(q) {
       const found = root.querySelector('.pdfv-found');
-      if (!q) { found.textContent = ''; return; }
+      if (!q || !pdf) { found.textContent = ''; return; }
       let hits = 0; let first = 0;
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
@@ -144,6 +119,78 @@
       }
       found.textContent = hits ? hits + ' trafień, pierwsze na stronie ' + first : 'brak trafień';
       if (first) { goTo(first); }
+    }
+
+    /** Otwiera dokument spod adresu src (pierwszy albo wybrany przełącznikiem); poprzedni dokument jest zamykany. */
+    async function open(src, downloadUrl) {
+      generation++;
+      if (io) { io.disconnect(); io = null; }
+      if (pdf) { try { pdf.destroy(); } catch (e) { /* ignorowane */ } pdf = null; }
+      pagesEl.innerHTML = '';
+      holders = [];
+      rendered = new Map();
+      root.dataset.src = src;
+      const dl = root.querySelector('.pdfv-download');
+      if (dl) { dl.href = downloadUrl || src; }
+      root.querySelector('.pdfv-count').textContent = '…';
+      root.querySelector('.pdfv-found').textContent = '';
+      status.textContent = 'Ładowanie dokumentu…';
+      try {
+        pdf = await pdfjs.getDocument({ url: src, isEvalSupported: false, disableAutoFetch: true, disableStream: false, rangeChunkSize: 65536 }).promise;
+        base = (await pdf.getPage(1)).getViewport({ scale: 1.33 });
+      } catch (e) {
+        status.textContent = 'Nie udało się otworzyć dokumentu. ' + (e && e.message ? e.message : '');
+        return;
+      }
+      status.textContent = '';
+      root.querySelector('.pdfv-count').textContent = String(pdf.numPages);
+      if (autoFit) { scale = fitScale(); }
+      root.querySelector('.pdfv-zoom').textContent = Math.round(scale * 100) + ' %';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const holder = document.createElement('div');
+        holder.className = 'pdfv-pg';
+        holder.dataset.page = String(i);
+        holder.setAttribute('aria-label', 'Karta ' + (pageFrom + i - 1) + ', strona ' + i);
+        holder.style.minHeight = Math.floor(base.height * scale) + 'px';
+        pagesEl.appendChild(holder);
+        holders.push(holder);
+      }
+      io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) {
+            const i = parseInt(en.target.dataset.page, 10);
+            render(i, false);
+            if (en.intersectionRatio > 0.4) { setCurrent(i); }
+          }
+        });
+      }, { root: scroll, threshold: [0.1, 0.5] });
+      holders.forEach(function (h) { io.observe(h); });
+      goTo(1);
+    }
+
+    // przełącznik dokumentów pisma (kilka skanów przy jednym wpływie): chipy z data-src; aktywny ten, którego adres jest otwarty
+    const docs = root.querySelectorAll('.pdfv-doc[data-src]');
+    function markActive(src) {
+      docs.forEach(function (d) {
+        const on = d.dataset.src === src;
+        d.classList.toggle('on', on);
+        d.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+    }
+    docs.forEach(function (d) {
+      d.addEventListener('click', function () {
+        if (d.dataset.src === root.dataset.src) { return; }
+        markActive(d.dataset.src);
+        open(d.dataset.src, d.dataset.download);
+      });
+    });
+    markActive(root.dataset.src);
+
+    if (window.ResizeObserver) {
+      let ostatnia = scroll.clientWidth;
+      new ResizeObserver(function () {
+        if (autoFit && pdf && Math.abs(scroll.clientWidth - ostatnia) > 8) { ostatnia = scroll.clientWidth; setScale(fitScale()); }
+      }).observe(scroll);
     }
 
     root.addEventListener('click', function (ev) {
@@ -181,7 +228,7 @@
         root.dispatchEvent(new CustomEvent('eskarga:highlight', { detail: detail, bubbles: true }));
       });
     }
-    goTo(1);
+    await open(root.dataset.src, root.dataset.download);
   }
 
   function mountAll() { document.querySelectorAll('.pdfv').forEach(mount); }

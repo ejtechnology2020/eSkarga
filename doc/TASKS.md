@@ -666,4 +666,7 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   S-02: formularz startuje pusty, filtry repertorium/rok działają, liczba spraw z trafień z danych. Pulpit bez liczb z makiety.
   Kod błędu `RTS-500-…` (S-26) zapisywany do logu (`pl.ejtechnology.tk.eSkarga.blad`, z wyjątkiem) i audytu. Stopka: commit i czas budowy
   (`eskarga-build.properties`, `-Deskarga.build.commit` z buduj.ps1 i CI).
+- 06.11.2026 – widżet PDF: przełącznik dokumentów pisma (chipy `.pdfv-doc` z `docs`/`docBase` w `tk:pdfViewer`; kolejka S-06, dziennik S-04,
+  założenie S-07 – kilka skanów jednego wpływu, TIFF jako plik do pobrania), dokument otwierany w tym samym widżecie (`open()`),
+  dopasowanie automatyczne ≤ 100 % (ręczne powiększenie do 300 %, „Dopasuj” wraca do auto). Testy `widget`: przełączanie i limit 100 %.
 

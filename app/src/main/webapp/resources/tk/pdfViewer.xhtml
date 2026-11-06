@@ -13,11 +13,20 @@
     <cc:attribute name="highlights" default="[]" />
     <cc:attribute name="canHighlight" default="false" />
     <cc:attribute name="downloadUrl" default="" />
+    <!-- kilka dokumentów jednego pisma (np. skany wpływu): lista obiektów z id, nazwa, pdf(); adresy budowane jako docBase/id (+ ?pobierz=1) -->
+    <cc:attribute name="docs" />
+    <cc:attribute name="docBase" default="" />
   </cc:interface>
   <cc:implementation>
-    <div id="#{cc.clientId}" class="pdfv" data-src="#{cc.attrs.src}" data-page-from="#{cc.attrs.pageFrom}" data-highlights="#{cc.attrs.highlights}"
+    <div id="#{cc.clientId}" class="pdfv" data-src="#{cc.attrs.src}" data-download="#{cc.attrs.downloadUrl}" data-page-from="#{cc.attrs.pageFrom}" data-highlights="#{cc.attrs.highlights}"
          data-can-highlight="#{cc.attrs.canHighlight}" data-worker="#{request.contextPath}/webjars/pdfjs-dist/6.4.299/build/pdf.worker.min.mjs"
          data-lib="#{request.contextPath}/webjars/pdfjs-dist/6.4.299/build/pdf.min.mjs" role="region" aria-label="#{cc.attrs.title}">
+      <h:panelGroup rendered="#{not empty cc.attrs.docs and cc.attrs.docs.size() gt 1}" layout="block" styleClass="pdfv-docs" role="tablist" pt:aria-label="Dokumenty pisma">
+        <ui:repeat value="#{cc.attrs.docs}" var="d" varStatus="st">
+          <h:panelGroup rendered="#{d.pdf()}"><button type="button" class="pdfv-doc" role="tab" aria-selected="false" data-src="#{cc.attrs.docBase}/#{d.id}" data-download="#{cc.attrs.docBase}/#{d.id}?pobierz=1" title="#{d.nazwa}">#{st.index + 1}. #{d.nazwa}</button></h:panelGroup>
+          <h:panelGroup rendered="#{not d.pdf()}"><a class="pdfv-doc off" href="#{cc.attrs.docBase}/#{d.id}?pobierz=1" pt:download="" title="TIFF – podgląd niedostępny, plik do pobrania">#{st.index + 1}. #{d.nazwa} ↓</a></h:panelGroup>
+        </ui:repeat>
+      </h:panelGroup>
       <div class="pdfv-bar" role="toolbar" aria-label="Podgląd dokumentu">
         <div class="row" role="group" aria-label="Powiększenie">
           <button type="button" class="ibtn" data-act="zoom-out" aria-label="Pomniejsz (−)">−</button>
@@ -35,7 +44,7 @@
           <span class="pdfv-found mut" aria-live="polite"></span>
         </div>
         <span class="sp"></span>
-        <h:outputLink rendered="#{not empty cc.attrs.downloadUrl}" value="#{cc.attrs.downloadUrl}" styleClass="btn s" pt:download="">Pobierz</h:outputLink>
+        <h:outputLink rendered="#{not empty cc.attrs.downloadUrl}" value="#{cc.attrs.downloadUrl}" styleClass="btn s pdfv-download" pt:download="">Pobierz</h:outputLink>
         <button type="button" class="btn s" data-act="print">Drukuj</button>
       </div>
       <div class="pdfv-scroll" tabindex="0">

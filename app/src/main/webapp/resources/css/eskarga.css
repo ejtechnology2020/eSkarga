@@ -604,6 +604,11 @@ body .ui-tabs.np .ui-tabs-panels{padding:0}
 .pdfv { display: flex; flex-direction: column; width: 100%; box-sizing: border-box; min-height: 420px; height: clamp(420px, calc(100vh - 230px), 1100px);
   border: 1px solid var(--line, #d9dde3); border-radius: 6px; background: #f3f4f6; } /* stała wysokość: strony przewijane w widżecie, nie cała strona; szerokość panelu (align-items:center w .viewer) */
 .pdfv-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 10px; background: #fff; border-bottom: 1px solid var(--line, #d9dde3); }
+.pdfv-docs { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; background: #fff; border-bottom: 1px solid var(--line, #d9dde3); }
+.pdfv-doc { min-height: 36px; padding: 4px 12px; border: 2px solid var(--edge, #9aa3b2); border-radius: 18px; background: #fff; color: var(--ink, #171b24); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdfv-doc.on { background: var(--ink, #171b24); border-color: var(--ink, #171b24); color: #fff; }
+.pdfv-doc.off { color: var(--mut, #5b6472); border-style: dashed; }
+.pdfv-doc:focus-visible { outline: 3px solid var(--acc, #1d4ed8); outline-offset: 2px; }
 .pdfv-num { width: 3.5em; }
 .pdfv-scroll { flex: 1; overflow: auto; padding: 12px; outline-offset: -2px; }
 .pdfv-pg { position: relative; margin: 0 auto 12px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); width: fit-content; }

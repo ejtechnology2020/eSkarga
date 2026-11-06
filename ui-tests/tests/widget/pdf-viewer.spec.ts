@@ -30,13 +30,17 @@ function widgetHtml(): string {
   return impl
     .replace(/#\{cc\.clientId\}/g, 'pdfv1').replace(/#\{cc\.attrs\.src\}/g, '/eskarga/wplyw/skan/1').replace(/#\{cc\.attrs\.pageFrom\}/g, '1')
     .replace(/#\{cc\.attrs\.highlights\}/g, '[]').replace(/#\{cc\.attrs\.canHighlight\}/g, 'false').replace(/#\{cc\.attrs\.title\}/g, 'Skan')
-    .replace(/#\{request\.contextPath\}/g, '/eskarga').replace(/<h:outputLink[\s\S]*?<\/h:outputLink>/g, '');
+    .replace(/#\{request\.contextPath\}/g, '/eskarga').replace(/<h:outputLink[\s\S]*?<\/h:outputLink>/g, '')
+    // przełącznik dokumentów to znaczniki JSF (ui:repeat) – w teście statycznym zastępujemy go własnymi chipami dwóch skanów
+    .replace(/<h:panelGroup rendered="#\{not empty cc\.attrs\.docs[\s\S]*?(?=<div class="pdfv-bar")/,
+      '<div class="pdfv-docs" role="tablist"><button type="button" class="pdfv-doc" role="tab" data-src="/eskarga/wplyw/skan/1" data-download="/eskarga/wplyw/skan/1?pobierz=1">1. skarga.pdf</button>'
+      + '<button type="button" class="pdfv-doc" role="tab" data-src="/eskarga/wplyw/skan/2" data-download="/eskarga/wplyw/skan/2?pobierz=1">2. zalacznik.pdf</button></div>');
 }
 
 async function serwer(): Promise<{ url: string; zamknij: () => void }> {
   const csp = cspZWebXml();
   const widget = widgetHtml();
-  const pdf = pdfTestowy('Skarga konstytucyjna - test widzetu');
+  const pdfy: Record<string, Buffer> = { '1': pdfTestowy('Skarga konstytucyjna - test widzetu'), '2': pdfTestowy('Drugi dokument pisma - zalacznik') };
   const srv = http.createServer((req, res) => {
     const url = new URL(req.url!, 'http://x');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -53,7 +57,9 @@ async function serwer(): Promise<{ url: string; zamknij: () => void }> {
       res.writeHead(200, { 'Content-Type': 'text/javascript' }); // web.xml: mime-mapping mjs → text/javascript
       return res.end(readFileSync(resolve(PDFJS, url.pathname.split('/').pop()!)));
     }
-    if (url.pathname === '/eskarga/wplyw/skan/1') {
+    const skan = /^\/eskarga\/wplyw\/skan\/(\d)$/.exec(url.pathname);
+    if (skan && pdfy[skan[1]!]) {
+      const pdf = pdfy[skan[1]!]!;
       res.setHeader('Accept-Ranges', 'bytes');
       const r = /bytes=(\d+)-(\d*)/.exec(req.headers.range ?? '');
       if (r) {
@@ -67,11 +73,17 @@ async function serwer(): Promise<{ url: string; zamknij: () => void }> {
     }
     if (url.pathname === '/eskarga/strona.html') {
       const ajax = url.searchParams.get('tryb') === 'ajax';
+      const szer = url.searchParams.get('szer') ?? '720';
       const body = ajax ? '<div id="cel"></div>' : widget;
       const wstaw = ajax ? `<script nonce="abc123">setTimeout(function () { document.getElementById('cel').innerHTML = ${JSON.stringify(widget)}; }, 300);</script>` : '';
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(`<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>widżet PDF</title><link rel="stylesheet" href="/eskarga/resources/css/eskarga.css"></head><body><div class="viewer" style="width: 720px">${body}</div><script src="/eskarga/resources/js/pdf-viewer.js"></script>${wstaw}</body></html>`);
+      return res.end(`<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>widżet PDF</title><link rel="stylesheet" href="/eskarga/resources/css/eskarga.css"></head><body><div class="viewer" style="width: ${szer}px">${body}</div><script src="/eskarga/resources/js/pdf-viewer.js"></script>${wstaw}</body></html>`);
     }
+    if (url.pathname === '/favicon.ico') {
+      res.writeHead(204);
+      return res.end();
+    }
+    console.log('serwer testowy: 404 ' + url.pathname);
     res.writeHead(404);
     res.end();
   });
@@ -84,6 +96,7 @@ async function sprawdzRender(page: Page): Promise<void> {
   const bledy: string[] = [];
   page.on('console', (m) => { if (m.type() === 'error') bledy.push(m.text()); });
   page.on('pageerror', (e) => bledy.push(e.message));
+  page.on('response', (r) => { if (r.status() >= 400) bledy.push(`HTTP ${r.status()} ${r.url()}`); });
   await expect(page.locator('.pdfv-count'), 'pdf.js policzył strony').toHaveText('1', { timeout: 20_000 });
   await expect(page.locator('.pdfv-text'), 'warstwa tekstowa z treścią skanu').toContainText('Skarga', { timeout: 20_000 });
   const ciemne = await page.evaluate(() => {
@@ -103,7 +116,9 @@ async function sprawdzRender(page: Page): Promise<void> {
     return { canvas: c.getBoundingClientRect().width, scroll: s.clientWidth, widget: w.getBoundingClientRect().height, okno: window.innerHeight, przewija: s.scrollHeight > s.clientHeight };
   });
   expect(miary.canvas, 'strona nie szersza niż panel').toBeLessThanOrEqual(miary.scroll);
-  expect(miary.canvas, 'strona dopasowana do szerokości panelu').toBeGreaterThan(miary.scroll * 0.85);
+  if (miary.scroll < 800) {
+    expect(miary.canvas, 'strona dopasowana do szerokości panelu').toBeGreaterThan(miary.scroll * 0.85);
+  }
   expect(miary.widget, 'widżet nie wyższy niż okno').toBeLessThanOrEqual(miary.okno);
   expect(miary.przewija, 'strona A4 przewija się w widżecie').toBeTruthy();
   expect(bledy, 'bez błędów CSP/MIME w konsoli').toEqual([]);
@@ -122,5 +137,31 @@ test.describe('Widżet PDF (pdf.js, CSP z web.xml)', () => {
   test('renderuje skan wstawiony do DOM po odpowiedzi AJAX (kolejka, dziennik, akta)', async ({ page }) => {
     await page.goto(s.url + '?tryb=ajax');
     await sprawdzRender(page);
+  });
+
+  test('przełącznik dokumentów pisma otwiera drugi skan w tym samym widżecie', async ({ page }) => {
+    await page.goto(s.url);
+    await sprawdzRender(page);
+    await expect(page.locator('.pdfv-doc').first()).toHaveClass(/on/);
+    await page.locator('.pdfv-doc', { hasText: 'zalacznik' }).click();
+    await expect(page.locator('.pdfv-doc', { hasText: 'zalacznik' })).toHaveClass(/on/);
+    await expect(page.locator('.pdfv-count')).toHaveText('1', { timeout: 20_000 });
+    await expect(page.locator('.pdfv-text')).toContainText('Drugi dokument', { timeout: 20_000 });
+    await expect(page.locator('.pdfv-text')).not.toContainText('Skarga konstytucyjna');
+    expect(await page.locator('.pdfv').getAttribute('data-src')).toBe('/eskarga/wplyw/skan/2');
+  });
+
+  test('dopasowanie automatyczne nie przekracza 100 %, ręczne powiększenie tak', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await page.goto(s.url + '?szer=1400');
+    await sprawdzRender(page);
+    await expect(page.locator('.pdfv-zoom')).toHaveText('100 %');
+    const szerokosc = await page.locator('.pdfv-pg canvas').first().evaluate((c) => (c as HTMLCanvasElement).width);
+    expect(szerokosc, 'A4 w skali 1:1 (595 pt × 1.33)').toBeLessThanOrEqual(795);
+    expect(szerokosc).toBeGreaterThanOrEqual(785);
+    await page.locator('[data-act="zoom-in"]').click();
+    await expect(page.locator('.pdfv-zoom')).toHaveText('115 %');
+    await page.locator('[data-act="fit"]').click();
+    await expect(page.locator('.pdfv-zoom')).toHaveText('100 %');
   });
 });

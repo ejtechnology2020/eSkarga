@@ -106,7 +106,8 @@
               <h:panelGroup rendered="#{empty zalozenie.skanyPisma}" layout="block" style="padding: 16px;"><p class="mut">Pismo nie ma skanu (zarejestrowano tylko metadane).</p></h:panelGroup>
               <h:panelGroup rendered="#{not empty zalozenie.pierwszyPdf}" layout="block">
                 <tk:pdfViewer src="#{request.contextPath}/wplyw/skan/#{zalozenie.pierwszyPdf.id}" title="Skan pisma #{zalozenie.pismo}: #{zalozenie.pierwszyPdf.nazwa}"
-                              downloadUrl="#{request.contextPath}/wplyw/skan/#{zalozenie.pierwszyPdf.id}?pobierz=1" />
+                              downloadUrl="#{request.contextPath}/wplyw/skan/#{zalozenie.pierwszyPdf.id}?pobierz=1"
+                              docs="#{zalozenie.skanyPisma}" docBase="#{request.contextPath}/wplyw/skan" />
               </h:panelGroup>
               <h:panelGroup rendered="#{not empty zalozenie.skanyPisma}" layout="block" style="padding: 8px 16px;">
                 <p class="mut">Skany pisma: #{zalozenie.pismoSkany}. Po założeniu sprawy staną się pierwszymi kartami akt.</p>
