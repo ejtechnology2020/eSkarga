@@ -123,6 +123,7 @@ public class JpaViewData implements ViewData {
     @Inject CaseAccessService caseAccess;
     @Inject AuditService audit;
     @Inject FormalRequirementsService requirements;
+    @Inject pl.ejtechnology.tk.eSkarga.domain.service.ChecklistService checklist;
     @Inject CurrentUser user;
     @Inject pl.ejtechnology.tk.eSkarga.search.SearchService search;
     @Inject AppClock clock;
@@ -591,8 +592,12 @@ public class JpaViewData implements ViewData {
         boolean attorney = parties.stream().anyMatch(p -> p.getRole() == PartyRole.PELNOMOCNIK);
         ProcessVariables.RodzajPisma rodzaj = cf.getDocket().symbol() == DocketSymbol.TS ? ProcessVariables.RodzajPisma.SKARGA : ProcessVariables.RodzajPisma.WNIOSEK;
         List<ChecklistItem> out = new ArrayList<>();
+        Map<String, pl.ejtechnology.tk.eSkarga.domain.model.ChecklistEntry> oceny = checklist.current(cf);
         for (FormalRequirementsService.Requirement r : requirements.requirements(rodzaj, attorney, null)) {
-            out.add(new ChecklistItem(r.description(), r.legalBasis(), ChecklistItem.State.DO_SPRAWDZENIA, "", false, ""));
+            var e = oceny.get(r.code());
+            ChecklistItem.State stan = e == null ? ChecklistItem.State.DO_SPRAWDZENIA : ChecklistItem.State.valueOf(e.getState().name());
+            out.add(new ChecklistItem(r.description(), r.legalBasis(), stan, e == null || e.getNote() == null ? "" : e.getNote(), e != null && stan == ChecklistItem.State.BRAK,
+                    e == null || e.getPageRef() == null ? "" : e.getPageRef(), r.code()));
         }
         return out;
     }

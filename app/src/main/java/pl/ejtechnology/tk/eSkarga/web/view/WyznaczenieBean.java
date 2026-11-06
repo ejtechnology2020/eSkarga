@@ -83,7 +83,7 @@ public class WyznaczenieBean implements Serializable {
             if (sedzia == null || sedzia.isBlank()) {
                 throw new IllegalArgumentException("Wybierz sędziego z listy");
             }
-            judges.assign(cf.getId(), sedzia, currentUser.getLogin(), currentUser.getRoles());
+            judges.assign(cf.getId(), sedzia, getSedziaNazwa(), currentUser.getLogin(), currentUser.getRoles());
             FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Sędzia wyznaczony.", getSedziaNazwa() + " · " + syg));
             return "/akta/podglad.xhtml?faces-redirect=true&sygnatura=" + syg.replace(" ", "%20");
         } catch (SecurityException e) {
@@ -104,6 +104,25 @@ public class WyznaczenieBean implements Serializable {
     public void setSygnatura(String sygnatura) { this.sygnatura = sygnatura; }
 
     public java.time.LocalDate getDzis() { return clock.today(); }
+
+    /** Aktywny szablon zarządzenia (rejestr szablonów pism S-24) – null, gdy nie załadowano szablonów domyślnych. */
+    public pl.ejtechnology.tk.eSkarga.domain.model.LetterTemplate getSzablonZarzadzenia() {
+        try {
+            return settings.isDemo() ? null : judges.orderTemplate();
+        } catch (IllegalStateException e) {
+            return null;
+        }
+    }
+
+    /** Adres podglądu projektu zarządzenia z szablonu (OrderPreviewServlet) – gdy wybrano sprawę i sędziego. */
+    public String getPodgladUrl() {
+        String syg = getSygnatura();
+        if (settings.isDemo() || syg == null || getSedzia() == null) {
+            return null;
+        }
+        return "/czynnosci/wyznaczenie/podglad?sygnatura=" + java.net.URLEncoder.encode(syg, java.nio.charset.StandardCharsets.UTF_8)
+                + "&sedzia=" + java.net.URLEncoder.encode(getSedzia(), java.nio.charset.StandardCharsets.UTF_8);
+    }
 
     /** Upoważnienie ważne dziś (do banera): poza demo z rejestru upoważnień, w demo z danych przykładowych. */
     public CaseAccessPolicy.Delegation getAktualneUpowaznienie() {

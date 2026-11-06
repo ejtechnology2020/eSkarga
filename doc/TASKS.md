@@ -691,4 +691,14 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
 - 06.11.2026 – S-17: „Not a business method CaseFileService.lastPage … Do not call non-public methods on EJB's” – metody pakietowe usług EJB
   wołane z innych usług przez proxy kontenera; wszystkie takie metody (`lastPage`, `actFor`, `nextRegisterNo`, `canRead`, `buildPackage`,
   `nextTransferNo`) publiczne, test `EjbBusinessMethodsTest` (skan `@Stateless`/`@Singleton` w `target/classes`) pilnuje reguły.
+- 06.11.2026 – S-14 lista kontrolna była tylko do odczytu (wszystko „do sprawdzenia”): `checklist_entry` (V9, tylko dopisywana),
+  `ChecklistService.record` (zespół sędziego, referent, kierownik z dostępem do akt; audyt), oceny scalone z wymogami z DMN
+  (`JpaViewData.checklist`), przyciski Spełniony/Brak/Do sprawdzenia z uwagą w zakładce; `ChecklistServiceTest`. Wymogi konfigurowalne
+  w tabeli decyzyjnej `app/src/main/resources/bpmn/wymogi-formalne.dmn` (`Dec_WymogiFormalne`), nie w słownikach.
+  S-17/UC-05: zarządzenie o wyznaczeniu sędziego z szablonu `ZARZ_WYZNACZENIE_SEDZIEGO` z rejestru szablonów pism (usługa dokumentów,
+  PDF/A w aktach – dotąd wpis bez pliku, pusty podgląd); podgląd projektu na S-17 renderowany z tego samego szablonu
+  (`OrderPreviewServlet`) zamiast makiety; bez aktywnego szablonu czytelny komunikat (S-24 „Załaduj szablony domyślne”).
+  Akta bez parametru: komunikat raz, bez domyślnej Ts 312/26 poza demo; `deadline.none`; „strona 1 z 14” z makiety usunięte.
+  GUI (Playwright, projekt `oidc`): UC-07 upoważnienie z aktem, UC-08 wyznaczenie sędziego z zarządzeniem z szablonu, UC-09 lista kontrolna.
+  ID-users (gałąź `claude/windows-invoke-compose`): drugi składnik OTP albo klucz WebAuthn w podprzepływach LoA2/MFA.
 

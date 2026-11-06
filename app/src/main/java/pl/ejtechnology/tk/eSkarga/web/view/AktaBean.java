@@ -42,7 +42,16 @@ public class AktaBean implements Serializable {
     @Inject
     private pl.ejtechnology.tk.eSkarga.domain.service.NoteService notes;
 
-    private String sygnatura = "Ts 312/26";
+    @Inject
+    private pl.ejtechnology.tk.eSkarga.domain.service.ChecklistService checklist;
+    @Inject
+    private pl.ejtechnology.tk.eSkarga.domain.service.CaseFileService cases;
+
+    /** Z parametru ?sygnatura=; w demo bez parametru Ts 312/26 (load). Poza demo bez parametru – powrót do repertorium. */
+    private String sygnatura;
+    private boolean komunikatDodany;
+    /** Uwagi wpisywane przy ocenie wymogów (kod wymogu → treść) – zapisywane razem z oceną. */
+    private final java.util.Map<String, String> uwagi = new java.util.HashMap<>();
     private String widok;
     private CaseSummary sprawa;
     private List<RecordPage> spis;
@@ -59,10 +68,14 @@ public class AktaBean implements Serializable {
 
     /** {@code f:viewAction}: z bazą bez sprawy (brak parametru albo brak dostępu) – powrót do repertorium z komunikatem; w demo domyślnie Ts 312/26. */
     public String load() {
+        if (settings.isDemo() && (sygnatura == null || sygnatura.isBlank())) {
+            sygnatura = "Ts 312/26";
+        }
         sprawa = data.caseBy(sygnatura);
         if (sprawa == null && !settings.isDemo()) {
             FacesContext fc = FacesContext.getCurrentInstance();
-            if (fc != null) {
+            if (fc != null && !komunikatDodany) {   // init() i f:viewAction wołają load() – komunikat tylko raz
+                komunikatDodany = true;
                 fc.getExternalContext().getFlash().setKeepMessages(true);
                 fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_WARN, sygnatura == null || sygnatura.isBlank() ? "Wybierz sprawę z repertorium."
                         : "Brak sprawy " + sygnatura + " albo brak dostępu do jej akt.", null));
@@ -197,6 +210,23 @@ public class AktaBean implements Serializable {
     public List<TimelineEntry> getCzynnosci() { return data.timeline(sygnatura); }
     public List<ProcessStep> getPrzebieg() { return data.processSteps(sygnatura); }
     public List<ChecklistItem> getLista() { return data.checklist(sygnatura); }
+
+    public java.util.Map<String, String> getUwagi() { return uwagi; }
+
+    /** UC-06: ocena wymogu (SPELNIONY / BRAK / DO_SPRAWDZENIA) z uwagą – zapis w usłudze listy kontrolnej, audyt. */
+    public void ocen(String kod, String stan) {
+        FacesContext fc = FacesContext.getCurrentInstance();
+        if (settings.isDemo()) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Tryb demo: ocena nie jest zapisywana.", null));
+            return;
+        }
+        try {
+            var cf = cases.byDocket(pl.ejtechnology.tk.eSkarga.domain.DocketNumber.parse(sygnatura)).orElseThrow(() -> new IllegalArgumentException("Brak sprawy " + sygnatura));
+            checklist.record(cf.getId(), kod, pl.ejtechnology.tk.eSkarga.domain.ChecklistState.valueOf(stan), uwagi.get(kod), null, currentUser.getLogin(), currentUser.getRoles());
+        } catch (RuntimeException e) {
+            fc.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się zapisać oceny wymogu.", e.getMessage()));
+        }
+    }
     public List<DeadlineView> getTerminy() { return data.deadlines(sygnatura); }
     public long getBraki() { return getLista().stream().filter(i -> i.stan() == ChecklistItem.State.BRAK).count(); }
     public int getJawne() { return (int) spis.stream().filter(p -> !p.isNiejawny()).count(); }

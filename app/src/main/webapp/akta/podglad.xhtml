@@ -144,9 +144,18 @@
                 <div class="col gap10" style="padding: 14px;">
                   <ul class="list-plain col gap6">
                     <ui:repeat value="#{akta.lista}" var="li">
-                      <li class="row jbetween" style="gap: 8px; padding: 6px 0; border-bottom: 1px solid #D3D8E0;">
-                        <span><b>#{li.wymog}</b><br /><span class="mut">#{li.podstawa}#{empty li.uwaga ? '' : ' · '.concat(li.uwaga)}</span></span>
-                        <tk:tag value="#{li.stan eq 'SPELNIONY' ? 'spełniony' : li.stan eq 'BRAK' ? 'brak' : 'do sprawdzenia'}" tone="#{li.stan eq 'SPELNIONY' ? 'OK' : li.stan eq 'BRAK' ? 'ERR' : 'WARN'}" />
+                      <li class="col gap6" style="padding: 8px 0; border-bottom: 1px solid #D3D8E0;">
+                        <div class="row jbetween" style="gap: 8px;">
+                          <span><b>#{li.wymog}</b><br /><span class="mut">#{li.podstawa}#{empty li.uwaga ? '' : ' · '.concat(li.uwaga)}</span></span>
+                          <tk:tag value="#{li.stan eq 'SPELNIONY' ? 'spełniony' : li.stan eq 'BRAK' ? 'brak' : 'do sprawdzenia'}" tone="#{li.stan eq 'SPELNIONY' ? 'OK' : li.stan eq 'BRAK' ? 'ERR' : 'WARN'}" />
+                        </div>
+                        <!-- ocena wymogu (UC-06): zespół sędziego, referent, kierownik – zapis w ChecklistService (wiersz tylko dopisywany), audyt -->
+                        <h:panelGroup rendered="#{akta.zespolSedziego or akta.referent}" layout="block" styleClass="row" style="gap: 6px; flex-wrap: wrap;">
+                          <p:inputText id="uw" value="#{akta.uwagi[li.kod]}" placeholder="Uwaga (np. karta, czego brakuje)" styleClass="s" style="flex: 1 1 160px; min-height: 36px;" pt:aria-label="Uwaga do wymogu #{li.wymog}" xmlns:pt="jakarta.faces.passthrough" />
+                          <p:commandButton value="Spełniony" action="#{akta.ocen(li.kod, 'SPELNIONY')}" process="@this uw" update=":af:akta-body growl" styleClass="s #{li.stan eq 'SPELNIONY' ? 'p' : ''}" />
+                          <p:commandButton value="Brak" action="#{akta.ocen(li.kod, 'BRAK')}" process="@this uw" update=":af:akta-body growl" styleClass="s #{li.stan eq 'BRAK' ? 'd' : ''}" />
+                          <p:commandButton value="Do sprawdzenia" action="#{akta.ocen(li.kod, 'DO_SPRAWDZENIA')}" process="@this uw" update=":af:akta-body growl" styleClass="s q" />
+                        </h:panelGroup>
                       </li>
                     </ui:repeat>
                   </ul>

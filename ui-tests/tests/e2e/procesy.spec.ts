@@ -121,7 +121,55 @@ test.describe.serial('Procesy eSkargi (OIDC)', () => {
     await expect(page.locator(jsf('dz:pv')).locator('.pdfv')).toBeVisible();
   });
 
-  test('UC-07 przełącznik roli zmienia kontekst menu (gdy konto ma kilka ról)', async () => {
+  test('UC-07 S-23 administrator wpisuje upoważnienie z aktem PDF (BR-10) dla konta testowego', async () => {
+    await page.goto('/admin/upowaznienia.xhtml');
+    await page.fill(jsf('upf:u-os'), LOGIN);
+    await page.fill(jsf('upf:u-od_input'), '01.01.2026');
+    await page.fill(jsf('upf:u-do_input'), '31.12.2027');
+    await page.keyboard.press('Escape');
+    await page.locator('#upf input[type=file]').setInputFiles({ name: 'zarzadzenie-upowaznienie.pdf', mimeType: 'application/pdf', buffer: pdfTestowy('Upowaznienie do wykonywania obowiazkow Prezesa TK') });
+    await expect(page.locator('#upf')).toContainText('zarzadzenie-upowaznienie.pdf', { timeout: 30_000 });
+    await page.getByRole('button', { name: /zapisz upoważnienie/i }).click();
+    await expect(page.locator('#upf')).toContainText(LOGIN, { timeout: 30_000 });
+    await expect(page.locator('#upf')).toContainText('zarzadzenie-upowaznienie.pdf');
+  });
+
+  test('UC-08 S-17 wyznaczenie sędziego: wybór sprawy i sędziego, zarządzenie z szablonu w aktach', async () => {
+    expect(sygnatura).toMatch(/Ts/);
+    await page.goto(`/czynnosci/wyznaczenie.xhtml?sygnatura=${encodeURIComponent(sygnatura)}`);
+    await expect(page.locator('h1')).toContainText(/wyznaczenie/i);
+    // sędzia: konto testowe (rola TK_SEDZIA, zalogowane → rejestr S-22); w tabeli obciążenia wiersz z loginem
+    const wiersz = page.locator('tr', { hasText: LOGIN }).first();
+    await expect(wiersz, 'konto testowe na liście sędziów').toBeVisible();
+    await wiersz.locator('.ui-radiobutton-box, input[type=radio]').first().click();
+    await expect(page.locator('.pane-h', { hasText: 'Podgląd zarządzenia' })).toContainText(sygnatura);
+    await page.getByRole('button', { name: /wyznacz i podpisz/i }).click();
+    await expect(page).toHaveURL(/akta\/podglad\.xhtml\?.*sygnatura=/, { timeout: 60_000 });
+    await expect(page.locator('body')).not.toContainText('Nie udało się wyznaczyć sędziego');
+    const zarzadzenie = page.locator('ol.tl.doc li', { hasText: /wyznaczeniu sędziego/i }).first();
+    await expect(zarzadzenie, 'zarządzenie w spisie akt').toBeVisible();
+    await zarzadzenie.locator('a.case.link').click();
+    await expect(page.locator('.pdfv .pdfv-count'), 'PDF zarządzenia z szablonu usługi dokumentów').toHaveText(/^\s*\d+\s*$/, { timeout: 30_000 });
+    await expect(page.locator('.pdfv-text')).toContainText(/ZARZĄDZENIE|wyznaczy/i, { timeout: 30_000 });
+  });
+
+  test('UC-09 S-14 lista kontrolna: ocena wymogu zapisuje się i przetrwa odświeżenie', async () => {
+    await page.goto(`/akta/podglad.xhtml?sygnatura=${encodeURIComponent(sygnatura)}`);
+    await page.getByRole('tab', { name: /lista kontrolna/i }).click();
+    const pozycja = page.locator('li', { has: page.getByRole('button', { name: /^brak$/i }) }).first();
+    await expect(pozycja).toBeVisible();
+    const wymog = (await pozycja.locator('b').first().textContent())!.trim();
+    await pozycja.getByRole('textbox').fill('brak pełnomocnictwa szczególnego – k. 2');
+    await pozycja.getByRole('button', { name: /^brak$/i }).click();
+    await expect(page.locator('li', { hasText: wymog }).first()).toContainText(/brak pełnomocnictwa szczególnego/, { timeout: 30_000 });
+    await expect(page.locator('li', { hasText: wymog }).first().locator('.tag')).toContainText(/brak/);
+    await page.reload();
+    await page.getByRole('tab', { name: /lista kontrolna/i }).click();
+    await expect(page.locator('li', { hasText: wymog }).first().locator('.tag')).toContainText(/brak/);
+    await expect(page.locator('body')).toContainText(/Lista kontrolna · 1 brak/);
+  });
+
+  test('UC-10 przełącznik roli zmienia kontekst menu (gdy konto ma kilka ról)', async () => {
     await page.goto('/pulpit.xhtml');
     const rola = page.locator('#tb-rola');
     test.skip(!(await rola.isVisible().catch(() => false)), 'konto ma jedną rolę – brak przełącznika');
@@ -133,7 +181,7 @@ test.describe.serial('Procesy eSkargi (OIDC)', () => {
     await expect(page.getByRole('navigation').getByRole('link', { name: /rejestracja/i }).first()).toBeVisible();
   });
 
-  test('UC-08 wylogowanie kończy sesję w eSkardze i w ID-users', async () => {
+  test('UC-11 wylogowanie kończy sesję w eSkardze i w ID-users', async () => {
     await page.goto('/pulpit.xhtml');
     await page.getByRole('link', { name: /wyloguj/i }).click();
     await page.waitForLoadState('domcontentloaded');

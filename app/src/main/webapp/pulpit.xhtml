@@ -20,7 +20,7 @@
     </h:panelGroup>
     <h:panelGroup rendered="#{pulpit.judgeTeam}">
       <h:link outcome="/sprawy/repertorium" styleClass="btn" value="Sprawy sędziego · #{pulpit.judgeCases}" />
-      <h:link outcome="/akta/podglad" styleClass="btn p" value="Otwórz akta Ts 312/26"><f:param name="sygnatura" value="Ts 312/26" /></h:link>
+      <h:link outcome="/akta/podglad" styleClass="btn p" value="Otwórz akta Ts 312/26" rendered="#{currentUser.demo}"><f:param name="sygnatura" value="Ts 312/26" /></h:link>
     </h:panelGroup>
     <h:panelGroup rendered="#{pulpit.isRole('pre')}">
       <h:link outcome="/czynnosci/podpis" styleClass="btn" value="Do podpisu · #{pulpit.count('podpis')}" />

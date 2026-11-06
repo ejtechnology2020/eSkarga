@@ -35,6 +35,7 @@ import pl.ejtechnology.tk.eSkarga.domain.service.ArchiveService;
 import pl.ejtechnology.tk.eSkarga.domain.service.CaseAccessService;
 import pl.ejtechnology.tk.eSkarga.domain.service.CaseDocumentService;
 import pl.ejtechnology.tk.eSkarga.domain.service.CaseFileService;
+import pl.ejtechnology.tk.eSkarga.domain.service.ChecklistService;
 import pl.ejtechnology.tk.eSkarga.domain.service.LetterService;
 import pl.ejtechnology.tk.eSkarga.domain.service.SigningService;
 import pl.ejtechnology.tk.eSkarga.domain.service.CorrectionService;
@@ -91,6 +92,7 @@ public abstract class ServiceTestSupport {
         public final DeliveryService deliveries;
         public final AppealService appeals;
         public final JudgeAssignmentService judges;
+        public final ChecklistService checklist;
         public final AccessRequestService access;
         public final GeneralLetterService generalLetters;
         public final DictionaryService dictionaries;
@@ -126,7 +128,6 @@ public abstract class ServiceTestSupport {
             this.corrections = Wiring.inject(new CorrectionService(), em, audit, clock);
             this.deliveries = Wiring.inject(new DeliveryService(), em, holidays, process, audit);
             this.appeals = Wiring.inject(new AppealService(), em, cases, delegations, process, audit, clock);
-            this.judges = Wiring.inject(new JudgeAssignmentService(), em, cases, delegations, engine.getTaskService(), audit, clock);
             this.caseAccess = caseAccess0;
             this.access = Wiring.inject(new AccessRequestService(), em, cases, audit, clock);
             this.generalLetters = Wiring.inject(new GeneralLetterService(), em, incoming, audit, clock);
@@ -134,6 +135,8 @@ public abstract class ServiceTestSupport {
             this.archive = Wiring.inject(new ArchiveService(), em, cases, store, audit, clock);
             this.reports = Wiring.inject(new ReportService(), em, clock);
             this.templates = Wiring.inject(new TemplateService(), em, audit, validator, clock);
+            this.judges = Wiring.inject(new JudgeAssignmentService(), em, cases, delegations, engine.getTaskService(), audit, clock, templates, docs, store);
+            this.checklist = Wiring.inject(new ChecklistService(), em, cases, caseAccess0, audit, clock);
             this.notes = Wiring.inject(new NoteService(), em, caseAccess, audit, clock);
             this.letters = Wiring.inject(new LetterService(), em, cases, templates, docs, store, engine.getTaskService(), audit, clock);
             this.signing = Wiring.inject(new SigningService(), em, cases, deliveries, docs, store, engine.getTaskService(), audit, clock);
@@ -201,6 +204,9 @@ public abstract class ServiceTestSupport {
 
     /** Zakłada sprawę Ts ze skarżącym i pełnomocnikiem (UC-03); proces czeka na wyznaczenie sędziego. */
     protected CaseFile createCase(Services s, long letterId) {
+        // zarządzenie o wyznaczeniu sędziego powstaje z szablonu – zasiew tylko tego kodu (idempotentny), żeby nie zmieniać numeracji wersji
+        // innych szablonów w testach; aktywacja wymaga innej osoby niż autor „system”
+        s.templates.seedDefaults(java.util.Map.of("ZARZ_WYZNACZENIE_SEDZIEGO", docs.defaultTemplates().get("ZARZ_WYZNACZENIE_SEDZIEGO")), "admin");
         return s.cases.createCase(new CaseFileService.CreateCaseCommand(DocketSymbol.TS, letterId, List.of(
                 new CaseFileService.PartyData(PartyRole.SKARZACY, "Jan Przykładowy", "ul. Przykładowa 1, 00-001 Warszawa", null, null, null, null, null),
                 new CaseFileService.PartyData(PartyRole.PELNOMOCNIK, "adw. Anna Testowa", "ul. Testowa 2, 00-002 Warszawa", "AE:PL-00000-00000-AAAAA-00",

@@ -15,6 +15,7 @@
     <class>pl.ejtechnology.tk.eSkarga.domain.model.ArchiveTransfer</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.Authority</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.CaseAssignment</class>
+    <class>pl.ejtechnology.tk.eSkarga.domain.model.ChecklistEntry</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.CaseFile</class>
     <class>pl.ejtechnology.tk.eSkarga.domain.model.CaseFileVersion</class>

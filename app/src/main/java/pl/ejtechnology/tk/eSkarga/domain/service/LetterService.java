@@ -110,7 +110,7 @@ public class LetterService {
     }
 
     /** Szacunek liczby stron bez parsera PDF: liczba obiektów /Type /Page w pliku (dokładną paginację potwierdza referent). */
-    static int pageCountEstimate(byte[] pdf) {
+    public static int pageCountEstimate(byte[] pdf) {
         String s = new String(pdf, java.nio.charset.StandardCharsets.ISO_8859_1);
         int count = 0;
         int idx = 0;

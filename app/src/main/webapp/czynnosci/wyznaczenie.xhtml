@@ -64,12 +64,23 @@
         </p:dataTable>
       </section>
       <section class="card np fx1" aria-label="Podgląd zarządzenia">
-        <div class="pane-h"><b>Podgląd zarządzenia</b><span class="mut">#{empty wyznaczenie.sygnatura ? '—' : wyznaczenie.sygnatura} · 1 strona</span></div>
-        <div class="viewer pad14">
+        <div class="pane-h"><b>Podgląd zarządzenia</b><span class="mut">#{empty wyznaczenie.sygnatura ? '—' : wyznaczenie.sygnatura}
+          <h:outputText rendered="#{not empty wyznaczenie.szablonZarzadzenia}" value=" · szablon #{wyznaczenie.szablonZarzadzenia.code} v#{wyznaczenie.szablonZarzadzenia.version}" /></span><span class="sp"></span>
+          <h:link outcome="/admin/slowniki" value="Szablony pism" styleClass="btn s q" rendered="#{currentUser.hasRole('adm')}" /></div>
+        <!-- poza demo: projekt z aktywnego szablonu ZARZ_WYZNACZENIE_SEDZIEGO (rejestr szablonów pism, S-24) renderowany przez usługę dokumentów;
+             ten sam szablon tworzy PDF zapisywany w aktach przy „Wyznacz i podpisz zarządzenie” -->
+        <h:panelGroup rendered="#{not currentUser.demo}" layout="block" styleClass="viewer pad14">
+          <h:panelGroup rendered="#{empty wyznaczenie.szablonZarzadzenia}" layout="block"><p class="mut">Brak aktywnego szablonu zarządzenia. Administrator: Słowniki i szablony pism → „Załaduj szablony domyślne”.</p></h:panelGroup>
+          <h:panelGroup rendered="#{not empty wyznaczenie.szablonZarzadzenia and empty wyznaczenie.podgladUrl}" layout="block"><p class="mut">Wybierz sprawę i sędziego, żeby zobaczyć projekt zarządzenia.</p></h:panelGroup>
+          <h:panelGroup rendered="#{not empty wyznaczenie.szablonZarzadzenia and not empty wyznaczenie.podgladUrl}" layout="block">
+            <tk:pdfViewer src="#{request.contextPath}#{wyznaczenie.podgladUrl}" title="Projekt zarządzenia o wyznaczeniu sędziego" />
+          </h:panelGroup>
+        </h:panelGroup>
+        <div class="viewer pad14" jsf:rendered="#{currentUser.demo}" xmlns:jsf="jakarta.faces">
           <tk:paper label="Podgląd zarządzenia o wyznaczeniu sędziego" styleClass="sm" watermark="PROJEKT">
             <p class="r">Warszawa, dnia #{fmt.date(wyznaczenie.dzis)} r.</p><p>Sygn. akt #{empty wyznaczenie.sygnatura ? '—' : wyznaczenie.sygnatura}</p><h2 class="fs15">ZARZĄDZENIE</h2>
-            <p>Na podstawie art. 61 ust. 1 ustawy o organizacji i trybie postępowania przed Trybunałem Konstytucyjnym wyznaczam <b>sędziego TK #{wyznaczenie.sedziaNazwa eq 'Adam Testowy' ? 'Adama Testowego' : wyznaczenie.sedziaNazwa}</b> do wstępnego rozpoznania skargi konstytucyjnej Przykładowej Spółki z o.o.</p>
-            <p class="sign">#{currentUser.demo ? 'sędzia TK Maria Makietowa' : currentUser.displayName}<br /><span style="font-size: 11px;">#{empty wyznaczenie.aktualneUpowaznienie ? 'Prezes TK' : 'wykonując obowiązki Prezesa TK na podstawie upoważnienia'}</span></p>
+            <p>Na podstawie art. 61 ust. 1 ustawy o organizacji i trybie postępowania przed Trybunałem Konstytucyjnym wyznaczam <b>sędziego TK #{wyznaczenie.sedziaNazwa eq 'Adam Testowy' ? 'Adama Testowego' : wyznaczenie.sedziaNazwa}</b> do wstępnego rozpoznania skargi konstytucyjnej.</p>
+            <p class="sign">sędzia TK Maria Makietowa<br /><span style="font-size: 11px;">wykonująca obowiązki Prezesa TK</span></p>
           </tk:paper>
         </div>
       </section>

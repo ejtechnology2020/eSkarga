@@ -53,17 +53,42 @@ public class JudgeAssignmentService {
     @Inject
     AppClock clock;
 
+    @Inject
+    TemplateService templates;
+    @Inject
+    pl.ejtechnology.tk.eSkarga.documents.DocsGateway docs;
+    @Inject
+    pl.ejtechnology.tk.eSkarga.documents.DocumentStore store;
+
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public ProceduralAct assign(long caseId, String judgeUserId, String actingUserId, Set<AppRole> roles) {
+        return assign(caseId, judgeUserId, judgeUserId, actingUserId, roles);
+    }
+
+    /**
+     * UC-05: zarządzenie Prezesa TK o wyznaczeniu sędziego powstaje z aktywnego szablonu {@code ZARZ_WYZNACZENIE_SEDZIEGO}
+     * w usłudze dokumentów (PDF/A do repozytorium, plik w spisie akt – wcześniej wpis bez pliku dawał pusty podgląd).
+     * Bez aktywnego szablonu wyznaczenie jest odrzucane z czytelną wskazówką (S-24 „Załaduj szablony domyślne”).
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public ProceduralAct assign(long caseId, String judgeUserId, String judgeDisplayName, String actingUserId, Set<AppRole> roles) {
         LocalDate today = clock.today();
         CaseFile cf = cases.require(caseId);
         delegations.requireActingAsPresident(actingUserId, roles, today, "wyznaczenie sędziego " + cf.getDocket().format());
         if (cf.current().getStatus() != CaseStatus.ZAREJESTROWANA && cf.current().getStatus() != CaseStatus.OCZEKUJE_NA_WYZNACZENIE_SEDZIEGO) {
             throw new IllegalStateException("Sprawa " + cf.getDocket().format() + " ma już wyznaczonego sędziego");
         }
-        CaseDocument order = new CaseDocument(cf, "Zarządzenie Prezesa TK o wyznaczeniu sędziego", DocumentKind.CZYNNOSC, today, actingUserId);
+        LetterKind kind = LetterKind.ZARZ_WYZNACZENIE_SEDZIEGO;
+        pl.ejtechnology.tk.eSkarga.domain.model.LetterTemplate template = orderTemplate();
+        byte[] pdf = renderOrder(cf, judgeDisplayName == null || judgeDisplayName.isBlank() ? judgeUserId : judgeDisplayName);
+        String key = "akta/" + cf.getId() + "/" + java.util.UUID.randomUUID() + ".pdf";
+        pl.ejtechnology.tk.eSkarga.documents.DocumentStore.Stored stored = store.put(key, new java.io.ByteArrayInputStream(pdf), pdf.length, "application/pdf", false);
+        CaseDocument order = new CaseDocument(cf, kind.title(), DocumentKind.CZYNNOSC, today, actingUserId);
         int last = cases.lastPage(cf);
-        order.paginate(1, last + 1, last + 1);
+        order.paginate(1, last + 1, last + Math.max(1, LetterService.pageCountEstimate(pdf)));
+        order.attachFile(stored.key(), stored.sha256());
+        order.setTemplateVersion(template);
+        order.setPdfaCompliant(true);
         em.persist(order);
         ProceduralAct act = new ProceduralAct(cf, ProceduralActKind.ZARZADZENIE, "WYZNACZENIE_SEDZIEGO", clock.instant(), actingUserId, "art. 61 ust. 1", ActStatus.PODPISANA);
         act.setDocument(order);
@@ -78,6 +103,20 @@ public class JudgeAssignmentService {
         }
         audit.record(actingUserId, AppRole.TK_PREZES.name(), "wyznaczenie sędziego: " + judgeUserId, order.pagesLabel(), cf.getDocket().format(), null);
         return act;
+    }
+
+    /** Aktywny szablon zarządzenia o wyznaczeniu sędziego z rejestru szablonów pism (S-24). */
+    public pl.ejtechnology.tk.eSkarga.domain.model.LetterTemplate orderTemplate() {
+        return templates.active(LetterKind.ZARZ_WYZNACZENIE_SEDZIEGO.name())
+                .orElseThrow(() -> new IllegalStateException("Brak aktywnego szablonu " + LetterKind.ZARZ_WYZNACZENIE_SEDZIEGO.name()
+                        + " – Administracja → Słowniki i szablony pism → „Załaduj szablony domyślne”"));
+    }
+
+    /** Projekt zarządzenia (PDF) z aktywnego szablonu dla sprawy i sędziego – do podglądu na S-17 i do zapisu przy wyznaczeniu; nic nie zapisuje. */
+    public byte[] renderOrder(CaseFile cf, String judgeDisplayName) {
+        pl.ejtechnology.tk.eSkarga.domain.model.LetterTemplate template = orderTemplate();
+        java.util.Map<String, Object> model = LetterModelBuilder.build(cf, cases.parties(cf), clock.today(), judgeDisplayName, null);
+        return docs.renderLetter(LetterKind.ZARZ_WYZNACZENIE_SEDZIEGO.name(), template.getSourceXhtml(), model);
     }
 
     /** Sprawy oczekujące na wyznaczenie sędziego (S-17). */

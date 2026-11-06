@@ -31,7 +31,7 @@ const KLUCZE_DIR = process.env['ID_USERS_KLUCZE_DIR'] ?? resolve(__dirname, '../
 export const PLIK_TOTP = process.env['ESKARGA_E2E_TOTP_PLIK'] ?? resolve(KLUCZE_DIR, `totp-${LOGIN}.txt`);
 
 /** Role klienta eskarga nadawane kontu zakładanemu przez test – ścieżka od biura podawczego do akt. */
-export const ROLE_TESTOWE = ['TK_BIURO_PODAWCZE', 'TK_REFERENT', 'TK_ASYSTENT', 'TK_ADMIN'];
+export const ROLE_TESTOWE = ['TK_BIURO_PODAWCZE', 'TK_REFERENT', 'TK_ASYSTENT', 'TK_SEDZIA', 'TK_PREZES', 'TK_ADMIN'];   // od biura podawczego po wyznaczenie sędziego i listę kontrolną
 
 let kluczTotp: string | undefined = process.env['ESKARGA_E2E_TOTP'];
 

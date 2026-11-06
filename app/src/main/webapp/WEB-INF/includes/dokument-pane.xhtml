@@ -20,7 +20,7 @@
     </h:panelGroup>
   </div>
   <h:panelGroup rendered="#{not doc.isNiejawny()}">
-    <div class="pane-sub"><span>karta akt #{doc.karty.replace('k. ', '')} · <b style="color: #171B24;">strona 1 z 14</b></span><span class="sp"></span><button type="button" class="btn s q" aria-expanded="false">Pokaż miniatury stron</button></div>
+    <div class="pane-sub"><span>karta akt #{doc.karty.replace('k. ', '')}</span><span class="sp"></span><button type="button" class="btn s q" aria-expanded="false">Pokaż miniatury stron</button></div>
     <h:panelGroup rendered="#{not currentUser.demo and not empty doc}" layout="block" styleClass="viewer">
       <tk:pdfViewer src="#{request.contextPath}/akta/dokument/#{doc.id}" title="#{doc.tytul}" pageFrom="#{doc.karty.replaceAll('[^0-9].*', '').replace('k', '')}"
                     highlights="#{akta.highlightsJson(doc)}" canHighlight="#{akta.zespolSedziego}" downloadUrl="#{request.contextPath}/akta/dokument/#{doc.id}?pobierz=1" />

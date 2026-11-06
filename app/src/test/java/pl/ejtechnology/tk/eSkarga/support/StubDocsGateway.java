@@ -54,6 +54,7 @@ public class StubDocsGateway implements DocsGateway {
 
     @Override
     public Map<String, String> defaultTemplates() {
-        return Map.of("ZARZ_BRAKI", "<html>${sygnatura}</html>", "POST_ODMOWA", "<html>${sygnatura}</html>", "POST_NADANIE_BIEGU", "<html/>", "ODP_PISMO_OGOLNE", "<html/>");
+        return Map.of("ZARZ_BRAKI", "<html>${sygnatura}</html>", "POST_ODMOWA", "<html>${sygnatura}</html>", "POST_NADANIE_BIEGU", "<html/>", "ODP_PISMO_OGOLNE", "<html/>",
+                "ZARZ_WYZNACZENIE_SEDZIEGO", "<html>${sygnatura} ${sedzia}</html>");
     }
 }
