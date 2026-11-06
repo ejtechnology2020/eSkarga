@@ -20,8 +20,8 @@
         <div class="tt"><h2 id="h-z" class="h2-17">Zażalenia</h2><span class="count">#{rejestry.zazalenia.size()}</span><span class="sp"></span>
           <div class="saved" role="group" aria-label="#{msg['common.savedFilters']}"><button type="button" class="chip" aria-pressed="false">Czekam na wpływ · 1</button><button type="button" class="chip" aria-pressed="false">Po terminie · 1</button></div>
           <div class="dens" role="group" aria-label="#{msg['common.density']}">
-            <p:commandButton value="#{msg['common.compact']}" action="#{rejestry.setComfy(false)}" update="zf" styleClass="q" pt:aria-pressed="#{not rejestry.comfy}" />
-            <p:commandButton value="#{msg['common.comfy']}" action="#{rejestry.setComfy(true)}" update="zf" styleClass="q" pt:aria-pressed="#{rejestry.comfy}" /></div></div>
+            <p:commandButton value="#{msg['common.compact']}" action="#{rejestry.setComfy(false)}" update="@form" styleClass="q" pt:aria-pressed="#{not rejestry.comfy}" />
+            <p:commandButton value="#{msg['common.comfy']}" action="#{rejestry.setComfy(true)}" update="@form" styleClass="q" pt:aria-pressed="#{rejestry.comfy}" /></div></div>
         <p:dataTable value="#{rejestry.zazalenia}" var="z" rowStyleClass="#{z.rowClass()}" styleClass="#{rejestry.comfy ? 'comfy' : ''}" summary="Rejestr zażaleń 2026">
           <p:column headerText="Sygnatura" filterBy="#{z.sprawa.format()}" filterMatchMode="contains"><tk:sig value="#{z.sprawa}" /><h:panelGroup rendered="#{z.flagi.size() gt 0}"><br /><tk:flags value="#{z.flagi}" /></h:panelGroup></p:column>
           <p:column headerText="Doręczenie odmowy">#{fmt.date(z.doreczenieOdmowy)}</p:column>

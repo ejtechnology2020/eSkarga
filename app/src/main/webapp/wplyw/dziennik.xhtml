@@ -39,8 +39,8 @@
         <section class="main tw fb900" aria-labelledby="h-dz">
           <div class="tt"><h2 id="h-dz" class="h2-17">Pisma</h2><span class="count">#{dziennik.rows.size()}</span><span class="sp"></span>
             <div class="dens" role="group" aria-label="#{msg['common.density']}">
-              <p:commandButton value="#{msg['common.compact']}" action="#{dziennik.setComfy(false)}" update="dz" styleClass="q" pt:aria-pressed="#{not dziennik.comfy}" xmlns:pt="jakarta.faces.passthrough" />
-              <p:commandButton value="#{msg['common.comfy']}" action="#{dziennik.setComfy(true)}" update="dz" styleClass="q" pt:aria-pressed="#{dziennik.comfy}" xmlns:pt="jakarta.faces.passthrough" />
+              <p:commandButton value="#{msg['common.compact']}" action="#{dziennik.setComfy(false)}" update="@form" styleClass="q" pt:aria-pressed="#{not dziennik.comfy}" xmlns:pt="jakarta.faces.passthrough" />
+              <p:commandButton value="#{msg['common.comfy']}" action="#{dziennik.setComfy(true)}" update="@form" styleClass="q" pt:aria-pressed="#{dziennik.comfy}" xmlns:pt="jakarta.faces.passthrough" />
             </div>
             <button type="button" class="btn s">#{msg['common.columns']}</button></div>
           <p:dataTable id="tbl" value="#{dziennik.rows}" var="r" rowKey="#{r.nr}" selectionMode="single" selection="#{dziennik.selected}"

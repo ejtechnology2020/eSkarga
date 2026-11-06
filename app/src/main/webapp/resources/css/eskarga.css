@@ -58,6 +58,11 @@ p,li,dd{max-width:80ch}
 .e-navwrap.mini{flex-basis:76px}
 .e-nav{flex:1;display:flex;flex-direction:column;gap:4px;padding:12px 10px 16px;background:var(--surface);border-right:1px solid var(--line);font-family:var(--font);color:var(--ink);min-height:100%}
 .e-nav .toggle{align-self:flex-end}
+/* przycisk zwijania na wysokości nagłówka pierwszej grupy („MOJA PRACA”), po prawej; w trybie zwiniętym w kolumnie ikon nad grupami */
+.e-nav{position:relative}
+.e-nav .navwrap-toggle{position:absolute;top:18px;right:10px;height:36px;padding:0;display:flex;align-items:center}
+.e-nav .grp:first-of-type .grp-h{padding-right:52px}
+.e-nav.mini .navwrap-toggle{position:static;height:auto;justify-content:center;margin-bottom:4px}
 .e-nav .grp{display:flex;flex-direction:column;gap:2px;padding-top:6px}
 .e-nav .grp-h{display:flex;align-items:center;gap:10px;min-height:36px;padding:0 10px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
 .e-nav ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
@@ -540,7 +545,7 @@ body .ui-datatable tbody tr.err td{background:#FFF6F5}
 body .ui-datatable tbody tr.off td{color:var(--mut)}
 body .ui-datatable tbody tr.sel td{background:var(--acc-t2)}
 body .ui-datatable tbody tr.sel td:first-child{box-shadow:inset 4px 0 0 var(--acc)}
-body .ui-datatable.comfy tbody td,body .ui-datatable.comfy .ui-datatable-data>tr>td{padding:18px 12px;line-height:1.6}
+body .ui-datatable.comfy tbody td,body .ui-datatable.comfy .ui-datatable-data>tr>td{padding:20px 14px;line-height:1.7;font-size:15px}
 body .ui-datatable .ui-paginator{background:transparent;border:0;border-top:1px solid var(--line);padding:10px 14px;text-align:left}
 body .ui-paginator .ui-paginator-page,body .ui-paginator .ui-paginator-next,body .ui-paginator .ui-paginator-prev,body .ui-paginator .ui-paginator-first,body .ui-paginator .ui-paginator-last{min-width:44px;min-height:44px;border:2px solid transparent;border-radius:8px;background:transparent;color:var(--ink);font-weight:600;display:inline-flex;align-items:center;justify-content:center}
 body .ui-paginator .ui-paginator-page.ui-state-active{border-color:var(--acc);background:var(--acc-t)}

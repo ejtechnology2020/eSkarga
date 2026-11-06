@@ -23,8 +23,8 @@
       <h:link outcome="/akta/podglad" styleClass="btn p" value="Otwórz akta Ts 312/26"><f:param name="sygnatura" value="Ts 312/26" /></h:link>
     </h:panelGroup>
     <h:panelGroup rendered="#{pulpit.isRole('pre')}">
-      <h:link outcome="/czynnosci/podpis" styleClass="btn" value="Do podpisu · 2" />
-      <h:link outcome="/czynnosci/wyznaczenie" styleClass="btn p" value="Wyznacz sędziego · 1" />
+      <h:link outcome="/czynnosci/podpis" styleClass="btn" value="Do podpisu · #{pulpit.count('podpis')}" />
+      <h:link outcome="/czynnosci/wyznaczenie" styleClass="btn p" value="Wyznacz sędziego · #{pulpit.count('wyznacz')}" />
     </h:panelGroup>
     <h:panelGroup rendered="#{pulpit.isRole('bp')}">
       <h:link outcome="/wplyw/dziennik" styleClass="btn" value="Dziennik wpływu" />
@@ -32,7 +32,7 @@
     </h:panelGroup>
     <h:panelGroup rendered="#{pulpit.isRole('kie')}">
       <h:link outcome="/nadzor/raporty" styleClass="btn" value="Raporty" />
-      <h:link outcome="/nadzor/monitor" styleClass="btn p" value="Monitor terminów · 5" />
+      <h:link outcome="/nadzor/monitor" styleClass="btn p" value="Monitor terminów · #{pulpit.count('terminy')}" />
     </h:panelGroup>
   </ui:define>
   <ui:define name="banners">
@@ -53,25 +53,17 @@
           <section class="tw" id="zad" aria-labelledby="h-zad">
             <div class="tt">
               <h2 id="h-zad" class="h2-17">Moje zadania</h2><span class="count">#{pulpit.tasks.size()}</span><span class="sp"></span>
+              <!-- chipy filtrów z liczbami z danych (zamiast makiety): Wszystkie, terminy w 7 dni, zadania grupowe do przejęcia, sprawy pilne -->
               <div class="saved" role="group" aria-label="#{msg['common.savedFilters']}">
-                <button type="button" class="chip" aria-pressed="true">Wszystkie</button>
-                <h:panelGroup rendered="#{pulpit.isRole('ref')}">
-                  <button type="button" class="chip" aria-pressed="false">Moje terminy w tym tygodniu · 3</button>
-                  <button type="button" class="chip" aria-pressed="false">Doręczenia · 2</button>
-                </h:panelGroup>
-                <h:panelGroup rendered="#{pulpit.judgeTeam}">
-                  <button type="button" class="chip" aria-pressed="false">Projekty pism · 2</button>
-                  <button type="button" class="chip" aria-pressed="false">Posiedzenia · 1</button>
-                </h:panelGroup>
-                <h:panelGroup rendered="#{pulpit.isRole('pre')}">
-                  <button type="button" class="chip" aria-pressed="false">Jako Prezes TK · 2</button>
-                  <button type="button" class="chip" aria-pressed="false">Jako sędzia · 1</button>
-                </h:panelGroup>
+                <p:commandLink action="#{pulpit.setFilter('all')}" update="zadForm" process="@this" styleClass="chip" pt:aria-pressed="#{pulpit.filter eq 'all'}" xmlns:pt="jakarta.faces.passthrough">Wszystkie · #{pulpit.count('all')}</p:commandLink>
+                <p:commandLink action="#{pulpit.setFilter('terminy')}" update="zadForm" process="@this" styleClass="chip" pt:aria-pressed="#{pulpit.filter eq 'terminy'}" xmlns:pt="jakarta.faces.passthrough">Terminy w 7 dni · #{pulpit.count('terminy')}</p:commandLink>
+                <p:commandLink action="#{pulpit.setFilter('grupowe')}" update="zadForm" process="@this" styleClass="chip" pt:aria-pressed="#{pulpit.filter eq 'grupowe'}" xmlns:pt="jakarta.faces.passthrough">Do przejęcia · #{pulpit.count('grupowe')}</p:commandLink>
+                <p:commandLink action="#{pulpit.setFilter('pilne')}" update="zadForm" process="@this" styleClass="chip" pt:aria-pressed="#{pulpit.filter eq 'pilne'}" xmlns:pt="jakarta.faces.passthrough">Pilne · #{pulpit.count('pilne')}</p:commandLink>
               </div>
               <div class="dens" role="group" aria-label="#{msg['common.density']}">
-                <p:commandButton value="#{msg['common.compact']}" action="#{pulpit.setComfy(false)}" update="zadForm" styleClass="q"
+                <p:commandButton value="#{msg['common.compact']}" action="#{pulpit.setComfy(false)}" update="@form" styleClass="q"
                                  pt:aria-pressed="#{not pulpit.comfy}" xmlns:pt="jakarta.faces.passthrough" />
-                <p:commandButton value="#{msg['common.comfy']}" action="#{pulpit.setComfy(true)}" update="zadForm" styleClass="q"
+                <p:commandButton value="#{msg['common.comfy']}" action="#{pulpit.setComfy(true)}" update="@form" styleClass="q"
                                  pt:aria-pressed="#{pulpit.comfy}" xmlns:pt="jakarta.faces.passthrough" />
               </div>
             </div>

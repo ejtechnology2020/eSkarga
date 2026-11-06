@@ -34,6 +34,9 @@ public class PulpitBean implements Serializable {
     private List<KpiTile> kpis;
     private List<TaskRow> tasks;
     private List<TimelineEntry> notifications;
+    @Inject
+    private pl.ejtechnology.tk.eSkarga.web.AppClock clock;
+    /** Filtr listy zadań (chipy): all, terminy (termin w 7 dni), grupowe (do przejęcia), pilne (art. 79). */
     private String filter = "all";
     private boolean comfy;
 
@@ -118,7 +121,23 @@ public class PulpitBean implements Serializable {
     }
 
     public List<TaskRow> getTasks() {
-        return tasks;
+        return tasks.stream().filter(t -> matches(t, filter)).toList();
+    }
+
+    /** Liczba zadań dla chipa filtra – z danych, nie z makiety. */
+    public long count(String f) {
+        return tasks.stream().filter(t -> matches(t, f)).count();
+    }
+
+    private boolean matches(TaskRow t, String f) {
+        return switch (f == null ? "all" : f) {
+            case "terminy" -> t.termin() != null && t.termin().end() != null && !t.termin().end().isAfter(clock.today().plusDays(7));
+            case "grupowe" -> t.grupowe();
+            case "pilne" -> t.opis() != null && t.opis().contains("pilna");
+            case "wyznacz" -> "Wyznacz sędziego".equals(t.akcja());
+            case "podpis" -> t.akcjaUrl() != null && t.akcjaUrl().contains("/czynnosci/podpis");
+            default -> true;
+        };
     }
 
     public List<TimelineEntry> getNotifications() {

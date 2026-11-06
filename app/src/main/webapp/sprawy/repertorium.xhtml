@@ -31,8 +31,8 @@
       <section class="tw" aria-labelledby="h-rep">
         <div class="tt"><h2 id="h-rep" class="h2-17">Wpisy</h2><span class="count">#{repertoriumWidok.total} wpisów · pokazano #{repertoriumWidok.rows.size()}</span><span class="sp"></span>
           <div class="dens" role="group" aria-label="#{msg['common.density']}">
-            <p:commandButton value="#{msg['common.compact']}" action="#{repertoriumWidok.setComfy(false)}" update="rf" styleClass="q" pt:aria-pressed="#{not repertoriumWidok.comfy}" />
-            <p:commandButton value="#{msg['common.comfy']}" action="#{repertoriumWidok.setComfy(true)}" update="rf" styleClass="q" pt:aria-pressed="#{repertoriumWidok.comfy}" />
+            <p:commandButton value="#{msg['common.compact']}" action="#{repertoriumWidok.setComfy(false)}" update="@form" styleClass="q" pt:aria-pressed="#{not repertoriumWidok.comfy}" />
+            <p:commandButton value="#{msg['common.comfy']}" action="#{repertoriumWidok.setComfy(true)}" update="@form" styleClass="q" pt:aria-pressed="#{repertoriumWidok.comfy}" />
           </div>
           <button type="button" class="btn s">#{msg['common.columns']}</button><button type="button" class="btn s">#{msg['common.exportXlsx']}</button></div>
         <p:dataTable id="tbl" value="#{repertoriumWidok.rows}" var="c" rowKey="#{c.sygnaturaText()}" rowStyleClass="#{repertoriumWidok.rowClass(c)}"

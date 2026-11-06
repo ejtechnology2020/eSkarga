@@ -677,4 +677,8 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   przez `DelegationDocumentServlet` (role S-23, kontrola skrótu, audyt). S-09: lista sędziów = rejestr osób z rolą `TK_SEDZIA` (S-22)
   + obciążenie z wpisów (dotąd tylko sędziowie z już przydzielonymi sprawami – pusta lista na starcie); wybór sędziego przez
   `p:selectOneRadio` z `p:radioButton` w wierszach (dotąd makietowe `<input type=radio>` bez wiązania), nazwisko w podglądzie zarządzenia.
+- 06.11.2026 – menu: przycisk zwijania na wysokości nagłówka pierwszej grupy („MOJA PRACA”), w trybie zwiniętym nad ikonami (pomiar w Chromium);
+  przełączniki gęstości (repertorium, dziennik, zażalenia, pulpit) aktualizują `@form`, widok wygodny wyraźniejszy (20px/15px); pulpit: chipy
+  filtrów działają (Wszystkie / Terminy w 7 dni / Do przejęcia / Pilne) z liczbami z danych, przyciski akcji z liczbami zadań.
+  Termin w „Moje zadania” jest wyliczany (najbliższy biegnący termin sprawy, inaczej „czeka od N dni”).
 
