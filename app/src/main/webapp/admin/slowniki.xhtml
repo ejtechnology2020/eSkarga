@@ -16,7 +16,7 @@
   <ui:define name="subtitle">Kalendarz dni wolnych wpływa na liczenie terminów w całym systemie.</ui:define>
   <ui:define name="content">
     <h:form id="sf">
-      <p:tabView activeIndex="#{administracja.tab}" dynamic="false" pt:aria-label="Sekcje">
+      <p:tabView id="tabs" activeIndex="#{administracja.tab}" dynamic="false" pt:aria-label="Sekcje">
         <p:tab title="Słowniki">
           <div class="flow">
             <nav class="card fx1" aria-label="Lista słowników">
@@ -38,7 +38,7 @@
           <div class="flow">
             <section class="tw fx2" aria-labelledby="h-sz">
               <div class="tt"><h2 id="h-sz" class="h2-17">Szablony pism</h2><span class="count">#{administracja.szablony.size()}</span><span class="sp"></span>
-                <p:commandButton id="sz-nowy" value="Nowy szablon" action="#{administracja.newTemplate}" update="sz-edytor" styleClass="s" process="@this" />
+                <p:commandButton id="sz-nowy" value="Nowy szablon" action="#{administracja.newTemplate}" update=":sf:tabs:sz-edytor" styleClass="s" process="@this" />
                 <!-- z bazą: szablony domyślne z usługi dokumentów (T-026a) tylko dla kodów bez żadnej wersji -->
                 <p:commandButton value="Załaduj szablony domyślne" action="#{administracja.seedTemplates}" update="@form :growl" styleClass="s p" rendered="#{not currentUser.demo}" process="@this" /></div>
               <!-- D13: wersje w bazie; projekt → aktywna (druga osoba) → wycofana; usunięcie logiczne (USUNIETA), bo pisma pamiętają wersję szablonu -->
@@ -48,8 +48,8 @@
                 <p:column headerText="Pisma">#{t.uzycia}</p:column>
                 <p:column headerText="#{msg['common.actions']}">
                   <div class="row" style="gap: 4px; flex-wrap: wrap;">
-                    <p:commandButton value="Podgląd" action="#{administracja.previewTemplate(t)}" update="sz-podglad" process="@this" styleClass="s" title="PDF z danych fikcyjnych Ts 312/26" />
-                    <p:commandButton value="Edytuj" action="#{administracja.editTemplate(t)}" update="sz-edytor" process="@this" styleClass="s" title="#{t.isProjekt() ? 'Poprawka projektu' : 'Nowa wersja na podstawie tej'}" />
+                    <p:commandButton value="Podgląd" action="#{administracja.previewTemplate(t)}" update=":sf:tabs:sz-podglad" process="@this" styleClass="s" title="PDF z danych fikcyjnych Ts 312/26" />
+                    <p:commandButton value="Edytuj" action="#{administracja.editTemplate(t)}" update=":sf:tabs:sz-edytor" process="@this" styleClass="s" title="#{t.isProjekt() ? 'Poprawka projektu' : 'Nowa wersja na podstawie tej'}" />
                     <p:commandButton value="Aktywuj" action="#{administracja.activateTemplate(t.id)}" update="@form :growl" process="@this" styleClass="s p" rendered="#{t.isProjekt()}" title="Walidacja w usłudze dokumentów; wymaga innej osoby niż autor" />
                     <p:commandButton value="Wycofaj" action="#{administracja.withdrawTemplate(t.id)}" update="@form :growl" process="@this" styleClass="s" rendered="#{t.isAktywna()}" onclick="return confirm('Wycofać aktywną wersję #{t.kod} #{t.wersja}? Do aktywacji innej wersji pisma z tego szablonu nie powstaną.');" />
                     <p:commandButton value="Usuń" action="#{administracja.deleteTemplate(t.id)}" update="@form :growl" process="@this" styleClass="s d" rendered="#{not t.isAktywna()}" onclick="return confirm('Usunąć wersję #{t.kod} #{t.wersja}? Pisma już wygenerowane (#{t.uzycia}) zachowają odniesienie do tej wersji.');" />
@@ -69,8 +69,8 @@
                   <p:inputTextarea id="sz-zrodlo" value="#{administracja.zrodloSzablonu}" rows="14" styleClass="mono" autoResize="false" /></div>
                 <ul class="sz-bledy" jsf:rendered="#{not empty administracja.bledySzablonu}"><ui:repeat value="#{administracja.bledySzablonu}" var="b"><li>#{b}</li></ui:repeat></ul>
                 <div class="row" style="gap: 6px; margin-top: 8px;">
-                  <p:commandButton value="Sprawdź" action="#{administracja.validateTemplate}" process="@this sz-kod sz-nazwa sz-zrodlo" update="sz-edytor :growl" styleClass="s" title="Kompilacja, render na Ts 312/26, veraPDF" />
-                  <p:commandButton id="sz-zapisz" value="#{administracja.edytowanyStan eq 'projekt' ? 'Zapisz projekt' : 'Zapisz jako nową wersję'}" action="#{administracja.saveTemplate}" process="@this sz-kod sz-nazwa sz-zrodlo" update="@form :growl" styleClass="s p" />
+                  <p:commandButton value="Sprawdź" action="#{administracja.validateTemplate}" process="@this :sf:tabs:sz-kod :sf:tabs:sz-nazwa :sf:tabs:sz-zrodlo" update=":sf:tabs:sz-edytor :growl" styleClass="s" title="Kompilacja, render na Ts 312/26, veraPDF" />
+                  <p:commandButton id="sz-zapisz" value="#{administracja.edytowanyStan eq 'projekt' ? 'Zapisz projekt' : 'Zapisz jako nową wersję'}" action="#{administracja.saveTemplate}" process="@this :sf:tabs:sz-kod :sf:tabs:sz-nazwa :sf:tabs:sz-zrodlo" update="@form :growl" styleClass="s p" />
                 </div>
                 <p class="hint">Zapis tworzy projekt; aktywacja (inna osoba niż autor) wycofuje poprzednią aktywną wersję. Pisma już wygenerowane pamiętają swoją wersję szablonu (D13).</p>
               </h:panelGroup>
