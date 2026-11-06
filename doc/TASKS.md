@@ -685,4 +685,7 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   wyboru bez wiązania, więc `sygnatura` była null i `DocketNumber.parse(null)` padał w Matcherze. Wybór sprawy przez `p:selectOneRadio`
   (domyślnie pierwsza oczekująca), `DocketNumber.parse` odrzuca pusty tekst czytelnym wyjątkiem, baner upoważnienia i podgląd zarządzenia
   z danych (daty, sygnatura, podpisujący) zamiast tekstów z makiety.
+- 06.11.2026 – po wdrożeniu przeglądarka używała starych `pdf-viewer.js`/`eskarga.css` (Faces: max-age 7 dni) – stąd „dopasowanie 107 %”
+  i martwe chipy dokumentów przy nowych znacznikach. `VersionedResourceHandler` (faces-config) dokleja `v=<znacznik buildu>` do adresów
+  zasobów bibliotek `js`, `css`, `tk`, `img`, `fonts`; test `VersionedResourceHandlerTest`.
 

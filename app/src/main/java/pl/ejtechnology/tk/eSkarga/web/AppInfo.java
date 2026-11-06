@@ -40,6 +40,19 @@ public class AppInfo implements Serializable {
         return getCommit() + " · " + getBuildTime();
     }
 
+    /** Krótki znacznik buildu do adresów zasobów (VersionedResourceHandler): commit + czas budowy; „lokalnie” też się zmienia co build. */
+    public static String buildStamp() {
+        return Stamp.VALUE;
+    }
+
+    private static final class Stamp {
+        static final String VALUE;
+        static {
+            java.util.Properties p = loadBuild();
+            VALUE = Integer.toHexString((p.getProperty("build.commit", "?") + "@" + p.getProperty("build.time", "?")).hashCode());
+        }
+    }
+
     private static java.util.Properties loadBuild() {
         java.util.Properties p = new java.util.Properties();
         try (java.io.InputStream in = AppInfo.class.getResourceAsStream("/eskarga-build.properties")) {

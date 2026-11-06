@@ -13,5 +13,7 @@
       <var>msg</var>
     </resource-bundle>
     <message-bundle>pl.ejtechnology.tk.eSkarga.web.messages</message-bundle>
+    <!-- adresy własnych zasobów z parametrem v=<build> – po wdrożeniu przeglądarka nie używa plików JS/CSS z pamięci podręcznej (max-age 7 dni) -->
+    <resource-handler>pl.ejtechnology.tk.eSkarga.web.faces.VersionedResourceHandler</resource-handler>
   </application>
 </faces-config>
