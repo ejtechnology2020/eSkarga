@@ -672,4 +672,9 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
 - 06.11.2026 – S-14: „does not have CREATE_INSTANCE permission on resource Dec_WymogiFormalne (DecisionDefinition)” – grupa aplikacji
   w Operatonie nie miała uprawnień do tabel decyzyjnych DMN; `EngineAuthorizations` nadaje też DECISION_DEFINITION
   i DECISION_REQUIREMENTS_DEFINITION (uzupełniane przy wdrożeniu, idempotentnie). Kod RTS-500 z logu potwierdzony w praktyce.
+- 06.11.2026 – S-23: akt podstawowy upoważnienia był atrapą (`p:fileUpload` bez listenera – plik znikał, zapis bez aktu odrzucany);
+  teraz PDF trafia do beana, przy zapisie do repozytorium S3 (klucz + SHA-256, V8 `basis_doc_key`/`basis_doc_sha256`), odnośnik w liście
+  przez `DelegationDocumentServlet` (role S-23, kontrola skrótu, audyt). S-09: lista sędziów = rejestr osób z rolą `TK_SEDZIA` (S-22)
+  + obciążenie z wpisów (dotąd tylko sędziowie z już przydzielonymi sprawami – pusta lista na starcie); wybór sędziego przez
+  `p:selectOneRadio` z `p:radioButton` w wierszach (dotąd makietowe `<input type=radio>` bez wiązania), nazwisko w podglądzie zarządzenia.
 

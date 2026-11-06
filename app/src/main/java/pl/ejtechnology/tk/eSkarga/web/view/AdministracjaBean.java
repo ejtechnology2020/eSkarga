@@ -49,6 +49,11 @@ public class AdministracjaBean implements Serializable {
     private TemplateService templates;
     @Inject
     private DocsGateway docs;
+    @Inject
+    private pl.ejtechnology.tk.eSkarga.documents.DocumentStore store;
+    /** Akt podstawowy przesłany w formularzu (do czasu zapisu trzymany w widoku; do S3 trafia razem z zapisem upoważnienia). */
+    private transient byte[] aktTresc;
+    private String aktNazwa;
     private java.time.LocalDate od;
     private java.time.LocalDate doDnia;
     private String akt;
@@ -59,16 +64,57 @@ public class AdministracjaBean implements Serializable {
     private String zrodloSzablonu;
     private List<String> bledySzablonu = List.of();
     private int tab = 2;
-    /** FR-36: nowe upoważnienie z aktem podstawowym. */
+    /** Akt podstawowy (PDF) z p:fileUpload – zapamiętany w widoku do czasu „Zapisz upoważnienie”. */
+    public void uploadAkt(org.primefaces.event.FileUploadEvent event) {
+        org.primefaces.model.file.UploadedFile f = event.getFile();
+        byte[] tresc = f.getContent();
+        FacesContext fc = FacesContext.getCurrentInstance();
+        if (!"application/pdf".equals(pl.ejtechnology.tk.eSkarga.domain.service.IncomingRegister.detectScanType(tresc))) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Odrzucono " + f.getFileName(), "Akt podstawowy musi być plikiem PDF."));
+            return;
+        }
+        if (tresc.length > 20L * 1024 * 1024) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Odrzucono " + f.getFileName(), "Plik przekracza 20 MB."));
+            return;
+        }
+        aktTresc = tresc;
+        aktNazwa = f.getFileName() == null || f.getFileName().isBlank() ? "akt.pdf" : f.getFileName().replaceAll("[\\\\/\\p{Cntrl}]", "_");
+        akt = aktNazwa;
+        fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Dołączono " + aktNazwa, "Plik zapisze się razem z upoważnieniem."));
+    }
+
+    public void usunAkt() {
+        aktTresc = null;
+        aktNazwa = null;
+        akt = null;
+    }
+
+    public String getAktNazwa() { return aktNazwa; }
+    public boolean isAktDolaczony() { return aktTresc != null; }
+    public String getAktRozmiar() { return aktTresc == null ? "" : String.format("%.1f MB", aktTresc.length / 1048576.0); }
+
+    /** FR-36: nowe upoważnienie z aktem podstawowym – akt do repozytorium (S3, SHA-256), wpis z kluczem dokumentu, audyt. */
     public void addDelegation() {
+        FacesContext fc = FacesContext.getCurrentInstance();
         if (settings.isDemo()) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Tryb demo: upoważnienie nie jest zapisywane.", null));
+            return;
+        }
+        if (osoba == null || osoba.isBlank() || od == null || doDnia == null || aktTresc == null) {
+            fc.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Uzupełnij osobę, okres od – do i dołącz akt podstawowy (PDF).", null));
             return;
         }
         try {
-            delegations.add(osoba, "prezes".equals(zakres) ? CaseAccessPolicy.FUNCTION_PRESIDENT : zakres, od, doDnia, akt, currentUser.getLogin());
-            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Upoważnienie dodane.", osoba));
+            String key = "upowaznienia/" + od.getYear() + "/" + java.util.UUID.randomUUID() + ".pdf";
+            pl.ejtechnology.tk.eSkarga.documents.DocumentStore.Stored stored = store.put(key, new java.io.ByteArrayInputStream(aktTresc), aktTresc.length, "application/pdf", false);
+            delegations.add(osoba, "prezes".equals(zakres) ? CaseAccessPolicy.FUNCTION_PRESIDENT : zakres, od, doDnia, aktNazwa, stored.key(), stored.sha256(), currentUser.getLogin());
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Upoważnienie dodane.", osoba));
+            osoba = null;
+            od = null;
+            doDnia = null;
+            usunAkt();
         } catch (RuntimeException e) {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się dodać upoważnienia.", e.getMessage()));
+            fc.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się dodać upoważnienia.", e.getMessage()));
         }
     }
     public void revokeDelegation(String id) {

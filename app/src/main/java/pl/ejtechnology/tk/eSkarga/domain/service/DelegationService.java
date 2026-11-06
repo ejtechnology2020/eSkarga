@@ -34,10 +34,25 @@ public class DelegationService {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public Delegation add(String userId, String function, LocalDate from, LocalDate to, String basisDocRef, String adminId) {
+        return add(userId, function, from, to, basisDocRef, null, null, adminId);
+    }
+
+    /** Upoważnienie z aktem podstawowym zapisanym w repozytorium dokumentów (klucz S3 + SHA-256, D5). */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public Delegation add(String userId, String function, LocalDate from, LocalDate to, String basisDocRef, String basisDocKey, String basisDocSha256, String adminId) {
         if (basisDocRef == null || basisDocRef.isBlank()) {
             throw new IllegalArgumentException("Akt podstawowy upoważnienia jest wymagany");
         }
-        Delegation d = new Delegation(userId, function, from, to, basisDocRef, adminId);
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("Podaj osobę (login z ID-users)");
+        }
+        if (from == null || to == null) {
+            throw new IllegalArgumentException("Podaj okres obowiązywania (od – do)");
+        }
+        Delegation d = new Delegation(userId.trim(), function, from, to, basisDocRef, adminId);
+        if (basisDocKey != null) {
+            d.attachBasisDocument(basisDocKey, basisDocSha256);
+        }
         em.persist(d);
         audit.record(adminId, AppRole.TK_ADMIN.name(), "dodanie upoważnienia: " + function, userId + " " + from + "–" + to, null, null);
         return d;
@@ -48,6 +63,10 @@ public class DelegationService {
         Delegation d = em.find(Delegation.class, id);
         d.revoke(clock.instant());
         audit.record(adminId, AppRole.TK_ADMIN.name(), "odwołanie upoważnienia", d.getUserId() + " " + d.getFunctionCode(), null, null);
+    }
+
+    public java.util.Optional<Delegation> byId(long id) {
+        return java.util.Optional.ofNullable(em.find(Delegation.class, id));
     }
 
     public List<Delegation> all() {

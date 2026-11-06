@@ -40,9 +40,17 @@
       </section>
       <section class="tw fx2" aria-labelledby="h-sd">
         <div class="tt"><h2 id="h-sd" class="h2-17">Sędziowie · obciążenie</h2><span class="mut">dla Ts 318/26</span></div>
-        <p:dataTable value="#{wyznaczenie.sedziowie}" var="j" rowStyleClass="#{j.nazwisko eq wyznaczenie.sedzia ? 'sel' : ''}" summary="Obciążenie sędziów">
-          <p:column headerText="Wybór" styleClass="chk"><p:selectOneRadio id="sd" value="#{wyznaczenie.sedzia}" layout="custom" rendered="#{false}" /><input type="radio" name="sd" class="chk22" checked="#{j.nazwisko eq wyznaczenie.sedzia ? 'checked' : null}" aria-label="Wybierz #{j.sedzia}" /></p:column>
-          <p:column headerText="Sędzia"><b jsf:rendered="#{j.nazwisko eq wyznaczenie.sedzia}">#{j.sedzia}</b><h:outputText rendered="#{j.nazwisko ne wyznaczenie.sedzia}" value="#{j.sedzia}" /></p:column>
+        <!-- wybór sędziego: p:selectOneRadio (layout=custom) poza tabelą, p:radioButton w wierszach po indeksie; poza demo wartością jest login z ID-users -->
+        <p:selectOneRadio id="sd" value="#{wyznaczenie.sedzia}" layout="custom">
+          <f:selectItems value="#{wyznaczenie.sedziowie}" var="s" itemValue="#{currentUser.demo ? s.nazwisko : s.sedzia}" itemLabel="#{s.nazwisko}" />
+          <p:ajax update="@form" />
+        </p:selectOneRadio>
+        <h:panelGroup rendered="#{empty wyznaczenie.sedziowie}" layout="block" styleClass="mut" style="padding: 8px 0;">
+          Brak sędziów na liście: sędzia pojawia się po pierwszym zalogowaniu do eSkargi z rolą „sędzia” nadaną w ID-users (rejestr S-22).
+        </h:panelGroup>
+        <p:dataTable value="#{wyznaczenie.sedziowie}" var="j" rowIndexVar="idx" rowStyleClass="#{(j.sedzia eq wyznaczenie.sedzia or j.nazwisko eq wyznaczenie.sedzia) ? 'sel' : ''}" summary="Obciążenie sędziów">
+          <p:column headerText="Wybór" styleClass="chk"><p:radioButton for="@form:sd" itemIndex="#{idx}" /></p:column>
+          <p:column headerText="Sędzia"><b jsf:rendered="#{j.sedzia eq wyznaczenie.sedzia or j.nazwisko eq wyznaczenie.sedzia}">#{j.nazwisko}</b><h:outputText rendered="#{not (j.sedzia eq wyznaczenie.sedzia or j.nazwisko eq wyznaczenie.sedzia)}" value="#{j.nazwisko}" /><br /><span class="mut mono">#{j.sedzia}</span></p:column>
           <p:column headerText="We wstępnej kontroli"><div class="hbar two"><span class="tr"><span style="width: #{j.percent}%;"></span></span><span class="v">#{j.sprawy}</span></div></p:column>
           <p:column headerText="Terminy w tym tygodniu">#{j.terminyTydzien} <span class="mut">#{j.terminyUwaga}</span></p:column>
           <p:column headerText="Nieobecności"><h:panelGroup rendered="#{not empty j.nieobecnosc and j.nieobecnoscTone eq 'WARN'}"><tk:tag value="#{j.nieobecnosc}" tone="WARN" /></h:panelGroup><h:outputText rendered="#{not empty j.nieobecnosc and j.nieobecnoscTone ne 'WARN'}" styleClass="mut" value="#{j.nieobecnosc}" /><h:outputText rendered="#{empty j.nieobecnosc}" value="—" /></p:column>
@@ -53,7 +61,7 @@
         <div class="viewer pad14">
           <tk:paper label="Podgląd zarządzenia o wyznaczeniu sędziego" styleClass="sm" watermark="PROJEKT">
             <p class="r">Warszawa, dnia 03.11.2026 r.</p><p>Sygn. akt Ts 318/26</p><h2 class="fs15">ZARZĄDZENIE</h2>
-            <p>Na podstawie art. 61 ust. 1 ustawy o organizacji i trybie postępowania przed Trybunałem Konstytucyjnym wyznaczam <b>sędziego TK #{wyznaczenie.sedzia eq 'Adam Testowy' ? 'Adama Testowego' : wyznaczenie.sedzia}</b> do wstępnego rozpoznania skargi konstytucyjnej Przykładowej Spółki z o.o.</p>
+            <p>Na podstawie art. 61 ust. 1 ustawy o organizacji i trybie postępowania przed Trybunałem Konstytucyjnym wyznaczam <b>sędziego TK #{wyznaczenie.sedziaNazwa eq 'Adam Testowy' ? 'Adama Testowego' : wyznaczenie.sedziaNazwa}</b> do wstępnego rozpoznania skargi konstytucyjnej Przykładowej Spółki z o.o.</p>
             <p class="sign">sędzia TK Maria Makietowa<br /><span style="font-size: 11px;">wykonująca obowiązki Prezesa TK</span></p>
           </tk:paper>
         </div>

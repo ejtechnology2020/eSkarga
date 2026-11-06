@@ -22,7 +22,7 @@
           <p:column headerText="Osoba"><b jsf:rendered="#{d.wybrany}" xmlns:jsf="jakarta.faces">#{d.osoba}</b><h:outputText rendered="#{not d.wybrany}" value="#{d.osoba}" /></p:column>
           <p:column headerText="Zakres">#{d.zakres}</p:column>
           <p:column headerText="Od – do">#{fmt.date(d.od)} – #{fmt.date(d.doDnia)}</p:column>
-          <p:column headerText="Akt podstawowy"><a href="#">#{d.akt}</a></p:column>
+          <p:column headerText="Akt podstawowy"><h:outputLink value="#{request.contextPath}/admin/upowaznienie/akt/#{d.id}" rendered="#{not currentUser.demo}" target="_blank">#{d.akt}</h:outputLink><h:outputText value="#{d.akt}" rendered="#{currentUser.demo}" /></p:column>
           <p:column headerText="Wprowadził">#{d.wprowadzil}</p:column>
           <p:column headerText="Status"><tk:tag value="#{d.status}" tone="#{d.statusTone}" icon="#{empty d.statusIcon ? '' : d.statusIcon}" /></p:column>
         </p:dataTable>
@@ -35,9 +35,20 @@
             <div class="fld"><p:outputLabel for="u-zk" value="Zakres" indicateRequired="true" /><p:selectOneMenu id="u-zk" value="#{administracja.zakres}"><f:selectItem itemLabel="wykonywanie obowiązków Prezesa TK" itemValue="prezes" /><f:selectItem itemLabel="podpisywanie zarządzeń o wyznaczeniu sędziego" itemValue="wyznaczenie" /><f:selectItem itemLabel="kierowanie zażaleń do składu" itemValue="sklad" /></p:selectOneMenu></div>
             <div class="fld"><p:outputLabel for="u-od" value="Od" indicateRequired="true" /><p:datePicker id="u-od" value="#{administracja.od}" pattern="dd.MM.yyyy" showIcon="false" placeholder="DD.MM.RRRR" /></div>
             <div class="fld"><p:outputLabel for="u-do" value="Do" indicateRequired="true" /><p:datePicker id="u-do" value="#{administracja.doDnia}" pattern="dd.MM.yyyy" showIcon="false" placeholder="DD.MM.RRRR" /></div>
-            <div class="fld full"><span class="lbl">Akt podstawowy <span class="req" aria-hidden="true">*</span></span><p:fileUpload mode="advanced" dragDrop="true" label="Wybierz plik" uploadLabel="Prześlij" cancelLabel="#{msg['common.cancel']}"><p:validateFile allowTypes="/(\.|\/)(pdf)$/" /></p:fileUpload></div>
+            <div class="fld full"><span class="lbl">Akt podstawowy <span class="req" aria-hidden="true">*</span></span>
+              <!-- plik trafia do beana (listener) i zapisuje się w repozytorium razem z upoważnieniem; po przesłaniu pokazujemy nazwę i „Usuń” -->
+              <h:panelGroup id="akt" layout="block">
+                <h:panelGroup rendered="#{not administracja.aktDolaczony}" layout="block">
+                  <p:fileUpload mode="advanced" dragDrop="true" auto="true" listener="#{administracja.uploadAkt}" update="akt growl" label="Wybierz plik" uploadLabel="Prześlij" cancelLabel="#{msg['common.cancel']}"><p:validateFile allowTypes="/(\.|\/)(pdf)$/" sizeLimit="20971520" /></p:fileUpload>
+                  <span class="hint">PDF do 20 MB. Zapisuje się w repozytorium przy zapisie upoważnienia.</span>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{administracja.aktDolaczony}" layout="block" styleClass="row" style="align-items: center; gap: 10px;">
+                  <tk:icon name="file-text" /><b>#{administracja.aktNazwa}</b><span class="mut">#{administracja.aktRozmiar}</span>
+                  <p:commandButton value="Usuń" action="#{administracja.usunAkt}" update="akt" process="@this" styleClass="s q" />
+                </h:panelGroup>
+              </h:panelGroup></div>
           </div>
-          <div class="row"><p:commandButton value="Zapisz upoważnienie" styleClass="p" action="#{administracja.addDelegation}" update="@form" /><button type="button" class="btn q">Wyczyść</button></div>
+          <div class="row"><p:commandButton value="Zapisz upoważnienie" styleClass="p" action="#{administracja.addDelegation}" update="@form growl" /><p:commandButton value="Wyczyść" action="#{administracja.usunAkt}" update="@form" process="@this" styleClass="q" /></div>
         </section>
         <aside class="side card" aria-labelledby="h-h"><h2 id="h-h">Historia zmian · Maria Makietowa</h2><tk:timeline value="#{administracja.historiaUpowaznienia}" /></aside>
       </div>

@@ -49,7 +49,8 @@ public class WyznaczenieBean implements Serializable {
     private String sygnatura;
 
     private String upowaznienie = "wazne";
-    private String sedzia = "Adam Testowy";
+    /** Wybrany sędzia: poza demo login z ID-users (JudgeLoad.sedzia), w demo nazwisko z danych przykładowych. */
+    private String sedzia;
 
     public boolean isUpowaznienieWazne() {
         if (!settings.isDemo()) {
@@ -75,8 +76,11 @@ public class WyznaczenieBean implements Serializable {
         }
         try {
             var cf = cases.byDocket(DocketNumber.parse(sygnatura)).orElseThrow(() -> new IllegalArgumentException("Wybierz sprawę"));
+            if (sedzia == null || sedzia.isBlank()) {
+                throw new IllegalArgumentException("Wybierz sędziego z listy");
+            }
             judges.assign(cf.getId(), sedzia, currentUser.getLogin(), currentUser.getRoles());
-            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Sędzia wyznaczony.", sedzia + " · " + sygnatura));
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Sędzia wyznaczony.", getSedziaNazwa() + " · " + sygnatura));
             return "/akta/podglad.xhtml?faces-redirect=true&sygnatura=" + sygnatura.replace(" ", "%20");
         } catch (SecurityException e) {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Odmowa: brak ważnego upoważnienia (BR-10).", e.getMessage()));
@@ -94,6 +98,20 @@ public class WyznaczenieBean implements Serializable {
 
     public String getUpowaznienie() { return upowaznienie; }
     public void setUpowaznienie(String upowaznienie) { this.upowaznienie = upowaznienie; }
-    public String getSedzia() { return sedzia; }
+    public String getSedzia() {
+        if (sedzia == null && settings.isDemo()) {
+            return "Adam Testowy";
+        }
+        return sedzia;
+    }
     public void setSedzia(String sedzia) { this.sedzia = sedzia; }
+
+    /** Nazwisko wybranego sędziego do podglądu zarządzenia (poza demo wybór jest loginem). */
+    public String getSedziaNazwa() {
+        String s = getSedzia();
+        if (s == null) {
+            return "…";
+        }
+        return getSedziowie().stream().filter(j -> s.equals(j.sedzia()) || s.equals(j.nazwisko())).map(JudgeLoad::nazwisko).findFirst().orElse(s);
+    }
 }

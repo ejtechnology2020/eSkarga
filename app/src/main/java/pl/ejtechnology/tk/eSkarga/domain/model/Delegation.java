@@ -36,6 +36,13 @@ public class Delegation {
     @Column(name = "basis_doc_ref", length = 200)
     private String basisDocRef;
 
+    /** Akt podstawowy w repozytorium dokumentów (klucz S3) i jego skrót SHA-256 – V8; null dla wpisów tylko z opisem. */
+    @Column(name = "basis_doc_key", length = 300)
+    private String basisDocKey;
+
+    @Column(name = "basis_doc_sha256", length = 64)
+    private String basisDocSha256;
+
     @Column(name = "revoked_at")
     private Instant revokedAt;
 
@@ -78,6 +85,14 @@ public class Delegation {
     public LocalDate getValidFrom() { return validFrom; }
     public LocalDate getValidTo() { return validTo; }
     public String getBasisDocRef() { return basisDocRef; }
+    public String getBasisDocKey() { return basisDocKey; }
+    public String getBasisDocSha256() { return basisDocSha256; }
+
+    /** Dołączenie aktu z repozytorium – przed zapisem encji (tabela bez UPDATE poza odwołaniem). */
+    public void attachBasisDocument(String key, String sha256) {
+        this.basisDocKey = key;
+        this.basisDocSha256 = sha256;
+    }
     public Instant getRevokedAt() { return revokedAt; }
     public String getCreatedBy() { return createdBy; }
     public Instant getCreatedAt() { return createdAt; }

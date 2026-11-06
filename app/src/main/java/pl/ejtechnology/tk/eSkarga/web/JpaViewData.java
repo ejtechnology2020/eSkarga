@@ -324,14 +324,30 @@ public class JpaViewData implements ViewData {
         return LocalDateTime.ofInstant(i, AppClock.WARSAW);
     }
 
+    /**
+     * Sędziowie do wyznaczenia (S-09): każdy, kto zalogował się do eSkargi z rolą {@code TK_SEDZIA} z ID-users (rejestr S-22, także bez spraw),
+     * plus sędziowie mający sprawy we wstępnej kontroli (obciążenie z wersji wpisów). Bez rejestru lista była pusta do pierwszego przydziału.
+     */
     @Override
     public List<JudgeLoad> judgeLoads() {
-        List<JudgeAssignmentService.JudgeLoad> loads = judges.loads();
-        long max = loads.stream().mapToLong(JudgeAssignmentService.JudgeLoad::casesInReview).max().orElse(1);
-        List<JudgeLoad> out = new ArrayList<>();
-        for (JudgeAssignmentService.JudgeLoad l : loads) {
-            out.add(new JudgeLoad(l.judgeUserId(), l.judgeUserId(), (int) l.casesInReview(), (int) (100 * l.casesInReview() / Math.max(1, max)), 0, "", null, null, false, true, null));
+        java.util.Map<String, Long> loads = new java.util.TreeMap<>();
+        for (JudgeAssignmentService.JudgeLoad l : judges.loads()) {
+            loads.put(l.judgeUserId(), l.casesInReview());
         }
+        java.util.Map<String, String> names = new java.util.HashMap<>();
+        for (var k : directory.all()) {
+            if (k.getRoles() != null && java.util.Arrays.asList(k.getRoles().split(",")).contains(AppRole.TK_SEDZIA.name())) {
+                loads.putIfAbsent(k.getLogin(), 0L);
+                names.put(k.getLogin(), k.getDisplayName());
+            }
+        }
+        long max = loads.values().stream().mapToLong(Long::longValue).max().orElse(1);
+        List<JudgeLoad> out = new ArrayList<>();
+        for (var e : loads.entrySet()) {
+            String name = names.getOrDefault(e.getKey(), e.getKey());
+            out.add(new JudgeLoad(e.getKey(), name == null || name.isBlank() ? e.getKey() : name, e.getValue().intValue(), (int) (100 * e.getValue() / Math.max(1, max)), 0, "", null, null, false, true, null));
+        }
+        out.sort(java.util.Comparator.comparing(JudgeLoad::nazwisko, String.CASE_INSENSITIVE_ORDER));
         return out;
     }
 
