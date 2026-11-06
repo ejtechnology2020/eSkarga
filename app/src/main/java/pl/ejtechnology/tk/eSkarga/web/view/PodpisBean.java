@@ -44,6 +44,8 @@ public class PodpisBean implements Serializable {
     private CurrentUser currentUser;
     @Inject
     private SigningService signing;
+    @Inject
+    private pl.ejtechnology.tk.eSkarga.domain.service.CaseDocumentService documents;
     private Long dokumentId;
     private String rodzajPisma = "ZARZ_BRAKI";
     private String sesja;
@@ -151,11 +153,46 @@ public class PodpisBean implements Serializable {
         return krok == 3 && blad == null ? "Podpisz kolejny dokument" : "Anuluj";
     }
 
+    /** Dokument do podpisu (poza demo z parametru ?dokument=); null w demo albo bez parametru. */
+    private pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument dokument() {
+        if (settings.isDemo() || dokumentId == null) {
+            return null;
+        }
+        try {
+            return documents.require(dokumentId);
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    /** Sygnatura sprawy podpisywanego dokumentu – do odnośnika „Zamknij i wróć do sprawy”; w demo dane przykładowe. */
+    public String getSygnatura() {
+        var d = dokument();
+        return d == null ? (sklad ? "Ts 276/26" : "Ts 318/26") : d.getCaseFile().getDocket().format();
+    }
+
     public String getDocShort() {
+        var d = dokument();
+        if (d != null) {
+            return getSygnatura() + " · " + d.getTitle();
+        }
         return sklad ? "Ts 276/26 · postanowienie" : "Ts 318/26 · zarządzenie";
     }
 
     public List<Effect> getSkutki() {
+        if (dokument() != null && rodzajPisma != null) {
+            LetterKind kind = LetterKind.valueOf(rodzajPisma);
+            String syg = getSygnatura();
+            return switch (kind) {
+                case ZARZ_WYZNACZENIE_SEDZIEGO -> List.of(Effect.next("Sędzia wskazany w zarządzeniu zostanie wyznaczony do wstępnej kontroli " + syg + " (przydział, zadanie w procesie)."),
+                        Effect.next("Status sprawy zmieni się na „We wstępnej kontroli”."), Effect.warning("Podpisu nie można cofnąć. Zmiana wymaga nowego zarządzenia."));
+                case ZARZ_BRAKI -> List.of(Effect.next("Zarządzenie trafi do ekspedycji; termin na usunięcie braków zacznie biec od doręczenia."),
+                        Effect.next("Status sprawy: „Wezwanie do usunięcia braków”."), Effect.warning("Podpisu nie można cofnąć."));
+                case POST_ODMOWA -> List.of(Effect.next("Postanowienie trafi do ekspedycji; termin na zażalenie zacznie biec od doręczenia."),
+                        Effect.next("Status sprawy: „Odmowa – termin na zażalenie”."), Effect.warning("Podpisu nie można cofnąć."));
+                default -> List.of(Effect.next(kind.title() + " w sprawie " + syg + " stanie się czynnością podpisaną."), Effect.warning("Podpisu nie można cofnąć."));
+            };
+        }
         return List.of(Effect.next("Sędzia TK Adam Testowy zostanie wyznaczony do wstępnej kontroli Ts 318/26."),
                 Effect.next("Status zmieni się na „We wstępnej kontroli”. Zawiadomienie trafi do r.pr. Oleńki Testowej."),
                 Effect.warning("Podpisu nie można cofnąć. Zmiana wymaga nowego zarządzenia."));

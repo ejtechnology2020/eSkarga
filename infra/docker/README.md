@@ -143,9 +143,11 @@ i certyfikat TSA muszą być w magazynie zaufania usługi dokumentów. Na dev za
 3. Po pierwszym uruchomieniu zrestartuj aplikację: `infra\windows\wdroz.cmd -TylkoApp` (usługa dokumentów czyta magazyn zaufania przy starcie).
 4. `infra\windows\podpis.cmd` ponownie – uruchamia aplikację lokalną (`java -jar … --pkcs12 … --origin http://localhost:8082`);
    zostaw okno otwarte. PIN klucza: parametr `-Pin` (domyślnie `123456`), trafia do niej zmienną `ESKARGA_SIGNER_PIN`.
-5. W eSkardze: akta sprawy → zakładka **Czynności** → „Podpisz” przy projekcie (projekt powstaje w edytorze S-15 przez „Prześlij
-   sędziemu”, np. zarządzenie o brakach z listy kontrolnej). Ekran S-16: krok 2 pobiera certyfikat z aplikacji lokalnej, krok 3 podpisuje.
-   Role: sędzia albo Prezes TK; sędzia musi być wyznaczony do sprawy (zespół).
+5. W eSkardze: „Wyznacz i podpisz zarządzenie” (S-17) tworzy projekt zarządzenia o wyznaczeniu sędziego i od razu otwiera S-16;
+   pozostałe pisma: akta sprawy → zakładka **Czynności** → „Podpisz” przy projekcie (projekt powstaje w edytorze S-15 przez „Prześlij
+   sędziemu”, np. zarządzenie o brakach z listy kontrolnej). Ekran S-16: krok 2 pobiera certyfikat z aplikacji lokalnej, krok 3 podpisuje;
+   po podpisie zarządzenia o wyznaczeniu sędzia dostaje przydział, sprawa status „we wstępnej kontroli”, proces zadanie kontroli.
+   Role: Prezes TK / osoba z upoważnieniem (zarządzenie o wyznaczeniu – podpisuje autor projektu), sędzia wyznaczony do sprawy (pisma z kontroli).
 
 Na prawdziwej stacji: `java -jar eskarga-local-signer.jar --lib <libykcs11> --origin https://<adres eSkargi>` z kluczem w slocie PIV YubiKey,
 certyfikat z wewnętrznego CA TK w `ESKARGA_DOCS_TRUSTSTORE`.

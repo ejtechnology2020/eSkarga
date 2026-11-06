@@ -706,4 +706,9 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   i `softhsm` normalizują CRLF skryptów (kody 127/255 przy starcie na Windows sprzed `.gitattributes`). S-14 zakładka Czynności: projekty
   w stanie PROJEKT z odnośnikiem „Podpisz” do S-16 (`?dokument=&rodzaj=`), edytor S-15 przekazuje identyfikator sporządzonego projektu
   (dotąd S-16 nie dostawał dokumentu – podpis poza demo był niemożliwy). README: rozdział „Podpis … na dev”.
+- 06.11.2026 – UC-05 dwuetapowo: „Wyznacz i podpisz zarządzenie” tworzy projekt zarządzenia (PDF z szablonu, czynność PROJEKT z loginem
+  sędziego w `panelUserIds`) i przenosi na S-16; `SigningService.complete` dla `ZARZ_WYZNACZENIE_SEDZIEGO` wywołuje
+  `JudgeAssignmentService.finalizeAssignment` (przydział, status, zadanie procesu, audyt) – podpisuje autor projektu (BR-10).
+  `assign(...)` jednoetapowe zostaje dla API/testów. S-16 pokazuje sygnaturę, tytuł i skutki z dokumentu (nie z makiety).
+  GUI UC-08: projekt + opcjonalny podpis (`ESKARGA_E2E_PODPIS=1` z działającym `podpis.cmd`).
 

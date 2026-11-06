@@ -53,6 +53,8 @@ public class SigningService {
     @Inject
     AuditService audit;
     @Inject
+    JudgeAssignmentService judges;
+    @Inject
     AppClock clock;
 
     /** Krok 1: dane do podpisu dla aplikacji lokalnej; nic nie zmienia w aktach. */
@@ -95,6 +97,13 @@ public class SigningService {
             return act;
         }
         act.setStatus(ActStatus.PODPISANA);
+        if (kind == LetterKind.ZARZ_WYZNACZENIE_SEDZIEGO) {
+            // UC-05: skutki wyznaczenia dopiero po podpisie; podpisuje osoba, która sporządziła projekt (upoważnienie sprawdzone przy projekcie, BR-10)
+            if (!userId.equals(act.getAuthorUserId())) {
+                throw new SecurityException("Zarządzenie o wyznaczeniu sędziego podpisuje osoba, która je sporządziła (" + act.getAuthorUserId() + ")");
+            }
+            judges.finalizeAssignment(act, userId);
+        }
         if (kind.statusAfterSigning() != null) {
             cases.changeStatus(cf.getId(), kind.statusAfterSigning(), userId);
         }

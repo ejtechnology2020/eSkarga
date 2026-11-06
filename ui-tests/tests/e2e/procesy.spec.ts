@@ -144,13 +144,32 @@ test.describe.serial('Procesy eSkargi (OIDC)', () => {
     await wiersz.locator('.ui-radiobutton-box, input[type=radio]').first().click();
     await expect(page.locator('.pane-h', { hasText: 'Podgląd zarządzenia' })).toContainText(sygnatura);
     await page.getByRole('button', { name: /wyznacz i podpisz/i }).click();
-    await expect(page).toHaveURL(/akta\/podglad\.xhtml\?.*sygnatura=/, { timeout: 60_000 });
+    // projekt zarządzenia w aktach, podpis na S-16 (dwuetapowy, D10); skutki wyznaczenia dopiero po podpisie
+    await expect(page).toHaveURL(/czynnosci\/podpis\.xhtml\?.*dokument=\d+/, { timeout: 60_000 });
     await expect(page.locator('body')).not.toContainText('Nie udało się wyznaczyć sędziego');
+    await expect(page.locator('body')).toContainText(sygnatura);
+    if (process.env['ESKARGA_E2E_PODPIS'] === '1') {
+      // aplikacja lokalna do podpisu działa na stacji testowej (infra\windows\podpis.cmd, klucz testowy w magazynie zaufania)
+      await page.getByRole('button', { name: /połącz z aplikacją/i }).click();
+      await page.getByRole('button', { name: /podpisz kartą/i }).click();
+      await expect(page.getByRole('button', { name: /czekam na aplikację/i })).toBeVisible({ timeout: 30_000 });
+      await page.getByRole('button', { name: /czekam na aplikację/i }).click();
+      await expect(page.locator('#sign-error')).toHaveText('');
+      await expect(page.getByRole('link', { name: /wróć do sprawy/i })).toBeVisible({ timeout: 60_000 });
+      await page.getByRole('link', { name: /wróć do sprawy/i }).click();
+      await expect(page).toHaveURL(/akta\/podglad\.xhtml/);
+      await expect(page.locator('body')).toContainText(/We wstępnej kontroli/i);
+    }
+    await page.goto(`/akta/podglad.xhtml?sygnatura=${encodeURIComponent(sygnatura)}`);
     const zarzadzenie = page.locator('ol.tl.doc li', { hasText: /wyznaczeniu sędziego/i }).first();
-    await expect(zarzadzenie, 'zarządzenie w spisie akt').toBeVisible();
+    await expect(zarzadzenie, 'zarządzenie (projekt albo podpisane) w spisie akt').toBeVisible();
     await zarzadzenie.locator('a.case.link').click();
     await expect(page.locator('.pdfv .pdfv-count'), 'PDF zarządzenia z szablonu usługi dokumentów').toHaveText(/^\s*\d+\s*$/, { timeout: 30_000 });
     await expect(page.locator('.pdfv-text')).toContainText(/ZARZĄDZENIE|wyznaczy/i, { timeout: 30_000 });
+    if (process.env['ESKARGA_E2E_PODPIS'] !== '1') {
+      await page.getByRole('tab', { name: /czynności/i }).click();
+      await expect(page.locator('body')).toContainText(/Projekty do podpisu/);
+    }
   });
 
   test('UC-09 S-14 lista kontrolna: ocena wymogu zapisuje się i przetrwa odświeżenie', async () => {

@@ -83,9 +83,11 @@ public class WyznaczenieBean implements Serializable {
             if (sedzia == null || sedzia.isBlank()) {
                 throw new IllegalArgumentException("Wybierz sędziego z listy");
             }
-            judges.assign(cf.getId(), sedzia, getSedziaNazwa(), currentUser.getLogin(), currentUser.getRoles());
-            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Sędzia wyznaczony.", getSedziaNazwa() + " · " + syg));
-            return "/akta/podglad.xhtml?faces-redirect=true&sygnatura=" + syg.replace(" ", "%20");
+            // projekt zarządzenia z szablonu w aktach; wyznaczenie staje się skuteczne po podpisie na S-16 (D10)
+            var act = judges.draftOrder(cf.getId(), sedzia, getSedziaNazwa(), currentUser.getLogin(), currentUser.getRoles());
+            FacesContext.getCurrentInstance().getExternalContext().getFlash().setKeepMessages(true);
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Projekt zarządzenia w aktach – podpisz go.", getSedziaNazwa() + " · " + syg));
+            return "/czynnosci/podpis.xhtml?faces-redirect=true&stan=1&dokument=" + act.getDocument().getId() + "&rodzaj=" + pl.ejtechnology.tk.eSkarga.domain.service.LetterKind.ZARZ_WYZNACZENIE_SEDZIEGO.name();
         } catch (SecurityException e) {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Odmowa: brak ważnego upoważnienia (BR-10).", e.getMessage()));
         } catch (RuntimeException e) {

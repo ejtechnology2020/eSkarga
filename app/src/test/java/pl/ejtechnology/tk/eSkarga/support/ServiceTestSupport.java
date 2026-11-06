@@ -139,7 +139,7 @@ public abstract class ServiceTestSupport {
             this.checklist = Wiring.inject(new ChecklistService(), em, cases, caseAccess0, audit, clock);
             this.notes = Wiring.inject(new NoteService(), em, caseAccess, audit, clock);
             this.letters = Wiring.inject(new LetterService(), em, cases, templates, docs, store, engine.getTaskService(), audit, clock);
-            this.signing = Wiring.inject(new SigningService(), em, cases, deliveries, docs, store, engine.getTaskService(), audit, clock);
+            this.signing = Wiring.inject(new SigningService(), em, cases, deliveries, docs, store, engine.getTaskService(), audit, clock, judges);
             this.documents = Wiring.inject(new CaseDocumentService(), em, cases, store, audit, clock, search);
             this.directory = Wiring.inject(new pl.ejtechnology.tk.eSkarga.domain.service.UserDirectoryService(), em, clock);
         }

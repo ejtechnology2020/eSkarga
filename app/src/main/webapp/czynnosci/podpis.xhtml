@@ -71,7 +71,7 @@
           <p id="sign-error" class="mut err" role="alert"></p>
           <h:outputScript library="js" name="eskarga-sign.js" target="body" />
           <h:inputHidden id="certyfikaty" value="#{podpis.certyfikaty}" /><h:inputHidden id="podpisWartosc" value="#{podpis.podpis}" /><h:inputHidden id="skrot" value="#{podpis.skrot}" /><h:inputHidden id="algorytm" value="#{podpis.algorytmPodpisu}" />
-          <h:link rendered="#{not podpis.hasError and podpis.krok eq 3}" outcome="/akta/podglad" styleClass="btn p" value="#{podpis.nextLabel}"><f:param name="sygnatura" value="Ts 318/26" /></h:link>
+          <h:link rendered="#{not podpis.hasError and podpis.krok eq 3}" outcome="/akta/podglad" styleClass="btn p" value="#{podpis.nextLabel}"><f:param name="sygnatura" value="#{podpis.sygnatura}" /></h:link>
         </div>
       </h:form>
     </div>

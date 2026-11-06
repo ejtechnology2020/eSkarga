@@ -15,6 +15,8 @@ import { expect, request, type Page } from '@playwright/test';
  *  ESKARGA_E2E_TOTP_PLIK       plik z kluczem (domyślnie <ID_USERS_KLUCZE_DIR>/totp-<login>.txt – zapisuje go
  *                              narzędzie rejestracji eSkargi w ID-users i ten test po pierwszej konfiguracji OTP)
  *  ESKARGA_E2E_KEYCLOAK_URL    Keycloak ID-users (domyślnie http://localhost:8180)
+ *  ESKARGA_E2E_PODPIS=1        na stacji działa aplikacja lokalna do podpisu z kluczem testowym (infra\windows\podpis.cmd) – scenariusz
+ *                              wyznaczenia sędziego podpisuje zarządzenie na S-16; bez tej zmiennej kończy się na projekcie w aktach
  *  ESKARGA_E2E_KC_ADMIN_HASLO  hasło administratora realm master – gdy ustawione, test zakłada świeże konto
  *                              testowe z rolami klienta eskarga (biuro podawcze, referent, asystent, administrator)
  *                              i konfiguruje OTP przy pierwszym logowaniu; bez niego używa istniejącego konta
