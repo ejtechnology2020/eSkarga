@@ -423,6 +423,7 @@ Etykiety: **[decyzja]** – zanim zaczniesz, zapytaj człowieka; **[zaślepka]**
     - podpis łańcucha audytu.
 - **Kryteria akceptacji:**
     - [~] skan repozytorium `RepositorySecretsScanTest`; skan bazy – zapytanie kontrolne w przeglądzie uprawnień;
+      Uwaga (06.11.2026): test nie sprawdza już istnienia `infra/docker/.env` (skrypty dev tworzą ten plik na stacji), lecz wpis w `.gitignore` oraz brak `infra/docker/.env` i `infra/docker/.local/` w indeksie Gita.
     - [~] `HsmKeyStore` (SunPKCS11) z testami w trybie PKCS#12 (zabroniony w PROD); SoftHSM2 w Compose/Ansible – test po uruchomieniu.
 - **Zależności:** T-030, T-015. **Odwołania:** D12.
 

@@ -40,6 +40,13 @@ class RepositorySecretsScanTest {
                     });
         }
         assertThat(hits).as("pliki z kluczem prywatnym albo sekretem").isEmpty();
-        assertThat(Files.exists(root.resolve("infra/docker/.env"))).as(".env jest w .gitignore i nie powinien być w repozytorium").isFalse();
+        // .env istnieje na każdej stacji dev (tworzą go skrypty) – nie może tylko trafić do Gita: wpis w .gitignore i brak w indeksie
+        assertThat(Files.readString(root.resolve(".gitignore"))).as("infra/docker/.env w .gitignore").contains("infra/docker/.env");
+        Path index = root.resolve(".git/index");
+        if (Files.exists(index)) {
+            String idx = new String(Files.readAllBytes(index), StandardCharsets.ISO_8859_1);
+            assertThat(idx).as(".env śledzony przez Git").doesNotContain("infra/docker/.env\0");
+            assertThat(idx).as("klucze podpisu dev śledzone przez Git").doesNotContain("infra/docker/.local/");
+        }
     }
 }
