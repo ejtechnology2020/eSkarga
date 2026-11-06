@@ -30,10 +30,19 @@
 
           <h:panelGroup rendered="#{podpis.krok eq 0}" layout="block" styleClass="col gap12" pt:aria-labelledby="k1h">
             <h3 id="k1h" class="h2-17">Co podpisujesz</h3>
-            <dl class="dl"><dt>Dokument</dt><dd><b>Zarządzenie o wyznaczeniu sędziego</b> · 1 strona · <a href="#">podgląd PDF</a></dd>
-              <dt>Sprawa</dt><dd><tk:sig value="#{dane.caseBy('Ts 318/26').sygnatura}" /> · Przykładowa Spółka z o.o.</dd>
-              <dt>Podpisujesz jako</dt><dd>sędzia TK Maria Makietowa — wykonująca obowiązki Prezesa TK (upoważnienie z 30.10.2026)</dd>
-              <dt>Certyfikat</dt><dd>kwalifikowany · ważny do 14.03.2028</dd></dl>
+            <!-- dane podpisywanego dokumentu z akt (PodpisBean.dokument); podgląd PDF z DocumentServlet (autoryzacja sesji, audyt odczytu) -->
+            <dl class="dl"><dt>Dokument</dt><dd><b>#{podpis.docTitle}</b> · #{podpis.docPages}
+                <h:panelGroup rendered="#{not empty podpis.docUrl}"> · <p:commandLink id="pdf-toggle" action="#{podpis.togglePodglad}" update="pdf-podglad @this" process="@this" value="#{podpis.podglad ? 'ukryj podgląd' : 'podgląd PDF'}" />
+                  · <h:outputLink value="#{request.contextPath}#{podpis.docUrl}" target="_blank" rel="noopener">otwórz w nowej karcie</h:outputLink></h:panelGroup>
+                <h:panelGroup rendered="#{empty podpis.docUrl and currentUser.demo}"> · <span class="mut">podgląd PDF (tryb demo – bez repozytorium)</span></h:panelGroup></dd>
+              <dt>Sprawa</dt><dd><tk:sig value="#{podpis.sygnaturaDn}" /> · #{podpis.strona}</dd>
+              <dt>Podpisujesz jako</dt><dd>#{podpis.podpisujacy}</dd>
+              <dt>Certyfikat</dt><dd>#{empty podpis.docUrl ? 'kwalifikowany · ważny do 14.03.2028' : 'z karty w aplikacji lokalnej (krok „Aplikacja do podpisu”)'}</dd></dl>
+            <h:panelGroup id="pdf-podglad" layout="block">
+              <h:panelGroup rendered="#{podpis.podglad and not empty podpis.docUrl}" layout="block" styleClass="viewer" style="height: 420px;">
+                <tk:pdfViewer src="#{request.contextPath}#{podpis.docUrl}" title="#{podpis.docTitle}" />
+              </h:panelGroup>
+            </h:panelGroup>
             <div class="card acc"><span class="eyebrow">Skutek po podpisie</span><tk:effects value="#{podpis.skutki}" /></div>
           </h:panelGroup>
 

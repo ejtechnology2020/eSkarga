@@ -737,3 +737,6 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
 - Infrastruktura – 06.11.2026 – `podpis.ps1` i `testy-gui.ps1` bez BOM UTF-8: Windows PowerShell 5.1 czytał je jako ANSI i parser
   wywracał się na „–” i polskich znakach (`Missing argument in parameter list`). Dodany BOM; `WindowsScriptsEncodingTest` pilnuje
   BOM w `.ps1` i samego ASCII w `.cmd`.
+- T-040 – 06.11.2026 – S-16 „Co podpisujesz” było makietą (tytuł, Ts 318/26, „Maria Makietowa”, martwy „podgląd PDF”): tytuł, karty,
+  sprawa i strona z akt, „Podpisujesz jako” z ID-users (z adnotacją „za Prezesa”, BR-10), „podgląd PDF” rozwija widżet pdf.js
+  z `DocumentServlet`, „otwórz w nowej karcie”; w demo dalej dane przykładowe.

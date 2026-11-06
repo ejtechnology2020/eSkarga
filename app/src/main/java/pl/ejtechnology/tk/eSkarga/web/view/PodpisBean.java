@@ -46,6 +46,8 @@ public class PodpisBean implements Serializable {
     private SigningService signing;
     @Inject
     private pl.ejtechnology.tk.eSkarga.domain.service.CaseDocumentService documents;
+    @Inject
+    private pl.ejtechnology.tk.eSkarga.web.ViewData data;
     private Long dokumentId;
     private String rodzajPisma = "ZARZ_BRAKI";
     private String sesja;
@@ -58,6 +60,8 @@ public class PodpisBean implements Serializable {
     private String blad;
     private boolean sklad;
     private boolean podpisano;
+    /** Podgląd PDF podpisywanego dokumentu rozwinięty w kroku „Podsumowanie” (widżet pdf.js z DocumentServlet). */
+    private boolean podglad;
 
     public void applyState() {
         String s = stan == null ? "1" : stan;
@@ -169,6 +173,51 @@ public class PodpisBean implements Serializable {
     public String getSygnatura() {
         var d = dokument();
         return d == null ? (sklad ? "Ts 276/26" : "Ts 318/26") : d.getCaseFile().getDocket().format();
+    }
+
+    /** Sygnatura jako {@code DocketNumber} dla {@code tk:sig}. */
+    public pl.ejtechnology.tk.eSkarga.domain.DocketNumber getSygnaturaDn() {
+        return pl.ejtechnology.tk.eSkarga.domain.DocketNumber.parse(getSygnatura());
+    }
+
+    /** Tytuł dokumentu z akt; w demo – makieta. */
+    public String getDocTitle() {
+        var d = dokument();
+        return d != null ? d.getTitle() : (sklad ? "Postanowienie o odmowie nadania dalszego biegu" : "Zarządzenie o wyznaczeniu sędziego");
+    }
+
+    /** Karty dokumentu w aktach („k. 15”) albo „—”, gdy jeszcze niepaginowany. */
+    public String getDocPages() {
+        var d = dokument();
+        return d != null ? d.pagesLabel() : "1 strona";
+    }
+
+    /** Adres PDF w DocumentServlet (autoryzacja sesji, Range, no-store) – null w demo i bez pliku. */
+    public String getDocUrl() {
+        var d = dokument();
+        return d == null || d.getStorageKey() == null || d.isClassified() ? null : "/akta/dokument/" + d.getId();
+    }
+
+    public boolean isPodglad() { return podglad; }
+    public void togglePodglad() { podglad = !podglad; }
+
+    /** Skarżący/wnioskodawca sprawy podpisywanego dokumentu – z danych widoku (po filtrze dostępu D4). */
+    public String getStrona() {
+        var d = dokument();
+        if (d == null) {
+            return sklad ? "Jan Przykładowy" : "Przykładowa Spółka z o.o.";
+        }
+        var cs = data.caseBy(getSygnatura());
+        return cs == null || cs.skarzacy() == null ? "" : cs.skarzacy();
+    }
+
+    /** „Podpisujesz jako”: nazwa z ID-users; sędzia działający za Prezesa (BR-10) ma to zaznaczone. */
+    public String getPodpisujacy() {
+        if (dokument() == null) {
+            return "sędzia TK Maria Makietowa — wykonująca obowiązki Prezesa TK (upoważnienie z 30.10.2026)";
+        }
+        String kto = currentUser.getDisplayName() == null || currentUser.getDisplayName().isBlank() ? currentUser.getLogin() : currentUser.getDisplayName();
+        return currentUser.isActingAsPresident() ? kto + " — wykonujący obowiązki Prezesa TK (upoważnienie, BR-10)" : kto;
     }
 
     public String getDocShort() {
