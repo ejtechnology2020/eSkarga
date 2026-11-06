@@ -22,6 +22,8 @@ services:
       DB_USER_APP: ${DB_USER_APP:-eskarga_app}
       DB_PASSWORD_APP: ${DB_PASSWORD_APP:?ustaw w .env}
       ESKARGA_ENVIRONMENT: TEST
+      # pamięć JVM WildFly (standalone.conf, obraz wildfly/Dockerfile): bez tego MaxMetaspaceSize=256m → OutOfMemoryError: Metaspace
+      ESKARGA_JAVA_OPTS: ${ESKARGA_JAVA_OPTS:--Xms512m -Xmx2g -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=1g}
       ESKARGA_FACES_STAGE: Development
       ESKARGA_SECURITY_MODE: ${ESKARGA_SECURITY_MODE:-oidc}
       ESKARGA_OIDC_ISSUER: http://localhost:8180/realms/id-users            # iss w tokenach = adres używany w przeglądarce

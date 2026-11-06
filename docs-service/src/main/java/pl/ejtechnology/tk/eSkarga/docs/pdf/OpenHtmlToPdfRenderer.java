@@ -29,8 +29,13 @@ public final class OpenHtmlToPdfRenderer implements PdfRenderer {
             // PDF/A-2b wymaga OutputIntent z profilem RGB (ISO 19005-2 6.2.4.3) – profil sRGB z JDK
             builder.useColorProfile(java.awt.color.ICC_Profile.getInstance(java.awt.color.ColorSpace.CS_sRGB).getData());
             builder.withHtmlContent(xhtml, baseUri);
-            if (fontDir != null && fontDir.isDirectory()) {
-                File regular = new File(fontDir, "LiberationSerif-Regular.ttf");
+            File regular = fontDir == null ? null : new File(fontDir, "LiberationSerif-Regular.ttf");
+            if (regular == null || !regular.isFile()) {
+                // PDF/A wymaga osadzonych czcionek; bez nich OpenHTMLtoPDF zgłasza błąd wewnętrzny – komunikat ma wskazać konfigurację
+                throw new IllegalStateException("Brak czcionki LiberationSerif-Regular.ttf w katalogu " + fontDir
+                        + " – zainstaluj pakiet fonts-liberation albo ustaw eskarga.pdf.fontDir (ESKARGA_PDF_FONTDIR)");
+            }
+            {
                 File bold = new File(fontDir, "LiberationSerif-Bold.ttf");
                 if (regular.isFile()) {
                     builder.useFont(regular, "Liberation Serif", 400, BaseRendererBuilder.FontStyle.NORMAL, true);

@@ -723,3 +723,14 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
 - T-012/T-018 – 06.11.2026 – kafelek KPI (`tk:kpi`) dopisuje `request.contextPath` do adresów ekranów (link „Pisma do kwalifikacji”
   prowadził do `/sprawy/kolejka.xhtml` bez `/eskarga`); `AppClock` zatrzymuje zegar (`ESKARGA_DEMO_TODAY`) tylko w trybie demo –
   w trybie OIDC z `.env` dev zadanie z dziś pokazywało „3 dni oczekiwania” przy „czeka od dziś”.
+- T-026a – 06.11.2026 – S-24 „Szablony pism” z pełną obsługą wersji: **podgląd** (PDF z usługi dokumentów na danych fikcyjnych,
+  `TemplatePreviewServlet` `/admin/szablony/podglad?id=`, widżet `tk:pdfViewer`), **edycja** (projekt poprawiany w miejscu –
+  `TemplateService.updateDraft`; aktywna/wycofana → „Zapisz jako nową wersję”), **wycofanie** aktywnej (`withdraw`) i **usunięcie
+  logiczne** (`delete` → status `USUNIETA`; rola aplikacji nie ma DELETE, pisma pamiętają wersję – D13); aktywnej wersji nie można
+  usunąć. Lista pokazuje kod, liczbę pism z wersji i akcje; edytor z wyborem kodu (LetterKind + kody z rejestru), „Sprawdź”
+  (walidacja w usłudze), „Aktywuj” (druga osoba). Testy: `TemplateServiceTest`, GUI UC-24 w `procesy.spec.ts`.
+- Infrastruktura – 06.11.2026 – **Metaspace WildFly** (`OutOfMemoryError: Metaspace`): obraz dopisuje do `standalone.conf`
+  `ESKARGA_JAVA_OPTS` (compose/.env, domyślnie -Xmx2g, MaxMetaspaceSize=1g); **czcionki** `fonts-liberation` w obrazie (render PDF/A
+  kończył się HTTP 500 bez nich); `OpenHtmlToPdfRenderer` zgłasza czytelny błąd konfiguracji bez czcionek; `DocsErrorMapper` loguje
+  każdy błąd 500 (także `Error`) z kodem `DOC-500-…` zwracanym aplikacji. **Commit w stopce**: `git-commit-id-maven-plugin` (JGit)
+  zamiast `-Deskarga.build.commit` ze skryptów (stopka pokazywała „lokalnie”); `build.dirty` → gwiazdka przy commicie.

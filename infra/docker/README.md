@@ -159,3 +159,18 @@ WAR-y do `standalone/deployments/` przy każdym starcie. Po `mvn package` wystar
 (`infra\windows\wdroz.cmd` robi oba kroki). Pojedyncze pliki nie są montowane celowo: `mvn clean` usuwa WAR w trakcie builda, skaner WildFly
 zgłaszał `WFLYDS0008 … FileNotFoundException` i cofał wdrożenie, a po restarcie kontener wciąż widział skasowany plik.
 
+
+Stopka aplikacji pokazuje skrócony commit i czas budowy WAR-a: `git-commit-id-maven-plugin` (JGit) czyta katalog `.git` przy każdym
+buildzie, także w kontenerze Mavena bez programu `git`; po `git pull` i `buduj.cmd`/`wdroz.cmd` sprawdź w stopce, że commit zgadza się
+z `git rev-parse --short HEAD` (gwiazdka = niezatwierdzone zmiany w drzewie roboczym, „lokalnie” = build bez `.git`).
+
+## Pamięć JVM i czcionki (kontener `app`)
+
+Dystrybucja Operaton dla WildFly ma w `standalone.conf` `-XX:MaxMetaspaceSize=256m` – dwa WAR-y (aplikacja i usługa dokumentów:
+DSS, PDFBox, OpenHTMLtoPDF, veraPDF, OCR) i silnik procesów przekraczają ten limit (`OutOfMemoryError: Metaspace`, potem HTTP 500 z usługi
+dokumentów). Obraz `wildfly/Dockerfile` dopisuje na końcu `standalone.conf` wartość `ESKARGA_JAVA_OPTS` (domyślnie
+`-Xms512m -Xmx2g -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=1g`, do zmiany w `.env`). Ten sam obraz instaluje `fonts-liberation`:
+usługa dokumentów osadza Liberation Serif w PDF/A (`ESKARGA_PDF_FONTDIR`), bez czcionek render pism kończy się komunikatem
+`Brak czcionki LiberationSerif-Regular.ttf …`. Po zmianie obrazu: `infra\windows\start.cmd -Przebuduj`.
+Błędy 500 usługi dokumentów mają w logu kod `DOC-500-…` (logger `pl.ejtechnology.tk.eSkarga.docs.blad`) – ten sam kod wraca
+w komunikacie aplikacji.

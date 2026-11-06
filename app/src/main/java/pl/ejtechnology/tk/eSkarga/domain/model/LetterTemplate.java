@@ -70,6 +70,23 @@ public class LetterTemplate {
         this.status = TemplateStatus.WYCOFANA;
     }
 
+    /** Poprawka projektu w miejscu (tylko PROJEKT); wersja aktywna lub wycofana jest niezmienna – zmiana to nowa wersja. */
+    public void updateDraft(String name, String sourceXhtml) {
+        if (status != TemplateStatus.PROJEKT) {
+            throw new IllegalStateException("Zmienić można tylko projekt szablonu – dla wersji " + status.name().toLowerCase() + " zapisz nową wersję");
+        }
+        this.name = name;
+        this.sourceXhtml = sourceXhtml;
+    }
+
+    /** Usunięcie logiczne: nigdy wersji aktywnej (najpierw wycofanie). Wiersz zostaje, bo pisma pamiętają wersję szablonu (D13). */
+    public void markDeleted() {
+        if (status == TemplateStatus.AKTYWNA) {
+            throw new IllegalStateException("Aktywnej wersji nie można usunąć – najpierw ją wycofaj albo aktywuj inną");
+        }
+        this.status = TemplateStatus.USUNIETA;
+    }
+
     public Long getId() { return id; }
     public String getCode() { return code; }
     public String getName() { return name; }

@@ -23,7 +23,16 @@ public class AppInfo implements Serializable {
 
     /** Commit i czas budowy WAR-a (eskarga-build.properties wypełniane przez Maven) – żeby w stopce było widać, co jest wdrożone. */
     public String getCommit() {
-        return build.getProperty("build.commit", "?");
+        return commit(build);
+    }
+
+    /** Skrócony commit z git-commit-id-maven-plugin; bez katalogu .git właściwość zostaje nierozwinięta → „lokalnie”; „*” = niezatwierdzone zmiany. */
+    static String commit(java.util.Properties p) {
+        String c = p.getProperty("build.commit", "").trim();
+        if (c.isEmpty() || c.startsWith("${")) {
+            c = "lokalnie";
+        }
+        return "true".equalsIgnoreCase(p.getProperty("build.dirty", "")) ? c + "*" : c;
     }
 
     /** Czas budowy w strefie Warszawy (Maven przy budowie odtwarzalnej podaje ISO-8601 w UTC). */
@@ -49,7 +58,7 @@ public class AppInfo implements Serializable {
         static final String VALUE;
         static {
             java.util.Properties p = loadBuild();
-            VALUE = Integer.toHexString((p.getProperty("build.commit", "?") + "@" + p.getProperty("build.time", "?")).hashCode());
+            VALUE = Integer.toHexString((commit(p) + "@" + p.getProperty("build.time", "?")).hashCode());
         }
     }
 

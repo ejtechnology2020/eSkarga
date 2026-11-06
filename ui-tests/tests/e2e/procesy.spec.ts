@@ -210,6 +210,34 @@ test.describe.serial('Procesy eSkargi (OIDC)', () => {
     await expect(page.locator('ol[aria-label="Dokumenty"]')).not.toContainText(tytul);
   });
 
+  test('UC-24 S-24 szablony pism: podgląd PDF, nowa wersja z edytora, usunięcie projektu', async () => {
+    await page.goto('/admin/slowniki.xhtml?zakladka=szablony');
+    const lista = page.locator('[id$="sz-lista"]');
+    if (!(await lista.locator('tbody tr', { hasText: 'ZARZ_WYZNACZENIE_SEDZIEGO' }).first().isVisible().catch(() => false))) {
+      await page.getByRole('button', { name: /załaduj szablony domyślne/i }).click();
+    }
+    const wiersz = lista.locator('tbody tr', { hasText: 'ZARZ_WYZNACZENIE_SEDZIEGO' }).first();
+    await expect(wiersz).toBeVisible({ timeout: 30_000 });
+    // podgląd: PDF z usługi dokumentów na danych fikcyjnych
+    await wiersz.getByRole('button', { name: /^podgląd$/i }).click();
+    await expect(page.locator('.pdfv .pdfv-count')).toHaveText(/^\s*\d+\s*$/, { timeout: 30_000 });
+    // edycja aktywnej wersji → zapis tworzy nową wersję w stanie projekt
+    const liczbaPrzed = await lista.locator('tbody tr').count();
+    await wiersz.getByRole('button', { name: /^edytuj$/i }).click();
+    await expect(page.locator('[id$="sz-edytor"]')).toContainText(/Nowa wersja na podstawie/);
+    const zrodlo = page.locator('[id$="sz-zrodlo"]');
+    await zrodlo.fill((await zrodlo.inputValue()).replace('<h1>ZARZĄDZENIE</h1>', '<h1>ZARZĄDZENIE</h1><p>Wersja testowa GUI.</p>'));
+    await page.getByRole('button', { name: /zapisz jako nową wersję/i }).click();
+    await expect(lista.locator('tbody tr')).toHaveCount(liczbaPrzed + 1, { timeout: 30_000 });
+    const projekt = lista.locator('tbody tr', { hasText: 'ZARZ_WYZNACZENIE_SEDZIEGO' }).filter({ hasText: /projekt/ }).first();
+    await expect(projekt).toBeVisible();
+    // usunięcie projektu (logiczne) – znika z listy; wersja aktywna zostaje
+    page.once('dialog', (d) => d.accept());
+    await projekt.getByRole('button', { name: /^usuń$/i }).click();
+    await expect(lista.locator('tbody tr')).toHaveCount(liczbaPrzed, { timeout: 30_000 });
+    await expect(lista.locator('tbody tr', { hasText: 'ZARZ_WYZNACZENIE_SEDZIEGO' }).first()).toContainText(/aktywna/);
+  });
+
   test('UC-10 przełącznik roli zmienia kontekst menu (gdy konto ma kilka ról)', async () => {
     await page.goto('/pulpit.xhtml');
     const rola = page.locator('#tb-rola');

@@ -776,10 +776,11 @@ public class JpaViewData implements ViewData {
     @Override
     public List<TemplateRow> templates() {
         List<TemplateRow> out = new ArrayList<>();
+        Map<Long, Long> uses = templates.usageCounts();
         for (LetterTemplate t : templates.all()) {
             Tone tone = t.getStatus() == TemplateStatus.AKTYWNA ? Tone.OK : t.getStatus() == TemplateStatus.PROJEKT ? Tone.INFO : Tone.OFF;
-            out.add(new TemplateRow(t.getName(), t.getCode(), "v" + t.getVersion(), t.getCreatedAt() == null ? "" : fmt.dateTime(at(t.getCreatedAt())) + " · " + t.getAuthorUserId(),
-                    t.getStatus().name().toLowerCase(), tone, false));
+            out.add(new TemplateRow(t.getId(), t.getCode(), t.getName(), t.getCode(), "v" + t.getVersion(), t.getCreatedAt() == null ? "" : fmt.dateTime(at(t.getCreatedAt())) + " · " + t.getAuthorUserId(),
+                    t.getStatus().name().toLowerCase(), tone, false, uses.getOrDefault(t.getId(), 0L)));
         }
         return out;
     }

@@ -225,6 +225,8 @@ select.in{appearance:auto}
 .in.bad{border-color:var(--err);background:#FFFBFA}
 .in[readonly]{background:var(--soft);border-style:dashed}
 .hint{font-size:13px;color:var(--mut)}
+.sz-bledy{margin:8px 0 0;padding-left:18px;color:var(--err-ink);font-size:13px}
+.sz-bledy li{margin:2px 0}
 .tl.doc .note-body{margin:4px 0 0;font-size:13px;white-space:pre-wrap;color:var(--ink)}
 .ferr{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--err-ink)}
 .chkl{display:flex;align-items:center;gap:10px;min-height:44px}

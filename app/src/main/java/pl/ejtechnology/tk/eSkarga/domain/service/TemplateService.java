@@ -81,12 +81,73 @@ public class TemplateService {
         return added;
     }
 
+    /** Poprawka projektu w miejscu (S-24 „Edytuj”): tylko PROJEKT; inne stany – nowa wersja przez {@link #saveDraft}. */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public LetterTemplate updateDraft(long templateId, String name, String source, String actorId) {
+        LetterTemplate t = require(templateId);
+        t.updateDraft(name, source);
+        audit.record(actorId, "TK_ADMIN", "zmiana projektu szablonu", t.getCode() + " v" + t.getVersion(), null, null);
+        return t;
+    }
+
+    /** Wycofanie aktywnej wersji bez następcy – pisma z tego kodu nie powstaną do aktywacji innej wersji. */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public LetterTemplate withdraw(long templateId, String actorId) {
+        LetterTemplate t = require(templateId);
+        if (t.getStatus() != TemplateStatus.AKTYWNA) {
+            throw new IllegalStateException("Wycofać można tylko aktywną wersję");
+        }
+        t.withdraw();
+        audit.record(actorId, "TK_ADMIN", "wycofanie szablonu", t.getCode() + " v" + t.getVersion(), null, null);
+        return t;
+    }
+
+    /** Usunięcie logiczne (status USUNIETA): projekt albo wersja wycofana; aktywnej nie (D13, rola bez DELETE). */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public LetterTemplate delete(long templateId, String actorId) {
+        LetterTemplate t = require(templateId);
+        if (t.getStatus() == TemplateStatus.USUNIETA) {
+            return t;
+        }
+        t.markDeleted();
+        audit.record(actorId, "TK_ADMIN", "usunięcie szablonu", t.getCode() + " v" + t.getVersion() + " (pisma: " + usageCount(templateId) + ")", null, null);
+        return t;
+    }
+
+    public LetterTemplate require(long templateId) {
+        LetterTemplate t = em.find(LetterTemplate.class, templateId);
+        if (t == null) {
+            throw new IllegalArgumentException("Brak szablonu " + templateId);
+        }
+        return t;
+    }
+
+    public Optional<LetterTemplate> find(long templateId) {
+        return Optional.ofNullable(em.find(LetterTemplate.class, templateId));
+    }
+
+    /** Liczba pism wygenerowanych z danej wersji (case_document.template_version_id). */
+    public long usageCount(long templateId) {
+        return em.createQuery("select count(d) from CaseDocument d where d.templateVersion.id = :id", Long.class).setParameter("id", templateId).getSingleResult();
+    }
+
+    /** Liczba pism na wersję szablonu – do listy S-24. */
+    public java.util.Map<Long, Long> usageCounts() {
+        java.util.Map<Long, Long> out = new java.util.HashMap<>();
+        for (Object[] row : em.createQuery("select d.templateVersion.id, count(d) from CaseDocument d where d.templateVersion is not null group by d.templateVersion.id", Object[].class).getResultList()) {
+            out.put((Long) row[0], (Long) row[1]);
+        }
+        return out;
+    }
+
     public Optional<LetterTemplate> active(String code) {
         return em.createQuery("select t from LetterTemplate t where t.code = :c and t.status = :s", LetterTemplate.class)
                 .setParameter("c", code).setParameter("s", TemplateStatus.AKTYWNA).getResultStream().findFirst();
     }
 
+    /** Wersje bez usuniętych logicznie; kolejność: kod, wersja malejąco. */
     public List<LetterTemplate> all() {
-        return em.createQuery("select t from LetterTemplate t order by t.code, t.version desc", LetterTemplate.class).getResultList();
+        return em.createQuery("select t from LetterTemplate t where t.status <> :deleted order by t.code, t.version desc", LetterTemplate.class)
+                .setParameter("deleted", TemplateStatus.USUNIETA).getResultList();
     }
 }

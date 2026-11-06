@@ -8,7 +8,8 @@ ARG OPERATON_SHA256=6bc09729936ccf735c6352fe2d0f89cf3ca89d4d1aee9ad973d4d909d429
 ARG OPERATON_DIST_URL=https://github.com/operaton/operaton/releases/download/v${OPERATON_VERSION}/operaton-bpm-wildfly-${OPERATON_VERSION}.tar.gz
 ARG POSTGRESQL_JDBC_VERSION=42.7.14
 ENV OPERATON_HOME=/opt/operaton
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/* \
+# fonts-liberation: usługa dokumentów osadza Liberation Serif w PDF/A (ESKARGA_PDF_FONTDIR); bez czcionek render pism kończy się błędem
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates fonts-liberation && rm -rf /var/lib/apt/lists/* \
  && curl -fsSL -o /tmp/operaton.tar.gz "${OPERATON_DIST_URL}" \
  && echo "${OPERATON_SHA256}  /tmp/operaton.tar.gz" | sha256sum -c - \
  && mkdir -p /tmp/operaton && tar -xzf /tmp/operaton.tar.gz -C /tmp/operaton \
@@ -22,6 +23,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
  && curl -fsSL -o ${OPERATON_HOME}/modules/system/layers/base/org/postgresql/main/postgresql.jar \
     "https://repo1.maven.org/maven2/org/postgresql/postgresql/${POSTGRESQL_JDBC_VERSION}/postgresql-${POSTGRESQL_JDBC_VERSION}.jar"
 COPY module-postgresql.xml ${OPERATON_HOME}/modules/system/layers/base/org/postgresql/main/module.xml
+# Pamięć JVM: dwa WAR-y (aplikacja + usługa dokumentów: DSS, PDFBox, OpenHTMLtoPDF, OCR) i Operaton nie mieszczą się
+# w domyślnym -XX:MaxMetaspaceSize=256m dystrybucji (OutOfMemoryError: Metaspace). Dopisane na końcu standalone.conf –
+# ostatnia wartość flagi wygrywa; nadpisanie zmienną ESKARGA_JAVA_OPTS (compose/.env).
+RUN printf '\n# eSkarga: pamięć dla dwóch WAR-ow i Operatona (ESKARGA_JAVA_OPTS z compose)\nJAVA_OPTS="$JAVA_OPTS ${ESKARGA_JAVA_OPTS:--Xms512m -Xmx2g -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=1g}"\n' >> ${OPERATON_HOME}/bin/standalone.conf
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 EXPOSE 8080 9990

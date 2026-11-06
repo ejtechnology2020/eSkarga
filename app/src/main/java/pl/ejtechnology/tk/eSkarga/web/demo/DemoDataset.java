@@ -577,12 +577,12 @@ public class DemoDataset implements Serializable, pl.ejtechnology.tk.eSkarga.web
 
     public List<TemplateRow> templates() {
         return List.of(
-                new TemplateRow("Zarządzenie o usunięciu braków", "zarządzenie", "v4", "12.10.2026 · Anna Admin", "obowiązuje", Tone.OK, true),
-                new TemplateRow("Postanowienie o odmowie nadania dalszego biegu", "postanowienie", "v3", "01.09.2026", "obowiązuje", Tone.OK, false),
-                new TemplateRow("Postanowienie o nadaniu dalszego biegu", "postanowienie", "v2", "01.09.2026", "obowiązuje", Tone.OK, false),
-                new TemplateRow("Zarządzenie o wyznaczeniu sędziego", "zarządzenie", "v2", "30.10.2026", "obowiązuje", Tone.OK, false),
-                new TemplateRow("Pouczenie o wymogach skargi konstytucyjnej", "pismo ogólne", "v5", "15.10.2026", "obowiązuje", Tone.OK, false),
-                new TemplateRow("Zarządzenie o usunięciu braków", "zarządzenie", "v3", "02.03.2026", "archiwalna", Tone.OFF, false));
+                new TemplateRow(1L, "ZARZ_BRAKI", "Zarządzenie o usunięciu braków", "zarządzenie", "v4", "12.10.2026 · Anna Admin", "obowiązuje", Tone.OK, true, 12),
+                new TemplateRow(2L, "POST_ODMOWA", "Postanowienie o odmowie nadania dalszego biegu", "postanowienie", "v3", "01.09.2026", "obowiązuje", Tone.OK, false, 7),
+                new TemplateRow(3L, "POST_NADANIE_BIEGU", "Postanowienie o nadaniu dalszego biegu", "postanowienie", "v2", "01.09.2026", "obowiązuje", Tone.OK, false, 5),
+                new TemplateRow(4L, "ZARZ_WYZNACZENIE_SEDZIEGO", "Zarządzenie o wyznaczeniu sędziego", "zarządzenie", "v2", "30.10.2026", "obowiązuje", Tone.OK, false, 31),
+                new TemplateRow(5L, "POUCZENIE", "Pouczenie o wymogach skargi konstytucyjnej", "pismo ogólne", "v5", "15.10.2026", "obowiązuje", Tone.OK, false, 9),
+                new TemplateRow(6L, "ZARZ_BRAKI", "Zarządzenie o usunięciu braków", "zarządzenie", "v3", "02.03.2026", "archiwalna", Tone.OFF, false, 12));
     }
 
     public List<pl.ejtechnology.tk.eSkarga.web.model.ScanRow> scansOf(String registerNo) {

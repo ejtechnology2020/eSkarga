@@ -210,6 +210,29 @@
       </resource>
     </resources>
     <plugins>
+      <!-- skrócony commit do eskarga-build.properties (stopka, adresy zasobów) – JGit czyta .git (także katalog nadrzędny), bez programu git -->
+      <plugin>
+        <groupId>io.github.git-commit-id</groupId>
+        <artifactId>git-commit-id-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>git-info</id>
+            <phase>initialize</phase>
+            <goals><goal>revision</goal></goals>
+          </execution>
+        </executions>
+        <configuration>
+          <failOnNoGitDirectory>false</failOnNoGitDirectory>
+          <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
+          <generateGitPropertiesFile>false</generateGitPropertiesFile>
+          <offline>true</offline>
+          <abbrevLength>7</abbrevLength>
+          <includeOnlyProperties>
+            <includeOnlyProperty>^git\.commit\.id\.abbrev$</includeOnlyProperty>
+            <includeOnlyProperty>^git\.dirty$</includeOnlyProperty>
+          </includeOnlyProperties>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>

@@ -63,6 +63,11 @@ public class AdministracjaBean implements Serializable {
     private String nazwaSzablonu;
     private String zrodloSzablonu;
     private List<String> bledySzablonu = List.of();
+    /** Wersja szablonu w edytorze (null = nowy projekt) i wersja w panelu podglądu (PDF z usługi dokumentów). */
+    private Long edytowanyId;
+    private String edytowanyStan;
+    private Long podgladId;
+    private String podgladTytul;
     private int tab = 2;
     /** Akt podstawowy (PDF) z p:fileUpload – zapamiętany w widoku do czasu „Zapisz upoważnienie”. */
     public void uploadAkt(org.primefaces.event.FileUploadEvent event) {
@@ -173,6 +178,123 @@ public class AdministracjaBean implements Serializable {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się aktywować szablonu.", e.getMessage()));
         }
     }
+    /** S-24: wczytanie wersji do edytora – projekt poprawiany w miejscu, aktywna/wycofana → zapis tworzy nową wersję (D13). */
+    public void editTemplate(TemplateRow t) {
+        if (settings.isDemo()) {
+            kodSzablonu = t.kod();
+            nazwaSzablonu = t.nazwa();
+            zrodloSzablonu = "<p>Tryb demo: źródło szablonu jest w bazie.</p>";
+            edytowanyId = t.id();
+            edytowanyStan = t.stan();
+            return;
+        }
+        templates.find(t.id()).ifPresent(v -> {
+            kodSzablonu = v.getCode();
+            nazwaSzablonu = v.getName();
+            zrodloSzablonu = v.getSourceXhtml();
+            edytowanyId = v.getId();
+            edytowanyStan = v.getStatus().name().toLowerCase();
+        });
+        bledySzablonu = List.of();
+    }
+
+    public void newTemplate() {
+        edytowanyId = null;
+        edytowanyStan = null;
+        nazwaSzablonu = null;
+        zrodloSzablonu = null;
+        bledySzablonu = List.of();
+    }
+
+    /** Zapis z edytora: projekt w miejscu ({@code updateDraft}), inaczej nowa wersja PROJEKT ({@code saveDraft}). */
+    public void saveTemplate() {
+        if (settings.isDemo()) {
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Tryb demo: szablon nie jest zapisywany.", null));
+            return;
+        }
+        if (kodSzablonu == null || kodSzablonu.isBlank() || zrodloSzablonu == null || zrodloSzablonu.isBlank()) {
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_WARN, "Podaj kod i źródło szablonu.", null));
+            return;
+        }
+        try {
+            String nazwa = nazwaSzablonu == null || nazwaSzablonu.isBlank() ? kodSzablonu : nazwaSzablonu;
+            var t = edytowanyId != null && "projekt".equals(edytowanyStan)
+                    ? templates.updateDraft(edytowanyId, nazwa, zrodloSzablonu, currentUser.getLogin())
+                    : templates.saveDraft(kodSzablonu.trim().toUpperCase(), nazwa, zrodloSzablonu, currentUser.getLogin());
+            edytowanyId = t.getId();
+            edytowanyStan = "projekt";
+            podgladId = t.getId();
+            podgladTytul = t.getName() + " v" + t.getVersion();
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Zapisano projekt szablonu.", t.getCode() + " v" + t.getVersion()));
+        } catch (RuntimeException e) {
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się zapisać szablonu.", e.getMessage()));
+        }
+    }
+
+    /** Podgląd wersji (PDF z usługi dokumentów na danych fikcyjnych Ts 312/26) w panelu obok listy. */
+    public void previewTemplate(TemplateRow t) {
+        podgladId = t.id();
+        podgladTytul = t.nazwa() + " " + t.wersja();
+    }
+
+    public void withdrawTemplate(long templateId) {
+        if (settings.isDemo()) {
+            return;
+        }
+        try {
+            var t = templates.withdraw(templateId, currentUser.getLogin());
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_WARN, "Wycofano " + t.getCode() + " v" + t.getVersion() + ".",
+                    "Do aktywacji innej wersji pisma z tego szablonu nie powstaną."));
+        } catch (RuntimeException e) {
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się wycofać szablonu.", e.getMessage()));
+        }
+    }
+
+    /** Usunięcie logiczne wersji (projekt albo wycofana); aktywnej nie – usługa odmawia. */
+    public void deleteTemplate(long templateId) {
+        if (settings.isDemo()) {
+            return;
+        }
+        try {
+            var t = templates.delete(templateId, currentUser.getLogin());
+            if (podgladId != null && podgladId == templateId) {
+                podgladId = null;
+            }
+            if (edytowanyId != null && edytowanyId == templateId) {
+                newTemplate();
+            }
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Usunięto " + t.getCode() + " v" + t.getVersion() + ".", null));
+        } catch (RuntimeException e) {
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się usunąć szablonu.", e.getMessage()));
+        }
+    }
+
+    /** Kody szablonów do wyboru: rodzaje pism aplikacji + kody już obecne w rejestrze. */
+    public List<String> getKodySzablonow() {
+        java.util.Set<String> out = new java.util.TreeSet<>();
+        for (var k : pl.ejtechnology.tk.eSkarga.domain.service.LetterKind.values()) {
+            out.add(k.name());
+        }
+        for (TemplateRow t : getSzablony()) {
+            if (t.kod() != null) {
+                out.add(t.kod());
+            }
+        }
+        if (kodSzablonu != null && !kodSzablonu.isBlank()) {
+            out.add(kodSzablonu);
+        }
+        return new java.util.ArrayList<>(out);
+    }
+
+    public Long getEdytowanyId() { return edytowanyId; }
+    public String getEdytowanyStan() { return edytowanyStan; }
+    public Long getPodgladId() { return podgladId; }
+    public String getPodgladTytul() { return podgladTytul; }
+    /** Adres PDF podglądu (TemplatePreviewServlet) albo null, gdy nic nie wybrano / tryb demo. */
+    public String getPodgladUrl() {
+        return podgladId == null || settings.isDemo() ? null : "/admin/szablony/podglad?id=" + podgladId + "&v=" + System.nanoTime();
+    }
+
     public void seedTemplates() {
         if (!settings.isDemo()) {
             int n = templates.seedDefaults(docs.defaultTemplates(), currentUser.getLogin());

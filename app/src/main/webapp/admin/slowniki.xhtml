@@ -7,6 +7,7 @@
                 xmlns:ui="jakarta.faces.facelets"
                 xmlns:p="primefaces"
                 xmlns:pt="jakarta.faces.passthrough"
+                xmlns:jsf="jakarta.faces"
                 xmlns:tk="jakarta.faces.composite/tk">
   <!-- S-24 Słowniki, szablony i dni wolne (UC-24, FR-35, D13): zakładki Słowniki / Szablony pism / Kalendarz dni wolnych.
        Kalendarz wpływa na liczenie terminów (DeadlineCalculator). -->
@@ -37,18 +38,54 @@
           <div class="flow">
             <section class="tw fx2" aria-labelledby="h-sz">
               <div class="tt"><h2 id="h-sz" class="h2-17">Szablony pism</h2><span class="count">#{administracja.szablony.size()}</span><span class="sp"></span>
-                <button type="button" class="btn s p" jsf:rendered="#{currentUser.demo}" xmlns:jsf="jakarta.faces">Nowy szablon</button>
-                <!-- z bazą: szablony domyślne z usługi dokumentów (T-026a); edytor szablonów to osobny ekran w zakresie T-026 -->
-                <p:commandButton value="Załaduj szablony domyślne" action="#{administracja.seedTemplates}" update="@form growl" styleClass="s p" rendered="#{not currentUser.demo}" process="@this" /></div>
-              <p:dataTable value="#{administracja.szablony}" var="t" rowStyleClass="#{t.rowClass()}" summary="Szablony pism">
-                <p:column headerText="Nazwa">#{t.nazwa}</p:column><p:column headerText="Rodzaj">#{t.rodzaj}</p:column><p:column headerText="Wersja">#{t.wersja}</p:column>
+                <p:commandButton id="sz-nowy" value="Nowy szablon" action="#{administracja.newTemplate}" update="sz-edytor" styleClass="s" process="@this" />
+                <!-- z bazą: szablony domyślne z usługi dokumentów (T-026a) tylko dla kodów bez żadnej wersji -->
+                <p:commandButton value="Załaduj szablony domyślne" action="#{administracja.seedTemplates}" update="@form :growl" styleClass="s p" rendered="#{not currentUser.demo}" process="@this" /></div>
+              <!-- D13: wersje w bazie; projekt → aktywna (druga osoba) → wycofana; usunięcie logiczne (USUNIETA), bo pisma pamiętają wersję szablonu -->
+              <p:dataTable id="sz-lista" value="#{administracja.szablony}" var="t" rowStyleClass="#{t.rowClass()}" summary="Szablony pism">
+                <p:column headerText="Nazwa">#{t.nazwa}<br/><span class="mono mut">#{t.kod}</span></p:column><p:column headerText="Wersja">#{t.wersja}</p:column>
                 <p:column headerText="Zmieniono">#{t.zmieniono}</p:column><p:column headerText="Stan"><tk:tag value="#{t.stan}" tone="#{t.stanTone}" /></p:column>
+                <p:column headerText="Pisma">#{t.uzycia}</p:column>
+                <p:column headerText="#{msg['common.actions']}">
+                  <div class="row" style="gap: 4px; flex-wrap: wrap;">
+                    <p:commandButton value="Podgląd" action="#{administracja.previewTemplate(t)}" update="sz-podglad" process="@this" styleClass="s" title="PDF z danych fikcyjnych Ts 312/26" />
+                    <p:commandButton value="Edytuj" action="#{administracja.editTemplate(t)}" update="sz-edytor" process="@this" styleClass="s" title="#{t.isProjekt() ? 'Poprawka projektu' : 'Nowa wersja na podstawie tej'}" />
+                    <p:commandButton value="Aktywuj" action="#{administracja.activateTemplate(t.id)}" update="@form :growl" process="@this" styleClass="s p" rendered="#{t.isProjekt()}" title="Walidacja w usłudze dokumentów; wymaga innej osoby niż autor" />
+                    <p:commandButton value="Wycofaj" action="#{administracja.withdrawTemplate(t.id)}" update="@form :growl" process="@this" styleClass="s" rendered="#{t.isAktywna()}" onclick="return confirm('Wycofać aktywną wersję #{t.kod} #{t.wersja}? Do aktywacji innej wersji pisma z tego szablonu nie powstaną.');" />
+                    <p:commandButton value="Usuń" action="#{administracja.deleteTemplate(t.id)}" update="@form :growl" process="@this" styleClass="s d" rendered="#{not t.isAktywna()}" onclick="return confirm('Usunąć wersję #{t.kod} #{t.wersja}? Pisma już wygenerowane (#{t.uzycia}) zachowają odniesienie do tej wersji.');" />
+                  </div>
+                </p:column>
               </p:dataTable>
+              <h:panelGroup id="sz-edytor" layout="block" styleClass="card" style="margin-top: 12px;">
+                <div class="pane-h"><b>#{empty administracja.edytowanyId ? 'Nowy szablon' : (administracja.edytowanyStan eq 'projekt' ? 'Poprawka projektu' : 'Nowa wersja na podstawie wersji ' + administracja.edytowanyStan)}</b></div>
+                <div class="row" style="gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                  <div class="fld"><p:outputLabel for="sz-kod" value="Kod (rodzaj pisma)" />
+                    <p:selectOneMenu id="sz-kod" value="#{administracja.kodSzablonu}" editable="true" disabled="#{administracja.edytowanyStan eq 'projekt'}" style="min-width: 260px;">
+                      <f:selectItems value="#{administracja.kodySzablonow}" var="k" itemLabel="#{k}" itemValue="#{k}" />
+                    </p:selectOneMenu></div>
+                  <div class="fld fx1"><p:outputLabel for="sz-nazwa" value="Nazwa" /><p:inputText id="sz-nazwa" value="#{administracja.nazwaSzablonu}" maxlength="200" /></div>
+                </div>
+                <div class="fld" style="margin-top: 8px;"><p:outputLabel for="sz-zrodlo" value="Źródło (FreeMarker XHTML; zmienne jak ${sygnatura}, ${sedzia}, ${dataZarzadzenia}, ${braki})" />
+                  <p:inputTextarea id="sz-zrodlo" value="#{administracja.zrodloSzablonu}" rows="14" styleClass="mono" autoResize="false" /></div>
+                <ul class="sz-bledy" jsf:rendered="#{not empty administracja.bledySzablonu}"><ui:repeat value="#{administracja.bledySzablonu}" var="b"><li>#{b}</li></ui:repeat></ul>
+                <div class="row" style="gap: 6px; margin-top: 8px;">
+                  <p:commandButton value="Sprawdź" action="#{administracja.validateTemplate}" process="@this sz-kod sz-nazwa sz-zrodlo" update="sz-edytor :growl" styleClass="s" title="Kompilacja, render na Ts 312/26, veraPDF" />
+                  <p:commandButton id="sz-zapisz" value="#{administracja.edytowanyStan eq 'projekt' ? 'Zapisz projekt' : 'Zapisz jako nową wersję'}" action="#{administracja.saveTemplate}" process="@this sz-kod sz-nazwa sz-zrodlo" update="@form :growl" styleClass="s p" />
+                </div>
+                <p class="hint">Zapis tworzy projekt; aktywacja (inna osoba niż autor) wycofuje poprzednią aktywną wersję. Pisma już wygenerowane pamiętają swoją wersję szablonu (D13).</p>
+              </h:panelGroup>
             </section>
             <section class="card np fx1" aria-label="Podgląd szablonu">
-              <div class="pane-h"><b>Podgląd · Zarządzenie o usunięciu braków v4</b></div>
-              <div class="viewer pad14"><tk:paper label="Podgląd szablonu" styleClass="sm"><p>Sygn. akt <span class="anon">{sygnatura}</span></p><h2 class="fs15">ZARZĄDZENIE</h2><p>Sędzia Trybunału Konstytucyjnego <span class="anon">{sędzia}</span>, na podstawie art. 61 ust. 3 ustawy, zarządza wezwać <span class="anon">{adresat}</span> do usunięcia w terminie 7 dni braków: <span class="anon">{braki z listy kontrolnej}</span>.</p></tk:paper></div>
-              <div class="pane-b" style="flex: 0;"><p class="hint">Szablony FreeMarker (XHTML) są w bazie z wersjami: projekt, aktywna, wycofana. Edytor z podświetlaniem składni, walidacją (kompilacja, render, veraPDF) i aktywacją z akceptacją drugiej osoby dostarcza T-026a.</p></div>
+              <h:panelGroup id="sz-podglad" layout="block" styleClass="col" style="height: 100%;">
+                <div class="pane-h"><b>Podgląd#{empty administracja.podgladTytul ? '' : ' · '.concat(administracja.podgladTytul)}</b></div>
+                <h:panelGroup rendered="#{not empty administracja.podgladUrl}" layout="block" styleClass="viewer">
+                  <tk:pdfViewer src="#{request.contextPath}#{administracja.podgladUrl}" title="Podgląd szablonu #{administracja.podgladTytul}" />
+                </h:panelGroup>
+                <div class="viewer pad14" jsf:rendered="#{empty administracja.podgladUrl}">
+                  <tk:paper label="Podgląd szablonu" styleClass="sm"><p>Sygn. akt <span class="anon">{sygnatura}</span></p><h2 class="fs15">ZARZĄDZENIE</h2><p>Wybierz „Podgląd” przy wersji szablonu – usługa dokumentów wyrenderuje PDF na danych fikcyjnych (Ts 312/26, Jan Przykładowy, adw. Anna Testowa).</p></tk:paper>
+                </div>
+                <div class="pane-b" style="flex: 0;"><p class="hint">Szablony FreeMarker (XHTML) są w bazie z wersjami: projekt, aktywna, wycofana. Walidacja (kompilacja, render, veraPDF) w usłudze dokumentów; aktywacja z akceptacją drugiej osoby (T-026a).</p></div>
+              </h:panelGroup>
             </section>
           </div>
         </p:tab>
