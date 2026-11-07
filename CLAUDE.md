@@ -16,6 +16,7 @@ docker compose -f infra/docker/compose.yml up -d --build   # aplikacja http://lo
 docker compose -f infra/docker/compose.yml logs -f app
 docker compose -f infra/docker/compose.yml --profile monitoring up -d   # Prometheus/Grafana
 PGHOST=/tmp PGPORT=5434 PGUSER=eskarga_migration PGPASSWORD=… PGDATABASE=eskarga_it python3 infra/scripts/erd-fizyczny.py   # ERD modelu fizycznego z katalogu PostgreSQL po migracjach → docs/erd/model-fizyczny.md (Mermaid)
+python3 infra/scripts/erd-pdf.py && node infra/scripts/erd-pdf.mjs   # ERD jako PDF (A3): docs/erd/ERD-eSkarga.pdf (własny rysunek SVG + Playwright/Chromium z ui-tests)
 cd ui-tests && npm ci && npm run test:demo           # Playwright + axe, tryb demo (ESKARGA_URL)
 ESKARGA_E2E=1 ESKARGA_E2E_KC_ADMIN_HASLO=… npm --prefix ui-tests run test:oidc   # procesy od końca do końca przez ID-users (Windows: infra\windows\testy-gui.cmd)
 infra\windows\start.cmd                             # Windows: całe środowisko obok ID-users (pozostałe skrypty: stop, status, logi, wdroz, rejestracja, reset, buduj – infra/docker/README.md)

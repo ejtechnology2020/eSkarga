@@ -1,0 +1,591 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>ERD eSkarga – model fizyczny</title>
+<style>
+@page { size: A3 landscape; margin: 12mm; }
+body { font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; color: #1d2430; margin: 0; }
+.page { page-break-after: always; break-after: page; }
+.cover { padding: 40mm 10mm; }
+h1 { font-size: 30px; margin: 0 0 8px; } h2 { font-size: 20px; margin: 0 0 2px; }
+.meta { color: #5b6672; margin: 0 0 8px; font-size: 13px; }
+.dia svg { width: 100%; height: auto; max-height: 255mm; }
+table { border-collapse: collapse; font-size: 11px; width: 100%; } th, td { border-bottom: 1px solid #d6dbd3; padding: 3px 6px; text-align: left; }
+td:nth-child(2), td:nth-child(4) { text-align: right; }
+.legend { font-size: 12px; color: #5b6672; }
+</style></head><body>
+<section class="page cover"><h1>eSkarga – Repertorium Ts/Tw<br>Model fizyczny bazy danych (ERD)</h1>
+<p class="meta">Schemat <b>repertorium</b> w PostgreSQL po migracjach Flyway V1–V12.1 · stan z 07.11.2026 · wygenerowano z katalogu bazy (<code>infra/scripts/erd-fizyczny.py</code> → <code>erd-pdf.py</code>)</p>
+<p class="legend">Oznaczenia: <b>PK</b> klucz główny · <b>FK</b> klucz obcy · <b>UK</b> unikalny · linia z „kurzą stopką” przy tabeli podrzędnej (wiele) i kreską przy nadrzędnej (jeden) · <code>timestamptz</code> = timestamp with time zone · w nawiasach długości typów.</p>
+<p class="legend">Strony: 1) przegląd kluczy i relacji wszystkich tabel, 2) wpływ pism i repertorium, 3) akta, czynności i podpisy, 4) doręczenia, terminy, zażalenia, archiwum, 5) dostęp, osoby, słowniki, audyt, 6) indeks tabel.</p>
+</section>
+<section class="page"><h2>Przegląd: tabele, klucze i relacje</h2><p class="meta">36 tabel · 26 relacji · tylko klucze (PK, FK, UK)</p><div class="dia"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1598 1487" width="1598" height="1487" font-family="IBM Plex Mono, Consolas, monospace" font-size="12">
+<defs><marker id="crow" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,1 L11,6 L1,11 M1,6 L11,6" fill="none" stroke="#3b4a56" stroke-width="1.3"/></marker><marker id="one" markerWidth="10" markerHeight="12" refX="9" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M4,1 L4,11 M1,6 L9,6" fill="none" stroke="#3b4a56" stroke-width="1.3"/></marker></defs>
+<path d="M624.4,423 L274.4,423 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,529 L274.4,529 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,652 L274.4,652 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,758 L274.4,758 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,1339 L274.4,1339 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,1356 L230,1356 L230,173.0 L190,173.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,300 L274.4,300 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,915 L274.4,915 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M963.2,283 L864.4,283 L864.4,262.0 L824.4,262.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M1309.2,71 L274.4,71 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M1309.2,88 L1239.2,88 L1239.2,597.0 L1199.2,597.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M963.2,652 L842.8,652 L842.8,156.0 L802.8,156.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M963.2,635 L893.2,635 L893.2,1301.0 L853.2,1301.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,1021 L274.4,1021 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M963.2,389 L871.6,389 L871.6,33.0 L831.6,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M963.2,406 L893.2,406 L893.2,1301.0 L853.2,1301.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M963.2,775 L893.2,775 L893.2,1301.0 L853.2,1301.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,88 L274.4,88 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M963.2,71 L871.6,71 L871.6,33.0 L831.6,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,1127 L274.4,1127 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,194 L274.4,194 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M963.2,177 L842.8,177 L842.8,156.0 L802.8,156.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M963.2,512 L274.4,512 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M963.2,529 L893.2,529 L893.2,1301.0 L853.2,1301.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M963.2,881 L893.2,881 L893.2,1301.0 L853.2,1301.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M624.4,1233 L274.4,1233 L274.4,33.0 L234.4,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<g><rect x="20" y="20" width="214.4" height="104" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="20" width="214.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="40" width="214.4" height="6" fill="#dfe9e4"/><text x="127.2" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">case_file</text>
+<text x="30" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="76"><tspan fill="#6b7680">varchar(3)</tspan> docket_symbol <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+<text x="30" y="93"><tspan fill="#6b7680">integer</tspan> docket_number <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+<text x="30" y="110"><tspan fill="#6b7680">integer</tspan> docket_year <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="20" y="160" width="170" height="87" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="160" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="180" width="170" height="6" fill="#dfe9e4"/><text x="105.0" y="178" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">letter_template</text>
+<text x="30" y="199"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="216"><tspan fill="#6b7680">varchar(60)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+<text x="30" y="233"><tspan fill="#6b7680">integer</tspan> version <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="20" y="283" width="171.20000000000002" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="283" width="171.20000000000002" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="303" width="171.20000000000002" height="6" fill="#dfe9e4"/><text x="105.60000000000001" y="301" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">app_user_seen</text>
+<text x="30" y="322"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="339"><tspan fill="#6b7680">varchar(100)</tspan> login <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="20" y="389" width="214.4" height="53" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="389" width="214.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="409" width="214.4" height="6" fill="#dfe9e4"/><text x="127.2" y="407" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">archive_category</text>
+<text x="30" y="428"><tspan fill="#6b7680">varchar(60)</tspan> closing_mode <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+</g>
+<g><rect x="20" y="478" width="170" height="53" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="478" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="498" width="170" height="6" fill="#dfe9e4"/><text x="105.0" y="496" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">audit_event</text>
+<text x="30" y="517"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+</g>
+<g><rect x="20" y="567" width="170" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="567" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="587" width="170" height="6" fill="#dfe9e4"/><text x="105.0" y="585" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">authority</text>
+<text x="30" y="606"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="623"><tspan fill="#6b7680">varchar(30)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="20" y="673" width="170" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="673" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="693" width="170" height="6" fill="#dfe9e4"/><text x="105.0" y="691" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">court</text>
+<text x="30" y="712"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="729"><tspan fill="#6b7680">varchar(30)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="20" y="779" width="170" height="53" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="779" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="799" width="170" height="6" fill="#dfe9e4"/><text x="105.0" y="797" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">delegation</text>
+<text x="30" y="818"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+</g>
+<g><rect x="20" y="868" width="170" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="868" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="888" width="170" height="6" fill="#dfe9e4"/><text x="105.0" y="886" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">docket_counter</text>
+<text x="30" y="907"><tspan fill="#6b7680">varchar(3)</tspan> symbol <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="924"><tspan fill="#6b7680">integer</tspan> year <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+</g>
+<g><rect x="20" y="974" width="170" height="87" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="974" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="994" width="170" height="6" fill="#dfe9e4"/><text x="105.0" y="992" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">formal_requirement</text>
+<text x="30" y="1013"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="1030"><tspan fill="#6b7680">varchar(4)</tspan> symbol <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+<text x="30" y="1047"><tspan fill="#6b7680">varchar(20)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="20" y="1097" width="170" height="53" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="1097" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="1117" width="170" height="6" fill="#dfe9e4"/><text x="105.0" y="1115" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">holiday</text>
+<text x="30" y="1136"><tspan fill="#6b7680">date</tspan> day <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+</g>
+<g><rect x="20" y="1186" width="170" height="53" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="1186" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="1206" width="170" height="6" fill="#dfe9e4"/><text x="105.0" y="1204" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">incoming_counter</text>
+<text x="30" y="1225"><tspan fill="#6b7680">integer</tspan> year <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+</g>
+<g><rect x="20" y="1275" width="185.6" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="1275" width="185.6" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="1295" width="185.6" height="6" fill="#dfe9e4"/><text x="112.8" y="1293" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">judge</text>
+<text x="30" y="1314"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="1331"><tspan fill="#6b7680">varchar(100)</tspan> user_id <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="20" y="1381" width="170" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="1381" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="1401" width="170" height="6" fill="#dfe9e4"/><text x="105.0" y="1399" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">letter_type</text>
+<text x="30" y="1420"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="1437"><tspan fill="#6b7680">varchar(30)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="344.4" y="20" width="170" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="344.4" y="20" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="344.4" y="40" width="170" height="6" fill="#dfe9e4"/><text x="429.4" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">review_standard</text>
+<text x="354.4" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="354.4" y="76"><tspan fill="#6b7680">varchar(30)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="624.4" y="20" width="207.20000000000002" height="87" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="20" width="207.20000000000002" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="40" width="207.20000000000002" height="6" fill="#dfe9e4"/><text x="728.0" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">incoming_letter</text>
+<text x="634.4" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="76"><tspan fill="#6b7680">varchar(20)</tspan> register_no <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+<text x="634.4" y="93"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="624.4" y="143" width="178.4" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="143" width="178.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="163" width="178.4" height="6" fill="#dfe9e4"/><text x="713.6" y="161" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">party</text>
+<text x="634.4" y="182"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="199"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="624.4" y="249" width="200.0" height="87" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="249" width="200.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="269" width="200.0" height="6" fill="#dfe9e4"/><text x="724.4" y="267" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">case_file_version</text>
+<text x="634.4" y="288"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="305"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">UK,FK</tspan></text>
+<text x="634.4" y="322"><tspan fill="#6b7680">integer</tspan> version <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="624.4" y="372" width="178.4" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="372" width="178.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="392" width="178.4" height="6" fill="#dfe9e4"/><text x="713.6" y="390" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">access_request</text>
+<text x="634.4" y="411"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="428"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="624.4" y="478" width="178.4" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="478" width="178.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="498" width="178.4" height="6" fill="#dfe9e4"/><text x="713.6" y="496" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">appeal</text>
+<text x="634.4" y="517"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="534"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="624.4" y="584" width="207.20000000000002" height="87" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="584" width="207.20000000000002" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="604" width="207.20000000000002" height="6" fill="#dfe9e4"/><text x="728.0" y="602" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">archive_transfer</text>
+<text x="634.4" y="623"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="640"><tspan fill="#6b7680">varchar(30)</tspan> transfer_no <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+<text x="634.4" y="657"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="624.4" y="707" width="200.0" height="121" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="707" width="200.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="727" width="200.0" height="6" fill="#dfe9e4"/><text x="724.4" y="725" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">case_assignment</text>
+<text x="634.4" y="746"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="763"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK,UK</tspan></text>
+<text x="634.4" y="780"><tspan fill="#6b7680">varchar(120)</tspan> user_id <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+<text x="634.4" y="797"><tspan fill="#6b7680">varchar(20)</tspan> role <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+<text x="634.4" y="814"><tspan fill="#6b7680">date</tspan> assigned_on <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="624.4" y="864" width="178.4" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="864" width="178.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="884" width="178.4" height="6" fill="#dfe9e4"/><text x="713.6" y="882" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">checklist_entry</text>
+<text x="634.4" y="903"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="920"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="624.4" y="970" width="178.4" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="970" width="178.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="990" width="178.4" height="6" fill="#dfe9e4"/><text x="713.6" y="988" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">final_ruling</text>
+<text x="634.4" y="1009"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="1026"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="624.4" y="1076" width="178.4" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="1076" width="178.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="1096" width="178.4" height="6" fill="#dfe9e4"/><text x="713.6" y="1094" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">internal_note</text>
+<text x="634.4" y="1115"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="1132"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="624.4" y="1182" width="178.4" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="1182" width="178.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="1202" width="178.4" height="6" fill="#dfe9e4"/><text x="713.6" y="1200" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">review_subject</text>
+<text x="634.4" y="1221"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="1238"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="624.4" y="1288" width="228.8" height="87" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="1288" width="228.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="624.4" y="1308" width="228.8" height="6" fill="#dfe9e4"/><text x="738.8" y="1306" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">case_document</text>
+<text x="634.4" y="1327"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="634.4" y="1344"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="634.4" y="1361"><tspan fill="#6b7680">bigint</tspan> template_version_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="963.2" y="20" width="170" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="20" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="40" width="170" height="6" fill="#dfe9e4"/><text x="1048.2" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">incoming_scan</text>
+<text x="973.2" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="973.2" y="76"><tspan fill="#6b7680">bigint</tspan> letter_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="963.2" y="126" width="170" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="126" width="170" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="146" width="170" height="6" fill="#dfe9e4"/><text x="1048.2" y="144" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">power_of_attorney</text>
+<text x="973.2" y="165"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="973.2" y="182"><tspan fill="#6b7680">bigint</tspan> party_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="963.2" y="232" width="171.20000000000002" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="232" width="171.20000000000002" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="252" width="171.20000000000002" height="6" fill="#dfe9e4"/><text x="1048.8" y="250" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">correction_decision</text>
+<text x="973.2" y="271"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="973.2" y="288"><tspan fill="#6b7680">bigint</tspan> version_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="963.2" y="338" width="214.4" height="87" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="338" width="214.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="358" width="214.4" height="6" fill="#dfe9e4"/><text x="1070.4" y="356" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">general_letter</text>
+<text x="973.2" y="377"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="973.2" y="394"><tspan fill="#6b7680">bigint</tspan> letter_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="973.2" y="411"><tspan fill="#6b7680">bigint</tspan> reply_document_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="963.2" y="461" width="178.4" height="87" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="461" width="178.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="481" width="178.4" height="6" fill="#dfe9e4"/><text x="1052.4" y="479" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">procedural_act</text>
+<text x="973.2" y="500"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="973.2" y="517"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="973.2" y="534"><tspan fill="#6b7680">bigint</tspan> document_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="963.2" y="584" width="236.0" height="104" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="584" width="236.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="604" width="236.0" height="6" fill="#dfe9e4"/><text x="1081.2" y="602" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">delivery</text>
+<text x="973.2" y="623"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="973.2" y="640"><tspan fill="#6b7680">bigint</tspan> document_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="973.2" y="657"><tspan fill="#6b7680">bigint</tspan> addressee_party_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="973.2" y="674"><tspan fill="#6b7680">varchar(80)</tspan> idempotency_key <tspan font-weight="700" fill="#1f5e4b">UK</tspan></text>
+</g>
+<g><rect x="963.2" y="724" width="171.20000000000002" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="724" width="171.20000000000002" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="744" width="171.20000000000002" height="6" fill="#dfe9e4"/><text x="1048.8" y="742" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">highlight</text>
+<text x="973.2" y="763"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="973.2" y="780"><tspan fill="#6b7680">bigint</tspan> document_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="963.2" y="830" width="171.20000000000002" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="830" width="171.20000000000002" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="963.2" y="850" width="171.20000000000002" height="6" fill="#dfe9e4"/><text x="1048.8" y="848" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">publication</text>
+<text x="973.2" y="869"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="973.2" y="886"><tspan fill="#6b7680">bigint</tspan> document_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+<g><rect x="1309.2" y="20" width="178.4" height="87" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="1309.2" y="20" width="178.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="1309.2" y="40" width="178.4" height="6" fill="#dfe9e4"/><text x="1398.4" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">deadline</text>
+<text x="1319.2" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="1319.2" y="76"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="1319.2" y="93"><tspan fill="#6b7680">bigint</tspan> delivery_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+</g>
+</svg></div></section><section class="page"><h2>Wpływ pism i repertorium</h2><p class="meta">12 tabel · 9 relacji</p><div class="dia"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1425 1230" width="1425" height="1230" font-family="IBM Plex Mono, Consolas, monospace" font-size="12">
+<defs><marker id="crow" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,1 L11,6 L1,11 M1,6 L11,6" fill="none" stroke="#3b4a56" stroke-width="1.3"/></marker><marker id="one" markerWidth="10" markerHeight="12" refX="9" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M4,1 L4,11 M1,6 L9,6" fill="none" stroke="#3b4a56" stroke-width="1.3"/></marker></defs>
+<path d="M502.8,381 L432.8,381 L432.8,33.0 L392.8,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M1028.8,487 L915.6,487 L915.6,343.0 L875.6,343.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M502.8,933 L432.8,933 L432.8,33.0 L392.8,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M1028.8,71 L944.4000000000001,71 L944.4000000000001,33.0 L904.4000000000001,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M502.8,241 L432.8,241 L432.8,33.0 L392.8,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M1028.8,262 L944.4000000000001,262 L944.4000000000001,33.0 L904.4000000000001,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M502.8,742 L432.8,742 L432.8,33.0 L392.8,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M1028.8,661 L915.6,661 L915.6,704.0 L875.6,704.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M502.8,1124 L432.8,1124 L432.8,33.0 L392.8,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<g><rect x="20" y="20" width="372.8" height="172" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="20" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="40" width="372.8" height="6" fill="#dfe9e4"/><text x="206.4" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">case_file</text>
+<text x="30" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="76"><tspan fill="#6b7680">varchar(3)</tspan> docket_symbol <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="93"><tspan fill="#6b7680">integer</tspan> docket_number <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="110"><tspan fill="#6b7680">integer</tspan> docket_year <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="127"><tspan fill="#6b7680">date</tspan> entered_on <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="144"><tspan fill="#6b7680">varchar(64)</tspan> process_instance_id</text>
+<text x="30" y="161"><tspan fill="#6b7680">varchar(120)</tspan> created_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="178"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+<g><rect x="20" y="228" width="315.2" height="87" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="228" width="315.2" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="248" width="315.2" height="6" fill="#dfe9e4"/><text x="177.6" y="246" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">docket_counter</text>
+<text x="30" y="267"><tspan fill="#6b7680">varchar(3)</tspan> symbol <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="284"><tspan fill="#6b7680">integer</tspan> year <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="301"><tspan fill="#6b7680">integer</tspan> last_value <tspan fill="#6b7680">NOT NULL; default 0</tspan></text>
+</g>
+<g><rect x="20" y="351" width="315.2" height="70" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="351" width="315.2" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="371" width="315.2" height="6" fill="#dfe9e4"/><text x="177.6" y="369" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">incoming_counter</text>
+<text x="30" y="390"><tspan fill="#6b7680">integer</tspan> year <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="407"><tspan fill="#6b7680">integer</tspan> last_value <tspan fill="#6b7680">NOT NULL; default 0</tspan></text>
+</g>
+<g><rect x="502.8" y="20" width="401.6" height="274" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="20" width="401.6" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="40" width="401.6" height="6" fill="#dfe9e4"/><text x="703.6" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">incoming_letter</text>
+<text x="512.8" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="512.8" y="76"><tspan fill="#6b7680">varchar(20)</tspan> register_no <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="93"><tspan fill="#6b7680">timestamptz</tspan> received_at <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="110"><tspan fill="#6b7680">date</tspan> filed_on</text>
+<text x="512.8" y="127"><tspan fill="#6b7680">boolean</tspan> filed_on_uncertain <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+<text x="512.8" y="144"><tspan fill="#6b7680">varchar(20)</tspan> channel <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="161"><tspan fill="#6b7680">varchar(400)</tspan> sender <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="178"><tspan fill="#6b7680">integer</tspan> attachments <tspan fill="#6b7680">NOT NULL; default 0</tspan></text>
+<text x="512.8" y="195"><tspan fill="#6b7680">integer</tspan> copies <tspan fill="#6b7680">NOT NULL; default 0</tspan></text>
+<text x="512.8" y="212"><tspan fill="#6b7680">boolean</tspan> classified <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+<text x="512.8" y="229"><tspan fill="#6b7680">varchar(30)</tspan> qualification</text>
+<text x="512.8" y="246"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="512.8" y="263"><tspan fill="#6b7680">varchar(120)</tspan> created_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="280"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+<g><rect x="502.8" y="330" width="372.8" height="325" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="330" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="350" width="372.8" height="6" fill="#dfe9e4"/><text x="689.2" y="348" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">case_file_version</text>
+<text x="512.8" y="369"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="512.8" y="386"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">UK,FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="403"><tspan fill="#6b7680">integer</tspan> version <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="420"><tspan fill="#6b7680">varchar(40)</tspan> status <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="437"><tspan fill="#6b7680">varchar(120)</tspan> judge_user_id</text>
+<text x="512.8" y="454"><tspan fill="#6b7680">boolean</tspan> flag_urgent <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+<text x="512.8" y="471"><tspan fill="#6b7680">boolean</tspan> flag_anonymise <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+<text x="512.8" y="488"><tspan fill="#6b7680">boolean</tspan> flag_suspended <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+<text x="512.8" y="505"><tspan fill="#6b7680">varchar(1000)</tspan> review_subject</text>
+<text x="512.8" y="522"><tspan fill="#6b7680">varchar(1000)</tspan> review_standard</text>
+<text x="512.8" y="539"><tspan fill="#6b7680">date</tspan> closed_on</text>
+<text x="512.8" y="556"><tspan fill="#6b7680">varchar(60)</tspan> closing_mode</text>
+<text x="512.8" y="573"><tspan fill="#6b7680">varchar(20)</tspan> related_docket</text>
+<text x="512.8" y="590"><tspan fill="#6b7680">varchar(2000)</tspan> justification</text>
+<text x="512.8" y="607"><tspan fill="#6b7680">varchar(120)</tspan> created_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="624"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+<text x="512.8" y="641"><tspan fill="#6b7680">boolean</tspan> is_correction <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+</g>
+<g><rect x="502.8" y="691" width="372.8" height="155" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="691" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="711" width="372.8" height="6" fill="#dfe9e4"/><text x="689.2" y="709" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">party</text>
+<text x="512.8" y="730"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="512.8" y="747"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="764"><tspan fill="#6b7680">varchar(30)</tspan> role <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="781"><tspan fill="#6b7680">varchar(400)</tspan> display_name <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="798"><tspan fill="#6b7680">varchar(600)</tspan> delivery_address</text>
+<text x="512.8" y="815"><tspan fill="#6b7680">varchar(120)</tspan> e_delivery_address</text>
+<text x="512.8" y="832"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+<g><rect x="502.8" y="882" width="416.0" height="155" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="882" width="416.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="902" width="416.0" height="6" fill="#dfe9e4"/><text x="710.8" y="900" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">final_ruling</text>
+<text x="512.8" y="921"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="512.8" y="938"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="955"><tspan fill="#6b7680">varchar(400)</tspan> authority <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="972"><tspan fill="#6b7680">varchar(120)</tspan> ruling_ref</text>
+<text x="512.8" y="989"><tspan fill="#6b7680">date</tspan> issued_on</text>
+<text x="512.8" y="1006"><tspan fill="#6b7680">date</tspan> delivered_on</text>
+<text x="512.8" y="1023"><tspan fill="#6b7680">boolean</tspan> extraordinary_remedy <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+</g>
+<g><rect x="502.8" y="1073" width="257.6" height="121" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="1073" width="257.6" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="1093" width="257.6" height="6" fill="#dfe9e4"/><text x="631.6" y="1091" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">review_subject</text>
+<text x="512.8" y="1112"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="512.8" y="1129"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="1146"><tspan fill="#6b7680">varchar(400)</tspan> act <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="1163"><tspan fill="#6b7680">varchar(120)</tspan> unit</text>
+<text x="512.8" y="1180"><tspan fill="#6b7680">varchar(400)</tspan> standard</text>
+</g>
+<g><rect x="1028.8" y="20" width="236.0" height="155" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="1028.8" y="20" width="236.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="1028.8" y="40" width="236.0" height="6" fill="#dfe9e4"/><text x="1146.8" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">general_letter</text>
+<text x="1038.8" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="1038.8" y="76"><tspan fill="#6b7680">bigint</tspan> letter_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="93"><tspan fill="#6b7680">varchar(600)</tspan> subject</text>
+<text x="1038.8" y="110"><tspan fill="#6b7680">date</tspan> reply_due_on</text>
+<text x="1038.8" y="127"><tspan fill="#6b7680">date</tspan> replied_on</text>
+<text x="1038.8" y="144"><tspan fill="#6b7680">bigint</tspan> reply_document_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="1038.8" y="161"><tspan fill="#6b7680">varchar(60)</tspan> template_code</text>
+</g>
+<g><rect x="1028.8" y="211" width="286.40000000000003" height="189" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="1028.8" y="211" width="286.40000000000003" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="1028.8" y="231" width="286.40000000000003" height="6" fill="#dfe9e4"/><text x="1172.0" y="229" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">incoming_scan</text>
+<text x="1038.8" y="250"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="1038.8" y="267"><tspan fill="#6b7680">bigint</tspan> letter_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="284"><tspan fill="#6b7680">varchar(255)</tspan> file_name <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="301"><tspan fill="#6b7680">varchar(100)</tspan> content_type <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="318"><tspan fill="#6b7680">bigint</tspan> size_bytes <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="335"><tspan fill="#6b7680">char(64)</tspan> sha256 <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="352"><tspan fill="#6b7680">varchar(400)</tspan> storage_key <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="369"><tspan fill="#6b7680">varchar(100)</tspan> uploaded_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="386"><tspan fill="#6b7680">timestamptz</tspan> uploaded_at <tspan fill="#6b7680">NOT NULL</tspan></text>
+</g>
+<g><rect x="1028.8" y="436" width="272.0" height="138" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="1028.8" y="436" width="272.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="1028.8" y="456" width="272.0" height="6" fill="#dfe9e4"/><text x="1164.8" y="454" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">correction_decision</text>
+<text x="1038.8" y="475"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="1038.8" y="492"><tspan fill="#6b7680">bigint</tspan> version_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="509"><tspan fill="#6b7680">varchar(20)</tspan> decision <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="526"><tspan fill="#6b7680">varchar(120)</tspan> decided_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="543"><tspan fill="#6b7680">timestamptz</tspan> decided_at <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="560"><tspan fill="#6b7680">varchar(2000)</tspan> remarks</text>
+</g>
+<g><rect x="1028.8" y="610" width="228.8" height="155" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="1028.8" y="610" width="228.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="1028.8" y="630" width="228.8" height="6" fill="#dfe9e4"/><text x="1143.2" y="628" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">power_of_attorney</text>
+<text x="1038.8" y="649"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="1038.8" y="666"><tspan fill="#6b7680">bigint</tspan> party_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="683"><tspan fill="#6b7680">varchar(30)</tspan> kind <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="1038.8" y="700"><tspan fill="#6b7680">varchar(30)</tspan> profession</text>
+<text x="1038.8" y="717"><tspan fill="#6b7680">varchar(60)</tspan> registry_no</text>
+<text x="1038.8" y="734"><tspan fill="#6b7680">date</tspan> granted_on</text>
+<text x="1038.8" y="751"><tspan fill="#6b7680">varchar(400)</tspan> scope</text>
+</g>
+</svg></div></section><section class="page"><h2>Akta, czynności i podpisy</h2><p class="meta">7 tabel · 3 relacji</p><div class="dia"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1468 903" width="1468" height="903" font-family="IBM Plex Mono, Consolas, monospace" font-size="12">
+<defs><marker id="crow" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,1 L11,6 L1,11 M1,6 L11,6" fill="none" stroke="#3b4a56" stroke-width="1.3"/></marker><marker id="one" markerWidth="10" markerHeight="12" refX="9" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M4,1 L4,11 M1,6 L9,6" fill="none" stroke="#3b4a56" stroke-width="1.3"/></marker></defs>
+<path d="M502.8,309 L432.8,309 L432.8,33.0 L392.8,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M985.6,71 L915.6,71 L915.6,33.0 L875.6,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<path d="M985.6,381 L915.6,381 L915.6,33.0 L875.6,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<g><rect x="20" y="20" width="372.8" height="189" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="20" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="40" width="372.8" height="6" fill="#dfe9e4"/><text x="206.4" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">letter_template</text>
+<text x="30" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="76"><tspan fill="#6b7680">varchar(60)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="93"><tspan fill="#6b7680">varchar(200)</tspan> name <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="110"><tspan fill="#6b7680">integer</tspan> version <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="127"><tspan fill="#6b7680">varchar(20)</tspan> status <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="144"><tspan fill="#6b7680">text</tspan> source_xhtml <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="161"><tspan fill="#6b7680">varchar(120)</tspan> author_user_id <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="178"><tspan fill="#6b7680">varchar(120)</tspan> approved_by</text>
+<text x="30" y="195"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+<g><rect x="20" y="245" width="308.0" height="172" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="245" width="308.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="265" width="308.0" height="6" fill="#dfe9e4"/><text x="174.0" y="263" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">checklist_entry</text>
+<text x="30" y="284"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="301"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="318"><tspan fill="#6b7680">varchar(60)</tspan> requirement_code <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="335"><tspan fill="#6b7680">varchar(20)</tspan> state <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="352"><tspan fill="#6b7680">varchar(500)</tspan> note</text>
+<text x="30" y="369"><tspan fill="#6b7680">varchar(40)</tspan> page_ref</text>
+<text x="30" y="386"><tspan fill="#6b7680">varchar(120)</tspan> decided_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="403"><tspan fill="#6b7680">timestamp</tspan> decided_at <tspan fill="#6b7680">NOT NULL</tspan></text>
+</g>
+<g><rect x="20" y="453" width="308.0" height="240" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="453" width="308.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="473" width="308.0" height="6" fill="#dfe9e4"/><text x="174.0" y="471" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">formal_requirement</text>
+<text x="30" y="492"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="509"><tspan fill="#6b7680">varchar(4)</tspan> symbol <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="526"><tspan fill="#6b7680">varchar(20)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="543"><tspan fill="#6b7680">varchar(600)</tspan> description <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="560"><tspan fill="#6b7680">varchar(160)</tspan> legal_basis <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="577"><tspan fill="#6b7680">varchar(30)</tspan> condition_code <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="594"><tspan fill="#6b7680">integer</tspan> position <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="611"><tspan fill="#6b7680">boolean</tspan> active <tspan fill="#6b7680">NOT NULL; default true</tspan></text>
+<text x="30" y="628"><tspan fill="#6b7680">varchar(120)</tspan> created_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="645"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="662"><tspan fill="#6b7680">varchar(120)</tspan> updated_by</text>
+<text x="30" y="679"><tspan fill="#6b7680">timestamptz</tspan> updated_at</text>
+</g>
+<g><rect x="20" y="729" width="372.8" height="138" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="729" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="749" width="372.8" height="6" fill="#dfe9e4"/><text x="206.4" y="747" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">internal_note</text>
+<text x="30" y="768"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="785"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="802"><tspan fill="#6b7680">varchar(120)</tspan> author_user_id <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="819"><tspan fill="#6b7680">varchar(300)</tspan> title <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="836"><tspan fill="#6b7680">text</tspan> body <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="853"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+<g><rect x="502.8" y="20" width="372.8" height="444" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="20" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="40" width="372.8" height="6" fill="#dfe9e4"/><text x="689.2" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">case_document</text>
+<text x="512.8" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="512.8" y="76"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="93"><tspan fill="#6b7680">integer</tspan> volume_no <tspan fill="#6b7680">NOT NULL; default 1</tspan></text>
+<text x="512.8" y="110"><tspan fill="#6b7680">integer</tspan> page_from</text>
+<text x="512.8" y="127"><tspan fill="#6b7680">integer</tspan> page_to</text>
+<text x="512.8" y="144"><tspan fill="#6b7680">varchar(400)</tspan> title <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="161"><tspan fill="#6b7680">varchar(30)</tspan> kind <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="178"><tspan fill="#6b7680">date</tspan> document_date</text>
+<text x="512.8" y="195"><tspan fill="#6b7680">varchar(400)</tspan> storage_key</text>
+<text x="512.8" y="212"><tspan fill="#6b7680">char(64)</tspan> sha256</text>
+<text x="512.8" y="229"><tspan fill="#6b7680">integer</tspan> version <tspan fill="#6b7680">NOT NULL; default 1</tspan></text>
+<text x="512.8" y="246"><tspan fill="#6b7680">boolean</tspan> classified <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+<text x="512.8" y="263"><tspan fill="#6b7680">boolean</tspan> internal_note <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+<text x="512.8" y="280"><tspan fill="#6b7680">varchar(400)</tspan> anonymised_key</text>
+<text x="512.8" y="297"><tspan fill="#6b7680">varchar(30)</tspan> signature_status</text>
+<text x="512.8" y="314"><tspan fill="#6b7680">bigint</tspan> template_version_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="512.8" y="331"><tspan fill="#6b7680">varchar(120)</tspan> created_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="348"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+<text x="512.8" y="365"><tspan fill="#6b7680">boolean</tspan> pdfa_compliant <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+<text x="512.8" y="382"><tspan fill="#6b7680">boolean</tspan> ocr_done <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+<text x="512.8" y="399"><tspan fill="#6b7680">varchar(2000)</tspan> signature_report</text>
+<text x="512.8" y="416"><tspan fill="#6b7680">varchar(120)</tspan> source_content_type</text>
+<text x="512.8" y="433"><tspan fill="#6b7680">varchar(400)</tspan> source_storage_key</text>
+<text x="512.8" y="450"><tspan fill="#6b7680">varchar(300)</tspan> source_file_name</text>
+</g>
+<g><rect x="985.6" y="20" width="372.8" height="155" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="985.6" y="20" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="985.6" y="40" width="372.8" height="6" fill="#dfe9e4"/><text x="1172.0" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">highlight</text>
+<text x="995.6" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="995.6" y="76"><tspan fill="#6b7680">bigint</tspan> document_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="995.6" y="93"><tspan fill="#6b7680">varchar(120)</tspan> author_user_id <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="995.6" y="110"><tspan fill="#6b7680">integer</tspan> page_no <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="995.6" y="127"><tspan fill="#6b7680">varchar(4000)</tspan> geometry_json <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="995.6" y="144"><tspan fill="#6b7680">varchar(2000)</tspan> comment_text</text>
+<text x="995.6" y="161"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+<g><rect x="985.6" y="211" width="300.8" height="206" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="985.6" y="211" width="300.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="985.6" y="231" width="300.8" height="6" fill="#dfe9e4"/><text x="1136.0" y="229" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">procedural_act</text>
+<text x="995.6" y="250"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="995.6" y="267"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="995.6" y="284"><tspan fill="#6b7680">varchar(40)</tspan> kind <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="995.6" y="301"><tspan fill="#6b7680">varchar(60)</tspan> subtype</text>
+<text x="995.6" y="318"><tspan fill="#6b7680">timestamptz</tspan> acted_on <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="995.6" y="335"><tspan fill="#6b7680">varchar(120)</tspan> author_user_id <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="995.6" y="352"><tspan fill="#6b7680">varchar(400)</tspan> panel_user_ids</text>
+<text x="995.6" y="369"><tspan fill="#6b7680">varchar(200)</tspan> legal_basis</text>
+<text x="995.6" y="386"><tspan fill="#6b7680">bigint</tspan> document_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="995.6" y="403"><tspan fill="#6b7680">varchar(30)</tspan> status <tspan fill="#6b7680">NOT NULL</tspan></text>
+</g>
+</svg></div></section><section class="page"><h2>Doręczenia, terminy, zażalenia, archiwum</h2><p class="meta">8 tabel · 1 relacji</p><div class="dia"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1454 1234" width="1454" height="1234" font-family="IBM Plex Mono, Consolas, monospace" font-size="12">
+<defs><marker id="crow" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,1 L11,6 L1,11 M1,6 L11,6" fill="none" stroke="#3b4a56" stroke-width="1.3"/></marker><marker id="one" markerWidth="10" markerHeight="12" refX="9" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M4,1 L4,11 M1,6 L9,6" fill="none" stroke="#3b4a56" stroke-width="1.3"/></marker></defs>
+<path d="M971.2,88 L432.8,88 L432.8,33.0 L392.8,33.0" fill="none" stroke="#3b4a56" stroke-opacity="0.75" stroke-width="1.2" marker-start="url(#crow)" marker-end="url(#one)"/>
+<g><rect x="20" y="20" width="372.8" height="206" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="20" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="40" width="372.8" height="6" fill="#dfe9e4"/><text x="206.4" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">delivery</text>
+<text x="30" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="76"><tspan fill="#6b7680">bigint</tspan> document_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="93"><tspan fill="#6b7680">bigint</tspan> addressee_party_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="30" y="110"><tspan fill="#6b7680">varchar(30)</tspan> channel <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="127"><tspan fill="#6b7680">varchar(80)</tspan> dispatch_no</text>
+<text x="30" y="144"><tspan fill="#6b7680">date</tspan> sent_on</text>
+<text x="30" y="161"><tspan fill="#6b7680">date</tspan> delivered_on</text>
+<text x="30" y="178"><tspan fill="#6b7680">varchar(20)</tspan> method</text>
+<text x="30" y="195"><tspan fill="#6b7680">varchar(80)</tspan> idempotency_key <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="212"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+<g><rect x="20" y="262" width="387.2" height="189" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="262" width="387.2" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="282" width="387.2" height="6" fill="#dfe9e4"/><text x="213.6" y="280" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">access_request</text>
+<text x="30" y="301"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="318"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="335"><tspan fill="#6b7680">varchar(400)</tspan> requester <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="352"><tspan fill="#6b7680">boolean</tspan> participant <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="369"><tspan fill="#6b7680">varchar(600)</tspan> scope</text>
+<text x="30" y="386"><tspan fill="#6b7680">numeric(10_2)</tspan> fee_pln</text>
+<text x="30" y="403"><tspan fill="#6b7680">timestamptz</tspan> reading_room_at</text>
+<text x="30" y="420"><tspan fill="#6b7680">boolean</tspan> anonymised_ready <tspan fill="#6b7680">NOT NULL; default false</tspan></text>
+<text x="30" y="437"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+<g><rect x="20" y="487" width="372.8" height="172" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="487" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="507" width="372.8" height="6" fill="#dfe9e4"/><text x="206.4" y="505" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">appeal</text>
+<text x="30" y="526"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="543"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="560"><tspan fill="#6b7680">date</tspan> filed_on <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="577"><tspan fill="#6b7680">boolean</tspan> in_time</text>
+<text x="30" y="594"><tspan fill="#6b7680">varchar(400)</tspan> panel_user_ids</text>
+<text x="30" y="611"><tspan fill="#6b7680">date</tspan> session_on</text>
+<text x="30" y="628"><tspan fill="#6b7680">varchar(40)</tspan> outcome</text>
+<text x="30" y="645"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+<g><rect x="20" y="695" width="250.4" height="121" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="695" width="250.4" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="715" width="250.4" height="6" fill="#dfe9e4"/><text x="145.2" y="713" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">archive_category</text>
+<text x="30" y="734"><tspan fill="#6b7680">varchar(60)</tspan> closing_mode <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="751"><tspan fill="#6b7680">varchar(10)</tspan> category <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="768"><tspan fill="#6b7680">integer</tspan> retention_years</text>
+<text x="30" y="785"><tspan fill="#6b7680">varchar(120)</tspan> updated_by</text>
+<text x="30" y="802"><tspan fill="#6b7680">timestamptz</tspan> updated_at</text>
+</g>
+<g><rect x="20" y="852" width="401.6" height="206" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="852" width="401.6" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="872" width="401.6" height="6" fill="#dfe9e4"/><text x="220.8" y="870" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">archive_transfer</text>
+<text x="30" y="891"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="908"><tspan fill="#6b7680">varchar(30)</tspan> transfer_no <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="925"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="942"><tspan fill="#6b7680">varchar(10)</tspan> category <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="959"><tspan fill="#6b7680">integer</tspan> retention_until</text>
+<text x="30" y="976"><tspan fill="#6b7680">integer</tspan> pages <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="993"><tspan fill="#6b7680">varchar(400)</tspan> package_key</text>
+<text x="30" y="1010"><tspan fill="#6b7680">char(64)</tspan> package_sha256</text>
+<text x="30" y="1027"><tspan fill="#6b7680">varchar(120)</tspan> transferred_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="1044"><tspan fill="#6b7680">timestamptz</tspan> transferred_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+<g><rect x="20" y="1094" width="372.8" height="104" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="1094" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="1114" width="372.8" height="6" fill="#dfe9e4"/><text x="206.4" y="1112" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">holiday</text>
+<text x="30" y="1133"><tspan fill="#6b7680">date</tspan> day <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="1150"><tspan fill="#6b7680">varchar(200)</tspan> description <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="1167"><tspan fill="#6b7680">varchar(120)</tspan> created_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="1184"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+<g><rect x="531.6" y="20" width="329.6" height="172" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="531.6" y="20" width="329.6" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="531.6" y="40" width="329.6" height="6" fill="#dfe9e4"/><text x="696.4000000000001" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">publication</text>
+<text x="541.6" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="541.6" y="76"><tspan fill="#6b7680">bigint</tspan> document_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="541.6" y="93"><tspan fill="#6b7680">varchar(400)</tspan> anonymised_key</text>
+<text x="541.6" y="110"><tspan fill="#6b7680">integer</tspan> replacements <tspan fill="#6b7680">NOT NULL; default 0</tspan></text>
+<text x="541.6" y="127"><tspan fill="#6b7680">varchar(120)</tspan> approved_by</text>
+<text x="541.6" y="144"><tspan fill="#6b7680">timestamptz</tspan> approved_at</text>
+<text x="541.6" y="161"><tspan fill="#6b7680">timestamptz</tspan> published_at</text>
+<text x="541.6" y="178"><tspan fill="#6b7680">varchar(20)</tspan> status <tspan fill="#6b7680">NOT NULL</tspan></text>
+</g>
+<g><rect x="971.2" y="20" width="372.8" height="206" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="971.2" y="20" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="971.2" y="40" width="372.8" height="6" fill="#dfe9e4"/><text x="1157.6000000000001" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">deadline</text>
+<text x="981.2" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="981.2" y="76"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="981.2" y="93"><tspan fill="#6b7680">bigint</tspan> delivery_id <tspan font-weight="700" fill="#1f5e4b">FK</tspan></text>
+<text x="981.2" y="110"><tspan fill="#6b7680">varchar(20)</tspan> kind <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="981.2" y="127"><tspan fill="#6b7680">date</tspan> starts_on <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="981.2" y="144"><tspan fill="#6b7680">date</tspan> ends_on <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="981.2" y="161"><tspan fill="#6b7680">date</tspan> suspended_from</text>
+<text x="981.2" y="178"><tspan fill="#6b7680">date</tspan> suspended_to</text>
+<text x="981.2" y="195"><tspan fill="#6b7680">varchar(20)</tspan> status <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="981.2" y="212"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+</g>
+</svg></div></section><section class="page"><h2>Dostęp, osoby, słowniki, audyt</h2><p class="meta">9 tabel · 0 relacji</p><div class="dia"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 921 1166" width="921" height="1166" font-family="IBM Plex Mono, Consolas, monospace" font-size="12">
+<defs><marker id="crow" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,1 L11,6 L1,11 M1,6 L11,6" fill="none" stroke="#3b4a56" stroke-width="1.3"/></marker><marker id="one" markerWidth="10" markerHeight="12" refX="9" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M4,1 L4,11 M1,6 L9,6" fill="none" stroke="#3b4a56" stroke-width="1.3"/></marker></defs>
+<g><rect x="20" y="20" width="322.40000000000003" height="155" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="20" width="322.40000000000003" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="40" width="322.40000000000003" height="6" fill="#dfe9e4"/><text x="181.20000000000002" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">app_user_seen</text>
+<text x="30" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="76"><tspan fill="#6b7680">varchar(100)</tspan> login <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="93"><tspan fill="#6b7680">varchar(200)</tspan> display_name</text>
+<text x="30" y="110"><tspan fill="#6b7680">varchar(400)</tspan> roles <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="127"><tspan fill="#6b7680">timestamptz</tspan> first_seen_at <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="144"><tspan fill="#6b7680">timestamptz</tspan> last_login_at <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="161"><tspan fill="#6b7680">integer</tspan> login_count <tspan fill="#6b7680">NOT NULL; default 1</tspan></text>
+</g>
+<g><rect x="20" y="211" width="272.0" height="206" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="211" width="272.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="231" width="272.0" height="6" fill="#dfe9e4"/><text x="156.0" y="229" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">audit_event</text>
+<text x="30" y="250"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="267"><tspan fill="#6b7680">timestamptz</tspan> occurred_at <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="284"><tspan fill="#6b7680">varchar(120)</tspan> user_id <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="301"><tspan fill="#6b7680">varchar(60)</tspan> user_role</text>
+<text x="30" y="318"><tspan fill="#6b7680">varchar(80)</tspan> action <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="335"><tspan fill="#6b7680">varchar(200)</tspan> object_ref</text>
+<text x="30" y="352"><tspan fill="#6b7680">varchar(20)</tspan> case_ref</text>
+<text x="30" y="369"><tspan fill="#6b7680">varchar(45)</tspan> remote_addr</text>
+<text x="30" y="386"><tspan fill="#6b7680">char(64)</tspan> prev_hash <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="403"><tspan fill="#6b7680">char(64)</tspan> hash <tspan fill="#6b7680">NOT NULL</tspan></text>
+</g>
+<g><rect x="20" y="453" width="308.0" height="104" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="453" width="308.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="473" width="308.0" height="6" fill="#dfe9e4"/><text x="174.0" y="471" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">authority</text>
+<text x="30" y="492"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="509"><tspan fill="#6b7680">varchar(30)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="526"><tspan fill="#6b7680">varchar(300)</tspan> name <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="543"><tspan fill="#6b7680">boolean</tspan> active <tspan fill="#6b7680">NOT NULL; default true</tspan></text>
+</g>
+<g><rect x="20" y="593" width="279.2" height="138" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="593" width="279.2" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="613" width="279.2" height="6" fill="#dfe9e4"/><text x="159.6" y="611" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">case_assignment</text>
+<text x="30" y="632"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="649"><tspan fill="#6b7680">bigint</tspan> case_file_id <tspan font-weight="700" fill="#1f5e4b">FK,UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="666"><tspan fill="#6b7680">varchar(120)</tspan> user_id <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="683"><tspan fill="#6b7680">varchar(20)</tspan> role <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="700"><tspan fill="#6b7680">date</tspan> assigned_on <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="717"><tspan fill="#6b7680">date</tspan> released_on</text>
+</g>
+<g><rect x="20" y="767" width="308.0" height="104" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="767" width="308.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="787" width="308.0" height="6" fill="#dfe9e4"/><text x="174.0" y="785" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">court</text>
+<text x="30" y="806"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="823"><tspan fill="#6b7680">varchar(30)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="840"><tspan fill="#6b7680">varchar(300)</tspan> name <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="857"><tspan fill="#6b7680">boolean</tspan> active <tspan fill="#6b7680">NOT NULL; default true</tspan></text>
+</g>
+<g><rect x="20" y="907" width="372.8" height="223" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="907" width="372.8" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="20" y="927" width="372.8" height="6" fill="#dfe9e4"/><text x="206.4" y="925" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">delegation</text>
+<text x="30" y="946"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="30" y="963"><tspan fill="#6b7680">varchar(120)</tspan> user_id <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="980"><tspan fill="#6b7680">varchar(60)</tspan> function_code <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="997"><tspan fill="#6b7680">date</tspan> valid_from <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="1014"><tspan fill="#6b7680">date</tspan> valid_to <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="1031"><tspan fill="#6b7680">varchar(200)</tspan> basis_doc_ref</text>
+<text x="30" y="1048"><tspan fill="#6b7680">timestamptz</tspan> revoked_at</text>
+<text x="30" y="1065"><tspan fill="#6b7680">varchar(120)</tspan> created_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="30" y="1082"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL; default now()</tspan></text>
+<text x="30" y="1099"><tspan fill="#6b7680">varchar(300)</tspan> basis_doc_key</text>
+<text x="30" y="1116"><tspan fill="#6b7680">varchar(64)</tspan> basis_doc_sha256</text>
+</g>
+<g><rect x="502.8" y="20" width="308.0" height="223" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="20" width="308.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="40" width="308.0" height="6" fill="#dfe9e4"/><text x="656.8" y="38" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">judge</text>
+<text x="512.8" y="59"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="512.8" y="76"><tspan fill="#6b7680">varchar(100)</tspan> user_id <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="93"><tspan fill="#6b7680">varchar(200)</tspan> display_name <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="110"><tspan fill="#6b7680">varchar(20)</tspan> function_code <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="127"><tspan fill="#6b7680">date</tspan> term_from <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="144"><tspan fill="#6b7680">date</tspan> term_to</text>
+<text x="512.8" y="161"><tspan fill="#6b7680">boolean</tspan> active <tspan fill="#6b7680">NOT NULL; default true</tspan></text>
+<text x="512.8" y="178"><tspan fill="#6b7680">varchar(120)</tspan> created_by <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="195"><tspan fill="#6b7680">timestamptz</tspan> created_at <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="212"><tspan fill="#6b7680">varchar(120)</tspan> updated_by</text>
+<text x="512.8" y="229"><tspan fill="#6b7680">timestamptz</tspan> updated_at</text>
+</g>
+<g><rect x="502.8" y="279" width="308.0" height="104" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="279" width="308.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="299" width="308.0" height="6" fill="#dfe9e4"/><text x="656.8" y="297" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">letter_type</text>
+<text x="512.8" y="318"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="512.8" y="335"><tspan fill="#6b7680">varchar(30)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="352"><tspan fill="#6b7680">varchar(300)</tspan> name <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="369"><tspan fill="#6b7680">boolean</tspan> active <tspan fill="#6b7680">NOT NULL; default true</tspan></text>
+</g>
+<g><rect x="502.8" y="419" width="308.0" height="121" rx="6" fill="#ffffff" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="419" width="308.0" height="26" rx="6" fill="#dfe9e4" stroke="#3b4a56" stroke-width="1.2"/><rect x="502.8" y="439" width="308.0" height="6" fill="#dfe9e4"/><text x="656.8" y="437" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13">review_standard</text>
+<text x="512.8" y="458"><tspan fill="#6b7680">bigint</tspan> id <tspan font-weight="700" fill="#1f5e4b">PK</tspan></text>
+<text x="512.8" y="475"><tspan fill="#6b7680">varchar(30)</tspan> code <tspan font-weight="700" fill="#1f5e4b">UK</tspan> <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="492"><tspan fill="#6b7680">varchar(200)</tspan> provision <tspan fill="#6b7680">NOT NULL</tspan></text>
+<text x="512.8" y="509"><tspan fill="#6b7680">varchar(400)</tspan> description</text>
+<text x="512.8" y="526"><tspan fill="#6b7680">boolean</tspan> active <tspan fill="#6b7680">NOT NULL; default true</tspan></text>
+</g>
+</svg></div></section>
+<section><h2>Indeks tabel</h2><table><thead><tr><th>Tabela</th><th>Kolumny</th><th>Klucze obce (wychodzące)</th><th>Indeksy</th></tr></thead><tbody><tr><td>access_request</td><td>9</td><td>case_file_id → case_file</td><td>1</td></tr><tr><td>app_user_seen</td><td>7</td><td>—</td><td>2</td></tr><tr><td>appeal</td><td>8</td><td>case_file_id → case_file</td><td>1</td></tr><tr><td>archive_category</td><td>5</td><td>—</td><td>1</td></tr><tr><td>archive_transfer</td><td>10</td><td>case_file_id → case_file</td><td>2</td></tr><tr><td>audit_event</td><td>10</td><td>—</td><td>3</td></tr><tr><td>authority</td><td>4</td><td>—</td><td>2</td></tr><tr><td>case_assignment</td><td>6</td><td>case_file_id → case_file</td><td>3</td></tr><tr><td>case_document</td><td>24</td><td>case_file_id → case_file, template_version_id → letter_template</td><td>2</td></tr><tr><td>case_file</td><td>8</td><td>—</td><td>2</td></tr><tr><td>case_file_version</td><td>17</td><td>case_file_id → case_file</td><td>3</td></tr><tr><td>checklist_entry</td><td>8</td><td>case_file_id → case_file</td><td>2</td></tr><tr><td>correction_decision</td><td>6</td><td>version_id → case_file_version</td><td>2</td></tr><tr><td>court</td><td>4</td><td>—</td><td>2</td></tr><tr><td>deadline</td><td>10</td><td>case_file_id → case_file, delivery_id → delivery</td><td>2</td></tr><tr><td>delegation</td><td>11</td><td>—</td><td>2</td></tr><tr><td>delivery</td><td>10</td><td>addressee_party_id → party, document_id → case_document</td><td>2</td></tr><tr><td>docket_counter</td><td>3</td><td>—</td><td>1</td></tr><tr><td>final_ruling</td><td>7</td><td>case_file_id → case_file</td><td>1</td></tr><tr><td>formal_requirement</td><td>12</td><td>—</td><td>3</td></tr><tr><td>general_letter</td><td>7</td><td>letter_id → incoming_letter, reply_document_id → case_document</td><td>1</td></tr><tr><td>highlight</td><td>7</td><td>document_id → case_document</td><td>2</td></tr><tr><td>holiday</td><td>4</td><td>—</td><td>1</td></tr><tr><td>incoming_counter</td><td>2</td><td>—</td><td>1</td></tr><tr><td>incoming_letter</td><td>14</td><td>case_file_id → case_file</td><td>2</td></tr><tr><td>incoming_scan</td><td>9</td><td>letter_id → incoming_letter</td><td>2</td></tr><tr><td>internal_note</td><td>6</td><td>case_file_id → case_file</td><td>2</td></tr><tr><td>judge</td><td>11</td><td>—</td><td>3</td></tr><tr><td>letter_template</td><td>9</td><td>—</td><td>2</td></tr><tr><td>letter_type</td><td>4</td><td>—</td><td>2</td></tr><tr><td>party</td><td>7</td><td>case_file_id → case_file</td><td>1</td></tr><tr><td>power_of_attorney</td><td>7</td><td>party_id → party</td><td>1</td></tr><tr><td>procedural_act</td><td>10</td><td>case_file_id → case_file, document_id → case_document</td><td>1</td></tr><tr><td>publication</td><td>8</td><td>document_id → case_document</td><td>1</td></tr><tr><td>review_standard</td><td>5</td><td>—</td><td>2</td></tr><tr><td>review_subject</td><td>5</td><td>case_file_id → case_file</td><td>1</td></tr></tbody></table></section>
+</body></html>

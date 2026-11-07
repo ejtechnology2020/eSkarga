@@ -774,3 +774,6 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
 - T-010 – 07.11.2026 – **ERD modelu fizycznego**: `infra/scripts/erd-fizyczny.py` czyta katalog PostgreSQL (information_schema, pg_indexes)
   po migracjach i generuje `docs/erd/model-fizyczny.md` (Mermaid: przegląd kluczy i relacji + 4 grupy z pełnymi kolumnami, typami,
   NOT NULL, domyślnymi; indeks tabel) oraz pliki `.mmd`; 36 tabel, 26 FK (V1–V12.1). `er-diagram.py` (z encji JPA) zostaje jako widok logiczny.
+- T-010 – 07.11.2026 – **ERD jako PDF**: `infra/scripts/erd-pdf.py` rysuje diagramy z plików `.mmd` własnym SVG (układ warstwowy
+  wg głębokości relacji, rodzic po lewej, kolejność po barycentrum rodziców, kurza stopka/kreska), `erd-pdf.mjs` drukuje przez
+  Playwright/Chromium na A3 poziomo (strona tytułowa, przegląd, 4 grupy, indeks tabel) → `docs/erd/ERD-eSkarga.pdf`.
