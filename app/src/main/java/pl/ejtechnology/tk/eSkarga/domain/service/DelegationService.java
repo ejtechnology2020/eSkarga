@@ -13,6 +13,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.model.Delegation;
 import pl.ejtechnology.tk.eSkarga.security.AppRole;
 import pl.ejtechnology.tk.eSkarga.security.CaseAccessPolicy;
@@ -23,6 +24,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
  * odmowa z zdarzeniem audytu, gdy brak ważnego upoważnienia.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class DelegationService {
 
     @PersistenceContext(unitName = "repertorium")
@@ -33,12 +35,14 @@ public class DelegationService {
     AppClock clock;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN, AppRole.TK_PREZES})
     public Delegation add(String userId, String function, LocalDate from, LocalDate to, String basisDocRef, String adminId) {
         return add(userId, function, from, to, basisDocRef, null, null, adminId);
     }
 
     /** Upoważnienie z aktem podstawowym zapisanym w repozytorium dokumentów (klucz S3 + SHA-256, D5). */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN, AppRole.TK_PREZES})
     public Delegation add(String userId, String function, LocalDate from, LocalDate to, String basisDocRef, String basisDocKey, String basisDocSha256, String adminId) {
         if (basisDocRef == null || basisDocRef.isBlank()) {
             throw new IllegalArgumentException("Akt podstawowy upoważnienia jest wymagany");
@@ -59,6 +63,7 @@ public class DelegationService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN, AppRole.TK_PREZES})
     public void revoke(long id, String adminId) {
         Delegation d = em.find(Delegation.class, id);
         d.revoke(clock.instant());

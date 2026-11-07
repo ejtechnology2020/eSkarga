@@ -12,6 +12,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.AppRole;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.model.AccessRequest;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
@@ -24,6 +26,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
  * dokumenty niejawne nie są udostępniane nikomu przez system; dokument z flagą art. 80 nie może zostać opublikowany bez wersji zanonimizowanej.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class AccessRequestService {
 
     @PersistenceContext(unitName = "repertorium")
@@ -34,6 +37,7 @@ public class AccessRequestService {
     AppClock clock;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT, AppRole.TK_KIEROWNIK})
     public AccessRequest register(long caseId, String requester, boolean participant, String scope, BigDecimal fee, String userId) {
         CaseFile cf = em.find(CaseFile.class, caseId);
         AccessRequest r = new AccessRequest(cf, requester, participant, scope, fee);
@@ -43,6 +47,7 @@ public class AccessRequestService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT, AppRole.TK_KIEROWNIK})
     public void schedule(long requestId, Instant at, String userId) {
         AccessRequest r = em.find(AccessRequest.class, requestId);
         r.scheduleReadingRoom(at);
@@ -50,6 +55,7 @@ public class AccessRequestService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT, AppRole.TK_KIEROWNIK})
     public void anonymisedReady(long requestId, String userId) {
         AccessRequest r = em.find(AccessRequest.class, requestId);
         r.anonymisedReady();
@@ -69,6 +75,7 @@ public class AccessRequestService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT, AppRole.TK_KIEROWNIK})
     public Publication queueForPublication(long documentId, String userId) {
         CaseDocument doc = em.find(CaseDocument.class, documentId);
         Publication p = new Publication(doc);
@@ -78,6 +85,7 @@ public class AccessRequestService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT, AppRole.TK_KIEROWNIK})
     public void approvePublication(long publicationId, String userId) {
         Publication p = em.find(Publication.class, publicationId);
         boolean art80 = p.getDocument().getCaseFile().current().isFlagAnonymise();

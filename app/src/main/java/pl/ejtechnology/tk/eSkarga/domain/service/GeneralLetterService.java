@@ -11,6 +11,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.AppRole;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.LetterQualification;
 import pl.ejtechnology.tk.eSkarga.domain.model.GeneralLetter;
 import pl.ejtechnology.tk.eSkarga.domain.model.IncomingLetter;
@@ -18,6 +20,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
 
 /** Pisma niebędące skargami (T-051, UC-17, FR-30): rejestr, termin odpowiedzi (30 dni, konfigurowalny), odpowiedź z szablonu. */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class GeneralLetterService {
 
     public static final int DEFAULT_REPLY_DAYS = 30;
@@ -32,6 +35,7 @@ public class GeneralLetterService {
     AppClock clock;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT})
     public GeneralLetter register(long letterId, String subject, String userId) {
         IncomingLetter letter = em.find(IncomingLetter.class, letterId);
         register.qualify(letterId, LetterQualification.PISMO_OGOLNE, null, userId);
@@ -42,6 +46,7 @@ public class GeneralLetterService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT})
     public void replied(long id, String templateCode, String userId) {
         GeneralLetter g = em.find(GeneralLetter.class, id);
         g.replied(clock.today(), templateCode, null);

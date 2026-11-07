@@ -32,6 +32,8 @@ public class BearerTokenFilter implements ContainerRequestFilter {
     TokenVerifierProducer verifiers;
     @Inject
     AuditService audit;
+    @Inject
+    pl.ejtechnology.tk.eSkarga.security.WorkerContext worker;
 
     @Override
     public void filter(ContainerRequestContext ctx) throws IOException {
@@ -51,6 +53,7 @@ public class BearerTokenFilter implements ContainerRequestFilter {
             ctx.abortWith(Response.status(Response.Status.FORBIDDEN).build());
             return;
         }
+        worker.activate(c.subject());   // RoleCheckInterceptor: metody oznaczone workers=true
         ctx.setSecurityContext(new SecurityContext() {
             @Override
             public Principal getUserPrincipal() {

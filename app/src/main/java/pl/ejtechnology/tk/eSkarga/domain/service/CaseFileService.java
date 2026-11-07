@@ -12,6 +12,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.AppRole;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.CaseStatus;
 import pl.ejtechnology.tk.eSkarga.domain.DocketNumber;
 import pl.ejtechnology.tk.eSkarga.domain.DocketSymbol;
@@ -47,6 +49,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
  * z kluczem biznesowym = sygnatura. Błąd startu procesu wycofuje wpis i nie zużywa numeru.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class CaseFileService {
 
     /** Strona z karty sprawy (krok 1 S-07). */
@@ -113,6 +116,7 @@ public class CaseFileService {
         }
     }
 
+    @RequiresRole({AppRole.TK_REFERENT})
     public CaseFile createCase(CreateCaseCommand cmd) {
         IncomingLetter letter = em.find(IncomingLetter.class, cmd.letterId());
         if (letter == null) {
@@ -162,6 +166,7 @@ public class CaseFileService {
 
     /** Pismo do sprawy w toku (UC-04): kolejne karty akt i komunikat do procesu (uzupełnienie braków albo zażalenie). */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT, AppRole.TK_BIURO_PODAWCZE})
     public CaseDocument attachLetter(long caseId, long letterId, String title, int pages, boolean appeal, String userId) {
         CaseFile cf = require(caseId);
         if (cf.current().getStatus().isReadOnly()) {
@@ -185,6 +190,7 @@ public class CaseFileService {
 
     /** Zmiana statusu = nowa wersja wpisu (NFR-01). */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole
     public CaseFileVersion changeStatus(long caseId, CaseStatus status, String userId) {
         return changeStatus(caseId, status, userId, null);
     }
@@ -194,6 +200,7 @@ public class CaseFileService {
      * aplikacji bez UPDATE na {@code case_file_version}), więc zmiana po {@code persist} kończyłaby się odmową bazy.
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole
     public CaseFileVersion changeStatus(long caseId, CaseStatus status, String userId, java.util.function.Consumer<CaseFileVersion> init) {
         CaseFile cf = require(caseId);
         CaseFileVersion v = cf.current().next(status, userId);
@@ -211,6 +218,7 @@ public class CaseFileService {
      * „zakończona – nadano bieg”, sposobem zakończenia i sygnaturą powiązaną; dalsze zmiany blokuje BR-08.
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole(system = true)
     public CaseFileVersion markTransferred(long caseId, String relatedDocket, String userId) {
         CaseFile cf = require(caseId);
         if (cf.current().getStatus().isReadOnly()) {
@@ -249,6 +257,7 @@ public class CaseFileService {
         return cf;
     }
 
+    @RequiresRole(workers = true)
     public Optional<CaseFile> byDocket(DocketNumber docket) {
         return em.createQuery("select c from CaseFile c where c.docketSymbol = :s and c.docketNumber = :n and c.docketYear = :y", CaseFile.class)
                 .setParameter("s", docket.symbol().code()).setParameter("n", docket.number()).setParameter("y", docket.year())
@@ -279,6 +288,7 @@ public class CaseFileService {
                 .setParameter("c", cf).getResultList();
     }
 
+    @RequiresRole(workers = true)
     public List<Party> parties(CaseFile cf) {
         return em.createQuery("select p from Party p where p.caseFile = :c order by p.id", Party.class).setParameter("c", cf).getResultList();
     }

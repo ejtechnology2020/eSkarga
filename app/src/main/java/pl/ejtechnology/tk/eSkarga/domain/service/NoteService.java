@@ -11,6 +11,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
 import pl.ejtechnology.tk.eSkarga.domain.model.Highlight;
@@ -23,6 +24,7 @@ import pl.ejtechnology.tk.eSkarga.security.CaseAccessPolicy;
  * nigdy w eksporcie akt jawnych ani w widoku referenta. Kopiowanie z cytatem: „Ts 312/26, k. 3”.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class NoteService {
 
     @PersistenceContext(unitName = "repertorium")
@@ -33,6 +35,7 @@ public class NoteService {
     AuditService audit;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_SEDZIA, AppRole.TK_ASYSTENT, AppRole.TK_PREZES})
     public InternalNote addNote(long caseId, String title, String body, String userId, Set<AppRole> roles) {
         CaseFile cf = em.find(CaseFile.class, caseId);
         requireTeam(cf, userId, roles);
@@ -43,6 +46,7 @@ public class NoteService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_SEDZIA, AppRole.TK_ASYSTENT, AppRole.TK_PREZES})
     public Highlight addHighlight(long documentId, int page, String geometryJson, String comment, String userId, Set<AppRole> roles) {
         CaseDocument doc = em.find(CaseDocument.class, documentId);
         requireTeam(doc.getCaseFile(), userId, roles);

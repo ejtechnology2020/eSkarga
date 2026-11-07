@@ -745,3 +745,8 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   nowe notatki zespołu sędziego (`NoteService.recentForTeam`), sprawy do wyznaczenia (Prezes). `NotificationsBean` (sesja): licznik =
   nieobejrzane, panel pod dzwonkiem z odnośnikami, otwarcie gasi licznik (klucze w sesji, bez tabeli w bazie), 0 = bez kółka.
   Demo: dane przykładowe. Testy: `NotificationsBeanTest`, `JpaViewDataTest`, GUI UC-18.
+- Bezpieczeństwo – 07.11.2026 – **obrona w głąb na usługach EJB**: `@RequiresRole` (binding interceptora CDI) + `RoleCheckInterceptor`
+  (role z `CurrentUser`, więc działa też w demo; odmowa → `SecurityException` i wpis w dzienniku zdarzeń); `WorkerContext`
+  z `BearerTokenFilter` dla `workers = true`; `system = true` dla nasłuchu procesu (`markTransferred`). 19 usług `domain.service`
+  z regułą na klasie i 60 reguł na metodach zmieniających stan; `ServiceRoleGuardTest` wymusza regułę na każdej takiej metodzie
+  (lista `INTERNAL` dla dziennika, liczników, polityki dostępu, rejestru osób, procesu, wyszukiwania). `doc/role-i-ekrany.md`.

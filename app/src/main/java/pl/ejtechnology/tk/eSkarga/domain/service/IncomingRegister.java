@@ -13,6 +13,8 @@ import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.AppRole;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.IntakeChannel;
 import pl.ejtechnology.tk.eSkarga.domain.LetterQualification;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
@@ -27,6 +29,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
  * w tej samej transakcji co wpis; po zarejestrowaniu pismo trafia do kolejki „Do kwalifikacji”. Dokument z klauzulą zapisuje tylko metadane.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class IncomingRegister {
 
     /** Dane z formularza S-03. */
@@ -51,6 +54,7 @@ public class IncomingRegister {
      * repozytorium S3 pod klucz {@code wplyw/<id pisma>/<uuid>}, metadane i SHA-256 do bazy. Pismo z klauzulą nie przyjmuje skanów (NFR-06).
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_BIURO_PODAWCZE, AppRole.TK_REFERENT})
     public IncomingScan attachScan(long letterId, String fileName, byte[] content, String userId, String remoteAddr) {
         IncomingLetter letter = em.find(IncomingLetter.class, letterId);
         if (letter == null) {
@@ -102,6 +106,7 @@ public class IncomingRegister {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_BIURO_PODAWCZE, AppRole.TK_REFERENT})
     public IncomingLetter register(RegisterCommand cmd) {
         if (cmd.channel() == null) {
             throw new IllegalArgumentException("Kanał wpływu jest wymagany");
@@ -125,6 +130,7 @@ public class IncomingRegister {
 
     /** Kwalifikacja pisma (UC-02): skarga, wniosek, pismo do sprawy, pismo ogólne, do innej jednostki. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT})
     public void qualify(long letterId, LetterQualification qualification, CaseFile caseFile, String userId) {
         IncomingLetter letter = em.find(IncomingLetter.class, letterId);
         if (letter == null) {
@@ -139,6 +145,7 @@ public class IncomingRegister {
     }
 
     /** Pisma oczekujące na kwalifikację (kolejka S-06), najstarsze pierwsze. */
+    @RequiresRole   // odczyt kolejki kwalifikacji (nazwa pasuje do wzorca metod zmieniających stan – reguła jawna)
     public List<IncomingLetter> queue() {
         return em.createQuery("select l from IncomingLetter l where l.qualification is null order by l.receivedAt", IncomingLetter.class).getResultList();
     }

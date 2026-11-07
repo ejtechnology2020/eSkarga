@@ -21,6 +21,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.AppRole;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.model.ArchiveCategory;
 import pl.ejtechnology.tk.eSkarga.domain.model.ArchiveTransfer;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument;
@@ -36,6 +38,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
  * Sprawa z dokumentem bez PDF/A nie może zostać przekazana.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class ArchiveService {
 
     /** Wynik kontroli kompletności (S-21). */
@@ -96,6 +99,7 @@ public class ArchiveService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ARCHIWISTA})
     public ArchiveTransfer transfer(long caseId, String archivistId) {
         CaseFile cf = cases.require(caseId);
         CaseFileVersion cur = cf.current();

@@ -16,6 +16,8 @@ import org.operaton.bpm.engine.TaskService;
 import org.operaton.bpm.engine.task.Task;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.AppRole;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.model.ActStatus;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
@@ -34,6 +36,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
  * aż do ostatniego.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class SigningService {
 
     public static final int PROVISIONAL_WAIT_DAYS = 21;
@@ -58,6 +61,7 @@ public class SigningService {
     AppClock clock;
 
     /** Krok 1: dane do podpisu dla aplikacji lokalnej; nic nie zmienia w aktach. */
+    @RequiresRole({AppRole.TK_SEDZIA, AppRole.TK_PREZES})
     public DocsGateway.DataToSign begin(long documentId, List<String> certificateChainBase64, String signatureAlgorithm, String userId) {
         CaseDocument doc = require(documentId);
         ProceduralAct act = actFor(doc).orElseThrow(() -> new IllegalStateException("Dokument nie jest czynnością do podpisu"));
@@ -77,6 +81,7 @@ public class SigningService {
 
     /** Krok 2: złożenie podpisu i skutki w aktach, procesie i ekspedycji – jedna transakcja (D10). */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_SEDZIA, AppRole.TK_PREZES})
     public ProceduralAct complete(long documentId, String sessionId, String signatureValueBase64, boolean finalSignature, LetterKind kind, String userId) {
         CaseDocument doc = require(documentId);
         CaseFile cf = doc.getCaseFile();

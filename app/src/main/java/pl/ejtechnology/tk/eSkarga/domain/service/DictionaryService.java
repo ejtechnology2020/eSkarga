@@ -10,6 +10,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.AppRole;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.model.Authority;
 import pl.ejtechnology.tk.eSkarga.domain.model.Court;
 import pl.ejtechnology.tk.eSkarga.domain.model.LetterType;
@@ -17,6 +19,7 @@ import pl.ejtechnology.tk.eSkarga.domain.model.ReviewStandard;
 
 /** Słowniki (FR-35, UC-24, S-24): sądy, organy, typy pism, wzorce kontroli. Pozycje wycofuje się, nie usuwa. */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class DictionaryService {
 
     @PersistenceContext(unitName = "repertorium")
@@ -30,6 +33,7 @@ public class DictionaryService {
     public List<ReviewStandard> reviewStandards() { return em.createQuery("select s from ReviewStandard s order by s.code", ReviewStandard.class).getResultList(); }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN})
     public <T> T add(T entry, String adminId) {
         em.persist(entry);
         audit.record(adminId, "TK_ADMIN", "dodanie pozycji słownika", entry.getClass().getSimpleName(), null, null);
@@ -42,6 +46,7 @@ public class DictionaryService {
 
     /** Kategoria archiwalna i okres przechowywania (lata, {@code null} = wieczyście) – konfiguracja, nie kod (ADR 0012). */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN})
     public pl.ejtechnology.tk.eSkarga.domain.model.ArchiveCategory updateArchiveCategory(pl.ejtechnology.tk.eSkarga.domain.model.ClosingMode mode, String category, Integer retentionYears, String adminId) {
         if (category == null || category.isBlank()) {
             throw new IllegalArgumentException("Kategoria archiwalna jest wymagana");
@@ -61,6 +66,7 @@ public class DictionaryService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN})
     public void withdrawReviewStandard(long id, String adminId) {
         ReviewStandard s = em.find(ReviewStandard.class, id);
         s.withdraw();

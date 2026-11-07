@@ -13,6 +13,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.AppRole;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.DeadlineType;
 import pl.ejtechnology.tk.eSkarga.domain.DeliveryMethod;
 import pl.ejtechnology.tk.eSkarga.domain.deadline.DeadlineCalculator;
@@ -36,6 +38,7 @@ import pl.ejtechnology.tk.eSkarga.process.ProcessVariables;
  * korekta daty doręczenia uchyla stary termin, tworzy nowy i przestawia timer.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class DeliveryService {
 
     public static final int AWIZO_DAYS = 14;
@@ -51,6 +54,7 @@ public class DeliveryService {
 
     /** Wysyłka dokumentu: adresat wybrany automatycznie (BR-06), klucz idempotencji dla workera (D7). */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT, AppRole.TK_BIURO_PODAWCZE})
     public Delivery dispatch(long documentId, DeliveryChannel channel, LocalDate sentOn, String dispatchNo, String userId) {
         CaseDocument doc = em.find(CaseDocument.class, documentId);
         if (doc == null) {
@@ -67,6 +71,7 @@ public class DeliveryService {
 
     /** Przygotowanie wysyłki elektronicznej: pismo czeka na workera (D7), który potwierdzi nadanie przez API. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT, AppRole.TK_BIURO_PODAWCZE})
     public Delivery prepare(long documentId, DeliveryChannel channel, String userId) {
         CaseDocument doc = em.find(CaseDocument.class, documentId);
         if (doc == null) {
@@ -81,6 +86,7 @@ public class DeliveryService {
 
     /** Potwierdzenie nadania przez workera (numer nadania / identyfikator przesyłki); ponowienie z tym samym numerem jest neutralne. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole(value = {AppRole.TK_REFERENT, AppRole.TK_BIURO_PODAWCZE}, workers = true)
     public Delivery confirmDispatch(long deliveryId, String dispatchNo, LocalDate sentOn, String actor) {
         Delivery d = require(deliveryId);
         if (d.getSentOn() != null) {
@@ -97,11 +103,13 @@ public class DeliveryService {
 
     /** Zwrot przesyłki bez skutku doręczenia – wymaga decyzji referenta o ponownej wysyłce; termin nie rusza. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole(value = {AppRole.TK_REFERENT, AppRole.TK_BIURO_PODAWCZE}, workers = true)
     public void returned(long deliveryId, LocalDate on, String reason, String actor) {
         Delivery d = require(deliveryId);
         audit.record(actor, "WORKER", "zwrot przesyłki: " + reason + " (" + on + ")", d.getDocument().getTitle(), d.getDocument().getCaseFile().getDocket().format(), null);
     }
 
+    @RequiresRole(workers = true)
     public Delivery require(long deliveryId) {
         Delivery d = em.find(Delivery.class, deliveryId);
         if (d == null) {
@@ -122,6 +130,7 @@ public class DeliveryService {
      * Dla zarządzenia o brakach rusza termin 7 dni (art. 61 ust. 3), dla postanowienia o odmowie – termin na zażalenie (ust. 5).
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole(value = {AppRole.TK_REFERENT, AppRole.TK_BIURO_PODAWCZE}, workers = true)
     public Optional<Deadline> registerReceipt(long deliveryId, LocalDate date, DeliveryMethod method, String userId) {
         Delivery d = em.find(Delivery.class, deliveryId);
         if (d == null) {
@@ -138,6 +147,7 @@ public class DeliveryService {
 
     /** Korekta daty doręczenia: termin zostaje przeliczony, timer przestawiony, stary termin uchylony (nie usunięty). */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT, AppRole.TK_KIEROWNIK})
     public Optional<Deadline> correctReceipt(long deliveryId, LocalDate newDate, DeliveryMethod method, String justification, String userId) {
         if (justification == null || justification.isBlank()) {
             throw new IllegalArgumentException("Korekta daty doręczenia wymaga uzasadnienia");

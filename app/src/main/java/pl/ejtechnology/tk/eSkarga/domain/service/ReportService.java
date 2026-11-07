@@ -13,6 +13,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.domain.CaseStatus;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFileVersion;
 import pl.ejtechnology.tk.eSkarga.domain.model.ClosingMode;
@@ -22,6 +23,7 @@ import pl.ejtechnology.tk.eSkarga.domain.model.ClosingMode;
  * i uwzględnionych zażaleń, czas wstępnej kontroli (mediana, p90), zaległości, obciążenie. Dane do rocznej Informacji TK.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class ReportService {
 
     /** Zestawienie za okres. */

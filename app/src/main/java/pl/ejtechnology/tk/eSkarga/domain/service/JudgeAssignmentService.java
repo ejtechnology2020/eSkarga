@@ -15,6 +15,7 @@ import org.operaton.bpm.engine.TaskService;
 import org.operaton.bpm.engine.task.Task;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.CaseStatus;
 import pl.ejtechnology.tk.eSkarga.domain.DocumentKind;
 import pl.ejtechnology.tk.eSkarga.domain.model.ActStatus;
@@ -34,6 +35,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
  * (BR-10): zarządzenie w aktach, przydział do sprawy, sędzia jako assignee zadania kontroli, zdarzenie audytu – jedna transakcja.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class JudgeAssignmentService {
 
     /** Obciążenie sędziego do podglądu w S-17 (FR-14). */
@@ -61,6 +63,7 @@ public class JudgeAssignmentService {
     pl.ejtechnology.tk.eSkarga.documents.DocumentStore store;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_PREZES, AppRole.TK_SEDZIA})
     public ProceduralAct assign(long caseId, String judgeUserId, String actingUserId, Set<AppRole> roles) {
         return assign(caseId, judgeUserId, judgeUserId, actingUserId, roles);
     }
@@ -70,6 +73,7 @@ public class JudgeAssignmentService {
      * Ekran S-17 używa {@link #draftOrder} + podpisu na S-16 ({@link SigningService#complete} → {@link #finalizeAssignment}).
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_PREZES, AppRole.TK_SEDZIA})
     public ProceduralAct assign(long caseId, String judgeUserId, String judgeDisplayName, String actingUserId, Set<AppRole> roles) {
         ProceduralAct act = draftOrder(caseId, judgeUserId, judgeDisplayName, actingUserId, roles);
         act.setStatus(ActStatus.PODPISANA);
@@ -84,6 +88,7 @@ public class JudgeAssignmentService {
      * Skutki wyznaczenia następują po podpisie ({@link #finalizeAssignment}).
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_PREZES, AppRole.TK_SEDZIA})
     public ProceduralAct draftOrder(long caseId, String judgeUserId, String judgeDisplayName, String actingUserId, Set<AppRole> roles) {
         LocalDate today = clock.today();
         CaseFile cf = cases.require(caseId);
@@ -122,6 +127,7 @@ public class JudgeAssignmentService {
      * „Wyznacz sędziego” w procesie (sędzia staje się assignee kontroli), zdarzenie audytu – jedna transakcja z podpisem.
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_SEDZIA, AppRole.TK_PREZES})
     public void finalizeAssignment(ProceduralAct act, String actingUserId) {
         CaseFile cf = act.getCaseFile();
         String judgeUserId = act.getPanelUserIds();
@@ -161,6 +167,7 @@ public class JudgeAssignmentService {
     }
 
     /** Projekt zarządzenia (PDF) z aktywnego szablonu dla sprawy i sędziego – do podglądu na S-17 i do zapisu przy wyznaczeniu; nic nie zapisuje. */
+    @RequiresRole
     public byte[] renderOrder(CaseFile cf, String judgeDisplayName) {
         pl.ejtechnology.tk.eSkarga.domain.model.LetterTemplate template = orderTemplate();
         java.util.Map<String, Object> model = LetterModelBuilder.build(cf, cases.parties(cf), clock.today(), judgeDisplayName, null);

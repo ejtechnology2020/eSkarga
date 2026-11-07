@@ -14,6 +14,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.DocumentKind;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
@@ -26,6 +27,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
  * dla workera {@code dokument-przetworz}, zapis wyniku jako nowej wersji pliku. Dokumenty niejawne – tylko metadane (NFR-06).
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class CaseDocumentService {
 
     /** Wynik przetworzenia z usługi dokumentów (przez workera). */
@@ -51,6 +53,7 @@ public class CaseDocumentService {
 
     /** Skan pisma do akt: plik do S3 (SSE), SHA-256 w bazie, karty po ostatniej. Dokument niejawny: tylko metadane. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole
     public CaseDocument upload(long caseId, String title, DocumentKind kind, byte[] content, String contentType, int pages, String userId) {
         CaseFile cf = cases.require(caseId);
         if (cf.current().getStatus().isReadOnly()) {
@@ -76,6 +79,7 @@ public class CaseDocumentService {
     }
 
     /** Dokumenty z plikiem, które nie przeszły jeszcze przetworzenia (brak raportu podpisu i PDF/A). */
+    @RequiresRole(workers = true)
     public List<CaseDocument> pendingProcessing() {
         return em.createQuery("select d from CaseDocument d where d.storageKey is not null and d.signatureReport is null and d.pdfaCompliant = false "
                 + "and d.classified = false order by d.id", CaseDocument.class).setMaxResults(50).getResultList();
@@ -88,6 +92,7 @@ public class CaseDocumentService {
     }
 
     /** Dokument razem ze sprawą i jej bieżącą wersją (fetch join) – serwlet dokumentów czyta {@code getCaseFile()} poza transakcją EJB. */
+    @RequiresRole(workers = true)
     public CaseDocument require(long id) {
         CaseDocument d = em.createQuery("select d from CaseDocument d join fetch d.caseFile where d.id = :id", CaseDocument.class).setParameter("id", id)
                 .getResultStream().findFirst().orElse(null);
@@ -110,6 +115,7 @@ public class CaseDocumentService {
 
     /** Wynik przetworzenia: nowa wersja pliku (gdy OCR/PDF/A zmieniły treść), flagi i raport podpisu. Powtórzony wynik jest neutralny. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole(workers = true)
     public CaseDocument applyProcessing(long documentId, ProcessingResult result, String actor) {
         CaseDocument doc = require(documentId);
         if (doc.getSignatureReport() != null && doc.isPdfaCompliant() == result.pdfaCompliant()) {

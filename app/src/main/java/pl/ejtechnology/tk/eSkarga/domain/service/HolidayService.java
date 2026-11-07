@@ -13,12 +13,15 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.AppRole;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.deadline.DeadlineCalculator;
 import pl.ejtechnology.tk.eSkarga.domain.deadline.PolishHolidays;
 import pl.ejtechnology.tk.eSkarga.domain.model.Holiday;
 
 /** Kalendarz dni wolnych w Trybunale (T-025, S-24) jako źródło {@link DeadlineCalculator}. */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class HolidayService {
 
     @PersistenceContext(unitName = "repertorium")
@@ -35,6 +38,7 @@ public class HolidayService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN})
     public Holiday add(LocalDate day, String description, String adminId) {
         Holiday h = new Holiday(day, description, adminId);
         em.persist(h);

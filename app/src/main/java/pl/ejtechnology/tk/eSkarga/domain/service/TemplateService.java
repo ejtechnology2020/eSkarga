@@ -11,6 +11,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.AppRole;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.model.LetterTemplate;
 import pl.ejtechnology.tk.eSkarga.domain.model.TemplateStatus;
 
@@ -20,6 +22,7 @@ import pl.ejtechnology.tk.eSkarga.domain.model.TemplateStatus;
  * Pisma już wygenerowane pamiętają identyfikator wersji szablonu, więc nowa aktywacja ich nie zmienia.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class TemplateService {
 
     /** Wynik walidacji szablonu (z usługi dokumentów). */
@@ -39,6 +42,7 @@ public class TemplateService {
     TemplateValidator validator;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN})
     public LetterTemplate saveDraft(String code, String name, String source, String authorId) {
         int next = em.createQuery("select coalesce(max(t.version), 0) from LetterTemplate t where t.code = :c", Integer.class).setParameter("c", code).getSingleResult() + 1;
         LetterTemplate t = new LetterTemplate(code, name, next, source, authorId);
@@ -49,6 +53,7 @@ public class TemplateService {
 
     /** Aktywacja: walidacja (błąd składni blokuje), akceptacja drugiej osoby, wycofanie poprzedniej aktywnej wersji. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN})
     public Validation activate(long templateId, String approverId) {
         LetterTemplate t = em.find(LetterTemplate.class, templateId);
         Validation v = validator.validate(t.getCode(), t.getSourceXhtml());
@@ -64,6 +69,7 @@ public class TemplateService {
 
     /** Zasiewa tabelę szablonami domyślnymi z usługi dokumentów (wersja 1, aktywna) tylko dla kodów bez żadnej wersji. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN})
     public int seedDefaults(java.util.Map<String, String> defaults, String actorId) {
         int added = 0;
         for (var e : defaults.entrySet()) {
@@ -83,6 +89,7 @@ public class TemplateService {
 
     /** Poprawka projektu w miejscu (S-24 „Edytuj”): tylko PROJEKT; inne stany – nowa wersja przez {@link #saveDraft}. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN})
     public LetterTemplate updateDraft(long templateId, String name, String source, String actorId) {
         LetterTemplate t = require(templateId);
         t.updateDraft(name, source);
@@ -92,6 +99,7 @@ public class TemplateService {
 
     /** Wycofanie aktywnej wersji bez następcy – pisma z tego kodu nie powstaną do aktywacji innej wersji. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN})
     public LetterTemplate withdraw(long templateId, String actorId) {
         LetterTemplate t = require(templateId);
         if (t.getStatus() != TemplateStatus.AKTYWNA) {
@@ -104,6 +112,7 @@ public class TemplateService {
 
     /** Usunięcie logiczne (status USUNIETA): projekt albo wersja wycofana; aktywnej nie (D13, rola bez DELETE). */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ADMIN})
     public LetterTemplate delete(long templateId, String actorId) {
         LetterTemplate t = require(templateId);
         if (t.getStatus() == TemplateStatus.USUNIETA) {

@@ -11,6 +11,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFileVersion;
 import pl.ejtechnology.tk.eSkarga.domain.model.CorrectionDecision;
@@ -23,6 +24,7 @@ import pl.ejtechnology.tk.eSkarga.security.AppRole;
  * kierownik zatwierdza (wersja staje się obowiązująca) albo odrzuca. Poprzednie wersje nigdy nie są zmieniane ani usuwane.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class CorrectionService {
 
     /** Zmieniane pola wpisu. */
@@ -37,6 +39,7 @@ public class CorrectionService {
     AppClock clock;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT, AppRole.TK_KIEROWNIK})
     public CaseFileVersion request(long caseId, Changes changes, String justification, String userId) {
         if (justification == null || justification.isBlank()) {
             throw new IllegalArgumentException("Uzasadnienie korekty jest wymagane");
@@ -64,6 +67,7 @@ public class CorrectionService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_KIEROWNIK})
     public void approve(long versionId, String approverId, Set<AppRole> roles) {
         CaseFileVersion v = pending(versionId);
         if (!roles.contains(AppRole.TK_KIEROWNIK)) {
@@ -78,6 +82,7 @@ public class CorrectionService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_KIEROWNIK})
     public void reject(long versionId, String approverId, String remarks) {
         if (remarks == null || remarks.isBlank()) {
             throw new IllegalArgumentException("Odrzucenie wymaga uwag kierownika");

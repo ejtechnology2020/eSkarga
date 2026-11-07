@@ -12,6 +12,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.ChecklistState;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseFile;
 import pl.ejtechnology.tk.eSkarga.domain.model.ChecklistEntry;
@@ -24,6 +25,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
  * każda ocena to zdarzenie audytu z sygnaturą (NFR-02).
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class ChecklistService {
 
     static final Set<AppRole> ROLES = Set.of(AppRole.TK_SEDZIA, AppRole.TK_ASYSTENT, AppRole.TK_REFERENT, AppRole.TK_KIEROWNIK);
@@ -40,6 +42,7 @@ public class ChecklistService {
     AppClock clock;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_SEDZIA, AppRole.TK_ASYSTENT, AppRole.TK_REFERENT, AppRole.TK_KIEROWNIK})
     public ChecklistEntry record(long caseId, String requirementCode, ChecklistState state, String note, String pageRef, String userId, Set<AppRole> roles) {
         CaseFile cf = cases.require(caseId);
         if (roles == null || roles.stream().noneMatch(ROLES::contains) || !access.canRead(cf, userId, roles)) {

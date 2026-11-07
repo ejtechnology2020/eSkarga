@@ -19,6 +19,8 @@ import org.operaton.bpm.engine.TaskService;
 import org.operaton.bpm.engine.task.Task;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.AppRole;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.DocumentKind;
 import pl.ejtechnology.tk.eSkarga.domain.model.ActStatus;
 import pl.ejtechnology.tk.eSkarga.domain.model.CaseDocument;
@@ -36,6 +38,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
  * rozstrzyga zadanie „Przeprowadź wstępną kontrolę” (wynik kontroli), gdy proces na nie czeka.
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class LetterService {
 
     @PersistenceContext(unitName = "repertorium")
@@ -56,6 +59,7 @@ public class LetterService {
     AppClock clock;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_ASYSTENT, AppRole.TK_SEDZIA, AppRole.TK_PREZES})
     public ProceduralAct draft(long caseId, LetterKind kind, Map<String, Object> extraModel, String judgeDisplayName, String userId) {
         CaseFile cf = cases.require(caseId);
         if (cf.current().getStatus().isReadOnly()) {
@@ -94,6 +98,7 @@ public class LetterService {
 
     /** Odpowiedź na pismo ogólne (UC-17) – PDF bez karty akt sprawy; zwraca klucz w repozytorium. */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT})
     public DocumentStore.Stored renderGeneralReply(Map<String, Object> model, String userId) {
         LetterTemplate template = templates.active(LetterKind_ODP).orElseThrow(() -> new IllegalStateException("Brak aktywnego szablonu odpowiedzi"));
         byte[] pdf = docs.renderLetter(LetterKind_ODP, template.getSourceXhtml(), model);

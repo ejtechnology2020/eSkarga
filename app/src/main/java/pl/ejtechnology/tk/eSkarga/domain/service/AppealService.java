@@ -13,6 +13,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import pl.ejtechnology.tk.eSkarga.audit.AuditService;
+import pl.ejtechnology.tk.eSkarga.security.RequiresRole;
 import pl.ejtechnology.tk.eSkarga.domain.CaseStatus;
 import pl.ejtechnology.tk.eSkarga.domain.DeadlineType;
 import pl.ejtechnology.tk.eSkarga.domain.model.Appeal;
@@ -30,6 +31,7 @@ import pl.ejtechnology.tk.eSkarga.web.AppClock;
  * nie można zarejestrować kolejnego zażalenia jako środka (tylko jako pismo ogólne).
  */
 @Stateless
+@RequiresRole   // domyślnie: dowolna rola eSkargi (odczyty); zmiany stanu – reguły na metodach
 public class AppealService {
 
     @PersistenceContext(unitName = "repertorium")
@@ -46,6 +48,7 @@ public class AppealService {
     AppClock clock;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_REFERENT})
     public Appeal register(long caseId, LocalDate filedOn, String userId) {
         CaseFile cf = cases.require(caseId);
         if (cf.current().getStatus() != CaseStatus.ODMOWA_TERMIN_NA_ZAZALENIE) {
@@ -67,6 +70,7 @@ public class AppealService {
 
     /** Skierowanie do składu (Prezes TK albo osoba upoważniona, BR-10) z wykluczeniem sędziego odmowy (BR-07). */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_PREZES})
     public void referToPanel(long appealId, List<String> panelUserIds, LocalDate sessionOn, String userId, Set<AppRole> roles) {
         Appeal appeal = em.find(Appeal.class, appealId);
         CaseFile cf = appeal.getCaseFile();
@@ -83,6 +87,7 @@ public class AppealService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RequiresRole({AppRole.TK_PREZES, AppRole.TK_SEDZIA})
     public void decide(long appealId, AppealOutcome outcome, String userId) {
         Appeal appeal = em.find(Appeal.class, appealId);
         appeal.decide(outcome);
