@@ -9,16 +9,16 @@
                 xmlns:pt="jakarta.faces.passthrough"
                 xmlns:tk="jakarta.faces.composite/tk">
   <!-- S-18 Skierowanie zażalenia do składu (UC-11): wykluczenie sędziego, który wydał odmowę (BR-07); zażalenie po terminie (stan=po). -->
-  <f:metadata><f:viewParam name="stan" value="#{sklad.stan}" /></f:metadata>
+  <f:metadata><f:viewParam name="stan" value="#{sklad.stan}" /><f:viewParam name="sygnatura" value="#{sklad.sygnaturaParam}" /><f:viewAction action="#{sklad.load}" /></f:metadata>
   <ui:define name="title">Skierowanie zażalenia do składu</ui:define>
   <ui:define name="crumbs">
     <nav class="e-crumbs" aria-label="#{msg['app.crumbs']}"><ol><li><h:link outcome="/pulpit" value="Czynności i decyzje" /></li><li><h:link outcome="/rejestry/zazalenia" value="Zażalenia" /></li><li><span aria-current="page">#{sklad.sygnatura} · skierowanie do składu</span></li></ol></nav>
   </ui:define>
   <ui:define name="banners"><tk:banner icon="shield" title="Działasz na podstawie upoważnienia z 30.10.2026" text="(ważne do 31.12.2026)" /></ui:define>
-  <ui:define name="subtitle"><tk:sig value="#{dane.caseBy(sklad.sygnatura).sygnatura}" /> · #{sklad.skarzacy} · pełn. adw. Jan Makieta</ui:define>
+  <ui:define name="subtitle"><h:panelGroup rendered="#{not empty dane.caseBy(sklad.sygnatura)}"><tk:sig value="#{dane.caseBy(sklad.sygnatura).sygnatura}" /> · </h:panelGroup>#{sklad.skarzacy}<h:outputText rendered="#{currentUser.demo}" value=" · pełn. adw. Jan Makieta" /></ui:define>
   <ui:define name="actions">
-    <h:link rendered="#{not sklad.poTerminie}" outcome="/czynnosci/podpis" styleClass="btn p" value="Skieruj i podpisz zarządzenie" />
-    <h:link rendered="#{sklad.poTerminie}" outcome="/czynnosci/edytor" styleClass="btn p" value="Przygotuj postanowienie o pozostawieniu bez rozpoznania" />
+    <h:link rendered="#{currentUser.demo and not sklad.poTerminie}" outcome="/czynnosci/podpis" styleClass="btn p" value="Skieruj i podpisz zarządzenie" />
+    <h:link rendered="#{sklad.poTerminie}" outcome="/czynnosci/edytor" styleClass="btn p" value="Przygotuj postanowienie o pozostawieniu bez rozpoznania"><f:param name="sygnatura" value="#{sklad.sygnatura}" /></h:link>
   </ui:define>
   <ui:define name="content">
     <div class="flow">
@@ -28,7 +28,32 @@
         <h:panelGroup rendered="#{not sklad.poTerminie}"><span class="term aux"><tk:icon name="check" /><span><b>Terminowość (pomocniczo):</b> w terminie · 6 z 7 dni · ocenia skład</span><span class="bar"><span style="width: 86%;"></span></span></span></h:panelGroup>
         <tk:message rendered="#{sklad.poTerminie}" tone="warn" icon="alert-triangle" role="alert"><b>Zażalenie po terminie (pomocniczo).</b> Termin upłynął 27.08.2026, zażalenie wniesiono 02.11.2026 — 67 dni później. Odmowa jest prawomocna od 15.09.2026. Zamiast składu przygotuj postanowienie o pozostawieniu zażalenia bez rozpoznania.</tk:message>
       </section>
-      <h:form rendered="#{not sklad.poTerminie}" styleClass="side card hl fb640" pt:aria-labelledby="h-sk">
+      <!-- tryb rzeczywisty (ADR 0027): kandydaci ze słownika sędziów (aktywni, w kadencji), wykluczenie sędziego odmowy (BR-07),
+           przewodniczący i sprawozdawca spośród wybranych; skierowanie = AppealService.referToPanel (upoważnienie BR-10) -->
+      <h:form id="skf" rendered="#{not currentUser.demo and not sklad.poTerminie}" styleClass="side card hl fb640" pt:aria-labelledby="h-sk2">
+        <h2 id="h-sk2">Skład trzech sędziów</h2>
+        <tk:message rendered="#{not sklad.rzeczywisty}" tone="warn" icon="alert-triangle"><b>Brak sprawy.</b> Otwórz ekran z rejestru zażaleń (S-11) albo z zadania na pulpicie.</tk:message>
+        <tk:message rendered="#{sklad.rzeczywisty and not sklad.maZazalenie}" tone="info" icon="info"><b>W sprawie #{sklad.sygnatura} nie ma zażalenia czekającego na skład.</b></tk:message>
+        <tk:message rendered="#{sklad.skladJuzWyznaczony}" tone="ok" icon="check"><b>Skład wyznaczony:</b> #{sklad.skladZapisany}. Ponowne skierowanie zastąpi skład.</tk:message>
+        <h:panelGroup rendered="#{sklad.rzeczywisty and sklad.maZazalenie}" layout="block" styleClass="col" style="gap: 8px;">
+          <fieldset class="fieldset" style="gap: 8px;">
+            <legend>Wybierz 3 sędziów ze słownika <span class="mut" style="font-weight: 400;">· wybrano #{sklad.wybrani.size()} z 3</span></legend>
+            <p:selectManyCheckbox id="sk-sedziowie" value="#{sklad.wybrani}" layout="pageDirection" pt:aria-label="Sędziowie do składu">
+              <f:selectItems value="#{sklad.kandydaci}" var="k" itemLabel="#{k.etykieta()}" itemValue="#{k.login}" itemDisabled="#{k.wykluczony}" />
+              <p:ajax update="@form" process="@form" />
+            </p:selectManyCheckbox>
+            <p class="hint" jsf:rendered="#{empty sklad.kandydaci}" xmlns:jsf="jakarta.faces">Słownik sędziów jest pusty albo nikt nie jest w kadencji – uzupełnij go w Administracja → Słowniki → Sędziowie.</p>
+          </fieldset>
+          <div class="form">
+            <div class="fld"><p:outputLabel for="sk-pr2" value="Przewodniczący" /><p:selectOneMenu id="sk-pr2" value="#{sklad.przewodniczacyLogin}"><f:selectItem itemLabel="—" itemValue="" noSelectionOption="true" /><f:selectItems value="#{sklad.kandydaciDostepni}" var="k" itemLabel="#{k.nazwa}" itemValue="#{k.login}" /></p:selectOneMenu></div>
+            <div class="fld"><p:outputLabel for="sk-sp2" value="Sprawozdawca" /><p:selectOneMenu id="sk-sp2" value="#{sklad.sprawozdawcaLogin}"><f:selectItem itemLabel="—" itemValue="" noSelectionOption="true" /><f:selectItems value="#{sklad.kandydaciDostepni}" var="k" itemLabel="#{k.nazwa}" itemValue="#{k.login}" /></p:selectOneMenu></div>
+            <div class="fld"><p:outputLabel for="sk-ter2" value="Termin posiedzenia niejawnego" /><p:datePicker id="sk-ter2" value="#{sklad.posiedzenie}" pattern="dd.MM.yyyy" showIcon="false" /></div>
+          </div>
+          <div class="row"><p:commandButton id="sk-skieruj" value="Skieruj do składu" action="#{sklad.skieruj}" process="@form" update="@form :growl" styleClass="p" /></div>
+          <p class="hint">Skład: 3 różnych sędziów z aktywnym wpisem w kadencji; sędzia, który wydał odmowę, jest wykluczony (BR-07). Skierowanie wymaga upoważnienia Prezesa TK (BR-10).</p>
+        </h:panelGroup>
+      </h:form>
+      <h:form rendered="#{currentUser.demo and not sklad.poTerminie}" styleClass="side card hl fb640" pt:aria-labelledby="h-sk">
         <h2 id="h-sk">Skład trzech sędziów</h2>
         <fieldset class="fieldset" style="gap: 8px;">
           <legend>Wybierz 3 sędziów <span class="mut" style="font-weight: 400;">· wybrano 3 z 3</span></legend>

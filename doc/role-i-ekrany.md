@@ -51,11 +51,11 @@ Dostęp do ekranu nie oznacza dostępu do każdej sprawy: sędzia i asystent wid
 | Projekt pisma | ASYSTENT, SEDZIA, PREZES |
 | Podpis | SEDZIA, PREZES |
 | Wyznaczenie sędziego (projekt, zarządzenie) | PREZES, SEDZIA z upoważnieniem (BR-10) |
-| Zażalenie: rejestracja – REFERENT; skład – PREZES; rozstrzygnięcie – PREZES, SEDZIA | |
+| Zażalenie: rejestracja – REFERENT; skład (3 sędziów ze słownika, bez sędziego odmowy) – PREZES z upoważnieniem; rozstrzygnięcie – PREZES, SEDZIA | |
 | Doręczenia: ekspedycja, zwrotki, zwroty | REFERENT, BIURO_PODAWCZE, workery; korekta daty doręczenia – REFERENT, KIEROWNIK |
 | Notatki wewnętrzne, zaznaczenia | SEDZIA, ASYSTENT, PREZES (tylko zespół sprawy) |
 | Wgląd do akt, publikacja | REFERENT, KIEROWNIK |
 | Pisma ogólne | REFERENT |
 | Archiwizacja | ARCHIWISTA |
-| Szablony pism, słowniki, dni wolne, lista kontrolna wymogów Ts/Tw | ADMIN |
+| Szablony pism, słowniki, dni wolne, lista kontrolna wymogów Ts/Tw, słownik sędziów | ADMIN |
 | Upoważnienia | ADMIN, PREZES |

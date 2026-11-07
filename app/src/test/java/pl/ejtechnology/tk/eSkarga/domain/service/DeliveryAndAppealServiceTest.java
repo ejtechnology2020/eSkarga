@@ -148,7 +148,16 @@ class DeliveryAndAppealServiceTest extends ServiceTestSupport {
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("BR-07");
         assertThatThrownBy(() -> run(s -> s.appeals.referToPanel(appeal.getId(), List.of("a", "b"), TODAY.plusDays(7), PREZES, Set.of(AppRole.TK_PREZES))))
                 .isInstanceOf(IllegalArgumentException.class);
+        // ADR 0027: skład tylko ze słownika sędziów, w kadencji, 3 różnych sędziów
+        run(s -> s.judgeDictionary.add("sedzia.emeryt", "Jan Emerytowany", pl.ejtechnology.tk.eSkarga.domain.JudgeFunction.SEDZIA, LocalDate.of(2010, 1, 1), LocalDate.of(2019, 12, 31), "admin"));
+        assertThatThrownBy(() -> run(s -> s.appeals.referToPanel(appeal.getId(), List.of("s1", "s2", "spoza.slownika"), TODAY.plusDays(7), PREZES, Set.of(AppRole.TK_PREZES))))
+                .hasMessageContaining("nie jest w słowniku");
+        assertThatThrownBy(() -> run(s -> s.appeals.referToPanel(appeal.getId(), List.of("s1", "s2", "sedzia.emeryt"), TODAY.plusDays(7), PREZES, Set.of(AppRole.TK_PREZES))))
+                .hasMessageContaining("poza kadencją");
+        assertThatThrownBy(() -> run(s -> s.appeals.referToPanel(appeal.getId(), List.of("s1", "s1", "s2"), TODAY.plusDays(7), PREZES, Set.of(AppRole.TK_PREZES))))
+                .hasMessageContaining("3 różnych");
         run(s -> s.appeals.referToPanel(appeal.getId(), List.of("s1", "s2", "s3"), TODAY.plusDays(7), PREZES, Set.of(AppRole.TK_PREZES)));
+        run(s -> assertThat(s.appeals.pendingFor(s.cases.require(cf.getId()))).isPresent().get().satisfies(a -> assertThat(a.getPanelUserIds()).isEqualTo("s1,s2,s3")));
         tx(s -> assertThat(s.em.find(Appeal.class, appeal.getId()).getPanelUserIds()).isEqualTo("s1,s2,s3"));
 
         run(s -> s.appeals.decide(appeal.getId(), AppealOutcome.NIEUWZGLEDNIONE, "s1"));

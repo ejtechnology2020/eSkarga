@@ -61,6 +61,8 @@ public class JudgeAssignmentService {
     pl.ejtechnology.tk.eSkarga.documents.DocsGateway docs;
     @Inject
     pl.ejtechnology.tk.eSkarga.documents.DocumentStore store;
+    @Inject
+    JudgeDictionaryService judgeDictionary;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     @RequiresRole({AppRole.TK_PREZES, AppRole.TK_SEDZIA})
@@ -96,6 +98,11 @@ public class JudgeAssignmentService {
         requireAwaiting(cf);
         if (judgeUserId == null || judgeUserId.isBlank()) {
             throw new IllegalArgumentException("Wybierz sędziego");
+        }
+        // ADR 0027: tylko sędzia ze słownika, aktywny i w kadencji w dniu zarządzenia; nazwa do pisma ze słownika, gdy nie podano
+        pl.ejtechnology.tk.eSkarga.domain.model.Judge judge = judgeDictionary.requireEligible(judgeUserId, today);
+        if (judgeDisplayName == null || judgeDisplayName.isBlank()) {
+            judgeDisplayName = judge.titledName();
         }
         for (ProceduralAct existing : pendingOrders(cf)) {
             if (judgeUserId.equals(existing.getPanelUserIds())) {

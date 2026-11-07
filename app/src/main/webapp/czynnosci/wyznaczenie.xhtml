@@ -53,11 +53,12 @@
           <p:ajax update="@form" />
         </p:selectOneRadio>
         <h:panelGroup rendered="#{empty wyznaczenie.sedziowie}" layout="block" styleClass="mut" style="padding: 8px 0;">
-          Brak sędziów na liście: sędzia pojawia się po pierwszym zalogowaniu do eSkargi z rolą „sędzia” nadaną w ID-users (rejestr S-22).
+          Brak sędziów do wyznaczenia: lista pochodzi ze słownika sędziów (Administracja → Słowniki → Sędziowie, ADR 0027) – wpis musi być aktywny i w kadencji w dniu dzisiejszym.
         </h:panelGroup>
         <p:dataTable value="#{wyznaczenie.sedziowie}" var="j" rowIndexVar="idx" rowStyleClass="#{(j.sedzia eq wyznaczenie.sedzia or j.nazwisko eq wyznaczenie.sedzia) ? 'sel' : ''}" summary="Obciążenie sędziów">
           <p:column headerText="Wybór" styleClass="chk"><p:radioButton for="@form:sd" itemIndex="#{idx}" /></p:column>
-          <p:column headerText="Sędzia"><b jsf:rendered="#{j.sedzia eq wyznaczenie.sedzia or j.nazwisko eq wyznaczenie.sedzia}">#{j.nazwisko}</b><h:outputText rendered="#{not (j.sedzia eq wyznaczenie.sedzia or j.nazwisko eq wyznaczenie.sedzia)}" value="#{j.nazwisko}" /><br /><span class="mut mono">#{j.sedzia}</span></p:column>
+          <p:column headerText="Sędzia"><b jsf:rendered="#{j.sedzia eq wyznaczenie.sedzia or j.nazwisko eq wyznaczenie.sedzia}">#{j.nazwisko}</b><h:outputText rendered="#{not (j.sedzia eq wyznaczenie.sedzia or j.nazwisko eq wyznaczenie.sedzia)}" value="#{j.nazwisko}" /><br /><span class="mut mono">#{j.sedzia}</span><h:outputText rendered="#{not empty j.nieobecnosc}" styleClass="mut" value=" · #{j.nieobecnosc}" /></p:column>
+          <p:column headerText="Funkcja">#{j.funkcja}</p:column>
           <p:column headerText="We wstępnej kontroli"><div class="hbar two"><span class="tr"><span style="width: #{j.percent}%;"></span></span><span class="v">#{j.sprawy}</span></div></p:column>
           <p:column headerText="Terminy w tym tygodniu">#{j.terminyTydzien} <span class="mut">#{j.terminyUwaga}</span></p:column>
           <p:column headerText="Nieobecności"><h:panelGroup rendered="#{not empty j.nieobecnosc and j.nieobecnoscTone eq 'WARN'}"><tk:tag value="#{j.nieobecnosc}" tone="WARN" /></h:panelGroup><h:outputText rendered="#{not empty j.nieobecnosc and j.nieobecnoscTone ne 'WARN'}" styleClass="mut" value="#{j.nieobecnosc}" /><h:outputText rendered="#{empty j.nieobecnosc}" value="—" /></p:column>

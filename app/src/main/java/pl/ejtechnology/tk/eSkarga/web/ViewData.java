@@ -120,6 +120,12 @@ public interface ViewData {
 
     List<DictionaryRow> reviewStandards();
 
+    /** Słownik sędziów (S-24, ADR 0027): wszyscy, także wycofani i poza kadencją. */
+    List<pl.ejtechnology.tk.eSkarga.web.model.JudgeRow> judgesDictionary();
+
+    /** Konta z rejestru S-22 z rolą sędziego albo Prezesa – podpowiedź loginu przy dodawaniu do słownika sędziów. */
+    List<pl.ejtechnology.tk.eSkarga.web.model.AccountRow> judgeAccounts();
+
     /** Słownik wymogów formalnych listy kontrolnej dla repertorium (S-24; aktywne i wycofane). */
     List<pl.ejtechnology.tk.eSkarga.web.model.RequirementRow> requirements(pl.ejtechnology.tk.eSkarga.domain.DocketSymbol symbol);
 

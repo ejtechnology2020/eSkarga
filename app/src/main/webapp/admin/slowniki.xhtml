@@ -153,6 +153,55 @@
             </section>
           </div>
         </p:tab>
+        <p:tab title="Sędziowie">
+          <!-- S-24 / ADR 0027: słownik sędziów – jedyne źródło sędziów do wyznaczenia (S-17) i składów (S-18): login z ID-users, nazwa do pism,
+               funkcja (Prezes, Wiceprezes, sędzia), kadencja; wpis wycofywany, nie usuwany -->
+          <div class="flow">
+            <section class="tw fx2" aria-labelledby="h-sd">
+              <div class="tt"><h2 id="h-sd" class="h2-17">Sędziowie Trybunału</h2><span class="count">#{administracja.sedziowieSlownik.size()}</span><span class="sp"></span>
+                <p:commandButton id="sd-nowy" value="Nowy sędzia" action="#{administracja.newJudge}" update=":sf:tabs:sd-edytor" process="@this" styleClass="s p" /></div>
+              <p:dataTable id="sd-lista" value="#{administracja.sedziowieSlownik}" var="j" rowStyleClass="#{j.rowClass()}" summary="Słownik sędziów">
+                <p:column headerText="Sędzia"><b>#{j.nazwa}</b><br/><span class="mono mut">#{j.login}</span></p:column>
+                <p:column headerText="Funkcja"><tk:tag value="#{j.funkcjaOpis}" tone="#{j.funkcja eq 'PREZES' ? 'OK' : (j.funkcja eq 'WICEPREZES' ? 'INFO' : 'NEUTRAL')}" /></p:column>
+                <p:column headerText="Kadencja">#{fmt.date(j.od)} – #{empty j.doDnia ? '…' : fmt.date(j.doDnia)}</p:column>
+                <p:column headerText="Stan"><tk:tag value="#{j.stan()}" tone="#{not j.aktywny ? 'OFF' : (j.wKadencji ? 'OK' : 'WARN')}" /><br/><span class="mut">#{j.zmieniono}</span></p:column>
+                <p:column headerText="#{msg['common.actions']}">
+                  <div class="row" style="gap: 4px; flex-wrap: wrap;">
+                    <p:commandButton value="Edytuj" action="#{administracja.editJudge(j)}" update=":sf:tabs:sd-edytor" process="@this" styleClass="s" />
+                    <p:commandButton value="Wycofaj" action="#{administracja.toggleJudge(j.id, false)}" update=":sf:tabs:sd-lista :sf:tabs:sd-edytor :growl" process="@this" styleClass="s d" rendered="#{j.aktywny}"
+                                     onclick="return confirm('Wycofać #{j.nazwa} ze słownika? Nie będzie można wyznaczać tego sędziego; sprawy już przydzielone zostają.');" />
+                    <p:commandButton value="Przywróć" action="#{administracja.toggleJudge(j.id, true)}" update=":sf:tabs:sd-lista :sf:tabs:sd-edytor :growl" process="@this" styleClass="s" rendered="#{not j.aktywny}" />
+                  </div>
+                </p:column>
+              </p:dataTable>
+            </section>
+            <section class="card fx1" aria-label="Edytor wpisu sędziego">
+              <h:panelGroup id="sd-edytor" layout="block" styleClass="col" style="gap: 8px;">
+                <div class="pane-h"><b>#{empty administracja.sedziaId ? 'Nowy sędzia' : 'Wpis: '.concat(administracja.sedziaLogin)}</b></div>
+                <div class="fld"><p:outputLabel for="sd-login" value="Login z ID-users (stały)" />
+                  <p:selectOneMenu id="sd-login" value="#{administracja.sedziaLogin}" editable="true" disabled="#{not empty administracja.sedziaId}" style="min-width: 260px;">
+                    <f:selectItem itemLabel="— wpisz albo wybierz konto z rejestru S-22 —" itemValue="" />
+                    <f:selectItems value="#{administracja.kontaSedziow}" var="k" itemLabel="#{k.etykieta()}" itemValue="#{k.login}" />
+                  </p:selectOneMenu></div>
+                <div class="fld"><p:outputLabel for="sd-nazwa" value="Imię i nazwisko (do pism)" /><p:inputText id="sd-nazwa" value="#{administracja.sedziaNazwa}" maxlength="200" pt:placeholder="Jan Przykładowy" /></div>
+                <div class="fld"><p:outputLabel for="sd-funkcja" value="Funkcja" />
+                  <p:selectOneMenu id="sd-funkcja" value="#{administracja.sedziaFunkcja}">
+                    <f:selectItems value="#{administracja.funkcje}" var="fn" itemLabel="#{fn.label()}" itemValue="#{fn.name()}" />
+                  </p:selectOneMenu></div>
+                <div class="row" style="gap: 12px;">
+                  <div class="fld"><p:outputLabel for="sd-od" value="Początek kadencji" /><p:datePicker id="sd-od" value="#{administracja.sedziaOd}" pattern="dd.MM.yyyy" showIcon="false" /></div>
+                  <div class="fld"><p:outputLabel for="sd-do" value="Koniec kadencji" /><p:datePicker id="sd-do" value="#{administracja.sedziaDo}" pattern="dd.MM.yyyy" showIcon="false" /><span class="hint">9 lat (art. 194 ust. 1 Konstytucji); puste = nieznany</span></div>
+                </div>
+                <div class="row" style="gap: 6px;">
+                  <p:commandButton id="sd-zapisz" value="#{empty administracja.sedziaId ? 'Dodaj do słownika' : 'Zapisz zmiany'}" action="#{administracja.saveJudge}"
+                                   process="@this :sf:tabs:sd-login :sf:tabs:sd-nazwa :sf:tabs:sd-funkcja :sf:tabs:sd-od :sf:tabs:sd-do" update=":sf:tabs:sd-lista :sf:tabs:sd-edytor :growl" styleClass="s p" />
+                  <p:commandButton value="Anuluj" action="#{administracja.newJudge}" update=":sf:tabs:sd-edytor" process="@this" styleClass="s q" rendered="#{not empty administracja.sedziaId}" />
+                </div>
+                <p class="hint">Wyznaczyć do sprawy (S-17) i do składu (S-18) można tylko sędziego z aktywnym wpisem i w kadencji w dniu czynności. Upoważnienia „za Prezesa” prowadzi osobno S-23 (BR-10).</p>
+              </h:panelGroup>
+            </section>
+          </div>
+        </p:tab>
       </p:tabView>
     </h:form>
   </ui:define>

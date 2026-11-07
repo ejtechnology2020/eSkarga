@@ -17,7 +17,7 @@ public class StubDocsGateway implements DocsGateway {
     @Override
     public byte[] renderLetter(String templateCode, String templateSource, Map<String, Object> model) {
         rendered.add(templateCode);
-        return ("%PDF-1.7 /Type /Page " + templateCode + " " + model.get("sygnatura") + " " + model.get("skarzacy") + " " + model.get("braki")).getBytes(StandardCharsets.UTF_8);
+        return ("%PDF-1.7 /Type /Page " + templateCode + " " + model.get("sygnatura") + " " + model.get("skarzacy") + " " + model.get("braki") + " " + model.get("sedzia")).getBytes(StandardCharsets.UTF_8);
     }
 
     @Override

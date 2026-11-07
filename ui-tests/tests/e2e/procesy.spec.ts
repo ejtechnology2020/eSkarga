@@ -173,11 +173,31 @@ test.describe.serial('Procesy eSkargi (OIDC)', () => {
     await expect(page.locator('#bell .cnt'), 'obejrzane pozycje nie wracają w tej sesji').toHaveCount(0);
   });
 
+  test('UC-24 S-24 słownik sędziów: administrator wpisuje konto testowe jako sędziego w kadencji (ADR 0027)', async () => {
+    await page.goto('/admin/slowniki.xhtml?zakladka=sedziowie');
+    const lista = page.locator('[id$="sd-lista"]');
+    await expect(page.locator('[id$="sd-nowy"]')).toBeVisible();
+    if (!(await lista.locator('tbody tr', { hasText: LOGIN }).first().isVisible().catch(() => false))) {
+      await page.locator('[id$="sd-nowy"]').click();
+      // login: pole edytowalne p:selectOneMenu – wpis ręczny
+      await page.locator(jsf('sf:tabs:sd-login') + ' input, ' + jsf('sf:tabs:sd-login_editableInput')).first().fill(LOGIN);
+      await page.fill(jsf('sf:tabs:sd-nazwa'), 'Ewa Endtoend');
+      await page.fill(jsf('sf:tabs:sd-od_input'), '01.01.2020');
+      await page.keyboard.press('Escape');
+      await page.fill(jsf('sf:tabs:sd-do_input'), '31.12.2029');
+      await page.keyboard.press('Escape');
+      await page.locator('[id$="sd-zapisz"]').click();
+    }
+    const wiersz = lista.locator('tbody tr', { hasText: LOGIN }).first();
+    await expect(wiersz, 'konto testowe w słowniku sędziów').toBeVisible({ timeout: 30_000 });
+    await expect(wiersz).toContainText(/w kadencji/);
+  });
+
   test('UC-08 S-17 wyznaczenie sędziego: wybór sprawy i sędziego, zarządzenie z szablonu w aktach', async () => {
     expect(sygnatura).toMatch(/Ts/);
     await page.goto(`/czynnosci/wyznaczenie.xhtml?sygnatura=${encodeURIComponent(sygnatura)}`);
     await expect(page.locator('h1')).toContainText(/wyznaczenie/i);
-    // sędzia: konto testowe (rola TK_SEDZIA, zalogowane → rejestr S-22); w tabeli obciążenia wiersz z loginem
+    // sędzia: konto testowe ze słownika sędziów (UC-24, ADR 0027); w tabeli obciążenia wiersz z loginem
     const wiersz = page.locator('tr', { hasText: LOGIN }).first();
     await expect(wiersz, 'konto testowe na liście sędziów').toBeVisible();
     await wiersz.locator('.ui-radiobutton-box, input[type=radio]').first().click();

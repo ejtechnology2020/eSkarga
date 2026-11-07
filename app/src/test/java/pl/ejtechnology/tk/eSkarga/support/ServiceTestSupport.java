@@ -108,6 +108,7 @@ public abstract class ServiceTestSupport {
         public final pl.ejtechnology.tk.eSkarga.domain.service.UserDirectoryService directory;
         public final SearchService search;
         public final pl.ejtechnology.tk.eSkarga.domain.service.RequirementCatalogService requirements;
+        public final pl.ejtechnology.tk.eSkarga.domain.service.JudgeDictionaryService judgeDictionary;
 
         public Services(EntityManager em, PreliminaryReviewProcess process) {
             this.em = em;
@@ -128,7 +129,8 @@ public abstract class ServiceTestSupport {
             this.cases = Wiring.inject(new CaseFileService(), em, docketNumbers, process, audit, clock, search, store);
             this.corrections = Wiring.inject(new CorrectionService(), em, audit, clock);
             this.deliveries = Wiring.inject(new DeliveryService(), em, holidays, process, audit);
-            this.appeals = Wiring.inject(new AppealService(), em, cases, delegations, process, audit, clock);
+            this.judgeDictionary = Wiring.inject(new pl.ejtechnology.tk.eSkarga.domain.service.JudgeDictionaryService(), em, audit, clock);
+            this.appeals = Wiring.inject(new AppealService(), em, cases, delegations, process, audit, clock, judgeDictionary);
             this.caseAccess = caseAccess0;
             this.access = Wiring.inject(new AccessRequestService(), em, cases, audit, clock);
             this.generalLetters = Wiring.inject(new GeneralLetterService(), em, incoming, audit, clock);
@@ -136,7 +138,7 @@ public abstract class ServiceTestSupport {
             this.archive = Wiring.inject(new ArchiveService(), em, cases, store, audit, clock);
             this.reports = Wiring.inject(new ReportService(), em, clock);
             this.templates = Wiring.inject(new TemplateService(), em, audit, validator, clock);
-            this.judges = Wiring.inject(new JudgeAssignmentService(), em, cases, delegations, engine.getTaskService(), audit, clock, templates, docs, store);
+            this.judges = Wiring.inject(new JudgeAssignmentService(), em, cases, delegations, engine.getTaskService(), audit, clock, templates, docs, store, judgeDictionary);
             this.checklist = Wiring.inject(new ChecklistService(), em, cases, caseAccess0, audit, clock);
             this.notes = Wiring.inject(new NoteService(), em, caseAccess, audit, clock);
             this.letters = Wiring.inject(new LetterService(), em, cases, templates, docs, store, engine.getTaskService(), audit, clock);
@@ -204,8 +206,24 @@ public abstract class ServiceTestSupport {
                 LocalDate.of(2026, 10, 28), false, "adw. Anna Testowa (pełnomocnik Jana Przykładowego)", 3, 5, false, "kprzykladowy", "10.0.0.7"));
     }
 
+    /** Sędziowie testowi w słowniku (ADR 0027): loginy używane w testach, kadencja obejmująca TODAY; idempotentnie. */
+    protected static void seedJudges(Services s) {
+        java.util.Map<String, pl.ejtechnology.tk.eSkarga.domain.JudgeFunction> judges = new java.util.LinkedHashMap<>();
+        judges.put(PREZES, pl.ejtechnology.tk.eSkarga.domain.JudgeFunction.PREZES);
+        judges.put("wiceprezes.testowy", pl.ejtechnology.tk.eSkarga.domain.JudgeFunction.WICEPREZES);
+        for (String login : List.of("sedzia.fikcyjny", "sedzia.testowy", "sedzia.drugi", "inny", "a", "b", "c", "s1", "s2", "s3")) {
+            judges.put(login, pl.ejtechnology.tk.eSkarga.domain.JudgeFunction.SEDZIA);
+        }
+        for (var e : judges.entrySet()) {
+            if (s.judgeDictionary.byUserId(e.getKey()).isEmpty()) {
+                s.judgeDictionary.add(e.getKey(), "sędzia TK " + e.getKey(), e.getValue(), LocalDate.of(2020, 1, 1), LocalDate.of(2028, 12, 31), "admin");
+            }
+        }
+    }
+
     /** Zakłada sprawę Ts ze skarżącym i pełnomocnikiem (UC-03); proces czeka na wyznaczenie sędziego. */
     protected CaseFile createCase(Services s, long letterId) {
+        seedJudges(s);
         // zarządzenie o wyznaczeniu sędziego powstaje z szablonu – zasiew tylko tego kodu (idempotentny), żeby nie zmieniać numeracji wersji
         // innych szablonów w testach; aktywacja wymaga innej osoby niż autor „system”
         s.templates.seedDefaults(java.util.Map.of("ZARZ_WYZNACZENIE_SEDZIEGO", docs.defaultTemplates().get("ZARZ_WYZNACZENIE_SEDZIEGO")), "admin");

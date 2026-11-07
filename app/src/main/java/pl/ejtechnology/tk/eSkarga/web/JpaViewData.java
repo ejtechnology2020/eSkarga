@@ -125,6 +125,7 @@ public class JpaViewData implements ViewData {
     @Inject AuditService audit;
     @Inject FormalRequirementsService requirements;
     @Inject pl.ejtechnology.tk.eSkarga.domain.service.RequirementCatalogService requirementCatalog;
+    @Inject pl.ejtechnology.tk.eSkarga.domain.service.JudgeDictionaryService judgeDictionary;
     @Inject pl.ejtechnology.tk.eSkarga.domain.service.LetterService letters;
     @Inject pl.ejtechnology.tk.eSkarga.domain.service.ChecklistService checklist;
     @Inject CurrentUser user;
@@ -360,29 +361,48 @@ public class JpaViewData implements ViewData {
     }
 
     /**
-     * Sędziowie do wyznaczenia (S-09): każdy, kto zalogował się do eSkargi z rolą {@code TK_SEDZIA} z ID-users (rejestr S-22, także bez spraw),
-     * plus sędziowie mający sprawy we wstępnej kontroli (obciążenie z wersji wpisów). Bez rejestru lista była pusta do pierwszego przydziału.
+     * Sędziowie do wyznaczenia (S-17, ADR 0027): wyłącznie ze słownika sędziów (S-24) – aktywni i w kadencji w dniu dzisiejszym,
+     * z obciążeniem sprawami we wstępnej kontroli (z wersji wpisów). Pusty słownik = pusta lista (ekran pokazuje wskazówkę).
      */
     @Override
     public List<JudgeLoad> judgeLoads() {
-        java.util.Map<String, Long> loads = new java.util.TreeMap<>();
+        java.util.Map<String, Long> loads = new java.util.HashMap<>();
         for (JudgeAssignmentService.JudgeLoad l : judges.loads()) {
             loads.put(l.judgeUserId(), l.casesInReview());
         }
-        java.util.Map<String, String> names = new java.util.HashMap<>();
-        for (var k : directory.all()) {
-            if (k.getRoles() != null && java.util.Arrays.asList(k.getRoles().split(",")).contains(AppRole.TK_SEDZIA.name())) {
-                loads.putIfAbsent(k.getLogin(), 0L);
-                names.put(k.getLogin(), k.getDisplayName());
-            }
-        }
         long max = loads.values().stream().mapToLong(Long::longValue).max().orElse(1);
         List<JudgeLoad> out = new ArrayList<>();
-        for (var e : loads.entrySet()) {
-            String name = names.getOrDefault(e.getKey(), e.getKey());
-            out.add(new JudgeLoad(e.getKey(), name == null || name.isBlank() ? e.getKey() : name, e.getValue().intValue(), (int) (100 * e.getValue() / Math.max(1, max)), 0, "", null, null, false, true, null));
+        for (var j : judgeDictionary.eligibleOn(clock.today())) {
+            long n = loads.getOrDefault(j.getUserId(), 0L);
+            String kadencja = j.getTermTo() == null ? null : "kadencja do " + fmt.date(j.getTermTo());
+            out.add(new JudgeLoad(j.getUserId(), j.titledName(), (int) n, (int) (100 * n / Math.max(1, max)), 0, "", kadencja, null, false, true, null, j.getFunction().label()));
         }
         out.sort(java.util.Comparator.comparing(JudgeLoad::nazwisko, String.CASE_INSENSITIVE_ORDER));
+        return out;
+    }
+
+    @Override
+    public List<pl.ejtechnology.tk.eSkarga.web.model.JudgeRow> judgesDictionary() {
+        List<pl.ejtechnology.tk.eSkarga.web.model.JudgeRow> out = new ArrayList<>();
+        LocalDate today = clock.today();
+        for (var j : judgeDictionary.all()) {
+            Instant t = j.getUpdatedAt() != null ? j.getUpdatedAt() : j.getCreatedAt();
+            String kto = j.getUpdatedBy() != null ? j.getUpdatedBy() : j.getCreatedBy();
+            out.add(new pl.ejtechnology.tk.eSkarga.web.model.JudgeRow(j.getId(), j.getUserId(), j.getDisplayName(), j.getFunction().name(), j.getFunction().label(), j.getTermFrom(), j.getTermTo(),
+                    j.isActive(), j.eligibleOn(today), t == null ? "" : fmt.dateTime(at(t)) + " · " + kto));
+        }
+        return out;
+    }
+
+    @Override
+    public List<pl.ejtechnology.tk.eSkarga.web.model.AccountRow> judgeAccounts() {
+        List<pl.ejtechnology.tk.eSkarga.web.model.AccountRow> out = new ArrayList<>();
+        for (var k : directory.all()) {
+            List<String> roles = k.getRoles() == null ? List.of() : java.util.Arrays.asList(k.getRoles().split(","));
+            if (roles.contains(AppRole.TK_SEDZIA.name()) || roles.contains(AppRole.TK_PREZES.name())) {
+                out.add(new pl.ejtechnology.tk.eSkarga.web.model.AccountRow(k.getLogin(), k.getDisplayName()));
+            }
+        }
         return out;
     }
 

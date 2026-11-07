@@ -6,6 +6,12 @@ import pl.ejtechnology.tk.eSkarga.domain.Tone;
 
 /** Obciążenie sędziego (S-17, S-19, S-01 Prezes). */
 public record JudgeLoad(String sedzia, String nazwisko, int sprawy, int percent, int terminyTydzien, String terminyUwaga,
-                        String nieobecnosc, Tone nieobecnoscTone, boolean wybrany, boolean dostepny, String powodNiedostepnosci)
+                        String nieobecnosc, Tone nieobecnoscTone, boolean wybrany, boolean dostepny, String powodNiedostepnosci, String funkcja)
         implements Serializable {
+
+    /** Bez funkcji ze słownika (dane przykładowe). */
+    public JudgeLoad(String sedzia, String nazwisko, int sprawy, int percent, int terminyTydzien, String terminyUwaga,
+                     String nieobecnosc, Tone nieobecnoscTone, boolean wybrany, boolean dostepny, String powodNiedostepnosci) {
+        this(sedzia, nazwisko, sprawy, percent, terminyTydzien, terminyUwaga, nieobecnosc, nieobecnoscTone, wybrany, dostepny, powodNiedostepnosci, "sędzia TK");
+    }
 }

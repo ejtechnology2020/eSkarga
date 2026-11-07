@@ -52,7 +52,7 @@ class JpaViewDataTest extends ServiceTestSupport {
         TaskBoardService board = Wiring.inject(new TaskBoardService(), engine.getTaskService(), s.cases, s.deliveries, s.caseAccess, clock);
         FormalRequirementsService req = Wiring.inject(new FormalRequirementsService(), engine.getDecisionService(), s.requirements);
         return Wiring.inject(new JpaViewData(), s.cases, s.incoming, s.deliveries, s.appeals, s.generalLetters, s.access, s.documents, s.judges, board, s.reports,
-                s.archive, s.delegations, s.templates, s.dictionaries, s.holidays, s.caseAccess, s.audit, req, new TestUser(login, roles), clock, new Fmt(), s.search, s.checklist, s.letters, s.notes, s.directory, s.requirements);
+                s.archive, s.delegations, s.templates, s.dictionaries, s.holidays, s.caseAccess, s.audit, req, new TestUser(login, roles), clock, new Fmt(), s.search, s.checklist, s.letters, s.notes, s.directory, s.requirements, s.judgeDictionary);
     }
 
     @Test
@@ -88,6 +88,15 @@ class JpaViewDataTest extends ServiceTestSupport {
                 assertThat(t.grupowe()).isTrue();
             });
             assertThat(prezes.menuCounter(Screen.S01, AppRole.TK_PREZES)).isGreaterThanOrEqualTo(1);
+            // ADR 0027: lista sędziów do wyznaczenia ze słownika (seedJudges), z funkcją; konto z rejestru S-22 bez wpisu w słowniku nie jest kandydatem
+            s.directory.touch("sedzia.bez.wpisu", "Sędzia Bez Wpisu", Set.of(AppRole.TK_SEDZIA));
+            assertThat(prezes.judgeLoads()).extracting(t -> t.sedzia()).contains("sedzia.fikcyjny", "wiceprezes.testowy").doesNotContain("sedzia.bez.wpisu");
+            assertThat(prezes.judgeLoads()).filteredOn(t -> t.sedzia().equals("wiceprezes.testowy")).singleElement().satisfies(t -> {
+                assertThat(t.funkcja()).isEqualTo("Wiceprezes TK");
+                assertThat(t.nieobecnosc()).contains("kadencja do");
+            });
+            assertThat(prezes.judgesDictionary()).extracting(j -> j.login()).contains("sedzia.fikcyjny");
+            assertThat(prezes.judgeAccounts()).extracting(a -> a.login()).contains("sedzia.bez.wpisu");
             assertThat(prezes.notifications(java.time.Instant.EPOCH)).as("Prezes: sprawa do wyznaczenia i nowe zadanie grupy w powiadomieniach")
                     .anySatisfy(n -> assertThat(n.klucz()).startsWith("wyznaczenie:")).anySatisfy(n -> {
                         assertThat(n.klucz()).startsWith("zadanie:");

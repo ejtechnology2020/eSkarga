@@ -495,6 +495,19 @@ public class DemoDataset implements Serializable, pl.ejtechnology.tk.eSkarga.web
         return true;   // w demo zakładka pokazuje dane przykładowe; dostęp w trybie OIDC rozstrzyga NoteService (FR-24)
     }
 
+    public List<pl.ejtechnology.tk.eSkarga.web.model.JudgeRow> judgesDictionary() {
+        return List.of(
+                new pl.ejtechnology.tk.eSkarga.web.model.JudgeRow(1L, "pfikcyjny", "Piotr Fikcyjny", "PREZES", "Prezes TK", d(2019, 12, 5), d(2028, 12, 4), true, true, "03.11.2026 · Anna Admin"),
+                new pl.ejtechnology.tk.eSkarga.web.model.JudgeRow(2L, "ewzorcowa", "Ewa Wzorcowa", "WICEPREZES", "Wiceprezes TK", d(2020, 2, 1), d(2029, 1, 31), true, true, "03.11.2026 · Anna Admin"),
+                new pl.ejtechnology.tk.eSkarga.web.model.JudgeRow(3L, "atestowy", "Adam Testowy", "SEDZIA", "sędzia TK", d(2021, 6, 1), d(2030, 5, 31), true, true, "03.11.2026 · Anna Admin"),
+                new pl.ejtechnology.tk.eSkarga.web.model.JudgeRow(4L, "mmakietowa", "Maria Makietowa", "SEDZIA", "sędzia TK", d(2018, 1, 1), d(2026, 12, 31), true, true, "03.11.2026 · Anna Admin"),
+                new pl.ejtechnology.tk.eSkarga.web.model.JudgeRow(5L, "jbyly", "Jan Były", "SEDZIA", "sędzia TK", d(2008, 1, 1), d(2017, 12, 31), false, false, "12.01.2018 · Anna Admin"));
+    }
+
+    public List<pl.ejtechnology.tk.eSkarga.web.model.AccountRow> judgeAccounts() {
+        return List.of(new pl.ejtechnology.tk.eSkarga.web.model.AccountRow("pfikcyjny", "Piotr Fikcyjny"), new pl.ejtechnology.tk.eSkarga.web.model.AccountRow("atestowy", "Adam Testowy"));
+    }
+
     public List<pl.ejtechnology.tk.eSkarga.web.model.RequirementRow> requirements(DocketSymbol symbol) {
         if (symbol == DocketSymbol.TW) {
             return List.of(

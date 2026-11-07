@@ -76,6 +76,13 @@ public class AdministracjaBean implements Serializable {
     private String wymogPodstawa;
     private String wymogWarunek = "ZAWSZE";
     private int wymogKolejnosc = 999;
+    /** Słownik sędziów (S-24, ADR 0027): wpis w edytorze (null = nowy) i jego pola. */
+    private Long sedziaId;
+    private String sedziaLogin;
+    private String sedziaNazwa;
+    private String sedziaFunkcja = "SEDZIA";
+    private java.time.LocalDate sedziaOd;
+    private java.time.LocalDate sedziaDo;
     private int tab = 2;
     /** Akt podstawowy (PDF) z p:fileUpload – zapamiętany w widoku do czasu „Zapisz upoważnienie”. */
     public void uploadAkt(org.primefaces.event.FileUploadEvent event) {
@@ -303,6 +310,78 @@ public class AdministracjaBean implements Serializable {
         return podgladId == null || settings.isDemo() ? null : "/admin/szablony/podglad?id=" + podgladId + "&v=" + System.nanoTime();
     }
 
+    // ---- słownik sędziów (S-24, ADR 0027)
+    @Inject
+    private pl.ejtechnology.tk.eSkarga.domain.service.JudgeDictionaryService sedziowie;
+
+    public List<pl.ejtechnology.tk.eSkarga.web.model.JudgeRow> getSedziowieSlownik() { return data.judgesDictionary(); }
+    public List<pl.ejtechnology.tk.eSkarga.web.model.AccountRow> getKontaSedziow() { return data.judgeAccounts(); }
+    public List<pl.ejtechnology.tk.eSkarga.domain.JudgeFunction> getFunkcje() { return java.util.Arrays.asList(pl.ejtechnology.tk.eSkarga.domain.JudgeFunction.values()); }
+
+    public void editJudge(pl.ejtechnology.tk.eSkarga.web.model.JudgeRow r) {
+        sedziaId = r.id();
+        sedziaLogin = r.login();
+        sedziaNazwa = r.nazwa();
+        sedziaFunkcja = r.funkcja();
+        sedziaOd = r.od();
+        sedziaDo = r.doDnia();
+    }
+
+    public void newJudge() {
+        sedziaId = null;
+        sedziaLogin = null;
+        sedziaNazwa = null;
+        sedziaFunkcja = "SEDZIA";
+        sedziaOd = null;
+        sedziaDo = null;
+    }
+
+    /** Nowy wpis albo zmiana (login stały – sprawy i zarządzenia odwołują się do loginu). */
+    public void saveJudge() {
+        FacesContext fc = FacesContext.getCurrentInstance();
+        if (settings.isDemo()) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Tryb demo: wpis nie jest zapisywany.", null));
+            return;
+        }
+        try {
+            var funkcja = pl.ejtechnology.tk.eSkarga.domain.JudgeFunction.valueOf(sedziaFunkcja);
+            var j = sedziaId == null ? sedziowie.add(sedziaLogin, sedziaNazwa, funkcja, sedziaOd, sedziaDo, currentUser.getLogin())
+                    : sedziowie.update(sedziaId, sedziaNazwa, funkcja, sedziaOd, sedziaDo, currentUser.getLogin());
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, (sedziaId == null ? "Dodano do słownika: " : "Zapisano: ") + j.titledName() + ".",
+                    "Kadencja " + j.getTermFrom() + " – " + (j.getTermTo() == null ? "…" : j.getTermTo())));
+            newJudge();
+        } catch (RuntimeException e) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się zapisać sędziego.", e.getMessage()));
+        }
+    }
+
+    public void toggleJudge(long id, boolean active) {
+        if (settings.isDemo()) {
+            return;
+        }
+        try {
+            var j = sedziowie.setActive(id, active, currentUser.getLogin());
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, (active ? "Przywrócono " : "Wycofano ") + j.titledName() + ".", null));
+            if (sedziaId != null && sedziaId == id && !active) {
+                newJudge();
+            }
+        } catch (RuntimeException e) {
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się zmienić wpisu.", e.getMessage()));
+        }
+    }
+
+    public Long getSedziaId() { return sedziaId; }
+    public String getSedziaLogin() { return sedziaLogin; }
+    public void setSedziaLogin(String v) { sedziaLogin = v; }
+    public String getSedziaNazwa() { return sedziaNazwa; }
+    public void setSedziaNazwa(String v) { sedziaNazwa = v; }
+    public String getSedziaFunkcja() { return sedziaFunkcja; }
+    public void setSedziaFunkcja(String v) { sedziaFunkcja = v; }
+    public java.time.LocalDate getSedziaOd() { return sedziaOd; }
+    public void setSedziaOd(java.time.LocalDate v) { sedziaOd = v; }
+    public java.time.LocalDate getSedziaDo() { return sedziaDo; }
+    public void setSedziaDo(java.time.LocalDate v) { sedziaDo = v; }
+
     // ---- lista kontrolna wymogów formalnych (S-24, UC-06, ADR 0015)
     @Inject
     private pl.ejtechnology.tk.eSkarga.domain.service.RequirementCatalogService wymogi;
@@ -415,7 +494,7 @@ public class AdministracjaBean implements Serializable {
 
     public void applyState() {
         if (zakladka != null) {
-            tab = switch (zakladka) { case "slowniki" -> 0; case "szablony" -> 1; case "lista" -> 3; default -> 2; };
+            tab = switch (zakladka) { case "slowniki" -> 0; case "szablony" -> 1; case "lista" -> 3; case "sedziowie" -> 4; default -> 2; };
         }
     }
 

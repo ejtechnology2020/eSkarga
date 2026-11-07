@@ -765,3 +765,9 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   `RequirementCatalogService` (add/update/setActive, TK_ADMIN, audyt), `FormalRequirementsService` czyta słownik (DMN zapasem), zakładka
   „Lista kontrolna” z przełącznikiem Ts/Tw, tabelą i edytorem (kod stały, wycofanie zamiast usunięcia). Testy: `RequirementCatalogServiceTest`,
   GUI UC-24 (lista). ADR 0015 zaktualizowany.
+- ADR 0027 – 07.11.2026 – **słownik sędziów** (S-24 → „Sędziowie”): login z ID-users (podpowiedź z rejestru S-22), nazwa do pism,
+  funkcja Prezes/Wiceprezes/sędzia, kadencja od–do, wycofanie; `JudgeDictionaryService`; S-17 i S-18 biorą kandydatów wyłącznie
+  ze słownika (aktywni, w kadencji), `draftOrder`/`referToPanel` odrzucają innych; **S-18 działa naprawdę** (zażalenie sprawy,
+  3 sędziów ze słownika z wykluczeniem sędziego odmowy, przewodniczący/sprawozdawca, termin posiedzenia → `referToPanel`,
+  Prezes/Wiceprezes podpowiadany jako przewodniczący). Testy: `JudgeDictionaryServiceTest`, skład w `DeliveryAndAppealServiceTest`,
+  `JpaViewDataTest`, GUI UC-24 (słownik sędziów) przed UC-08.

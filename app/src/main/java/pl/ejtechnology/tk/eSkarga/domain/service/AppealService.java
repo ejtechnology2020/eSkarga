@@ -46,6 +46,8 @@ public class AppealService {
     AuditService audit;
     @Inject
     AppClock clock;
+    @Inject
+    JudgeDictionaryService judgeDictionary;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     @RequiresRole({AppRole.TK_REFERENT})
@@ -75,8 +77,11 @@ public class AppealService {
         Appeal appeal = em.find(Appeal.class, appealId);
         CaseFile cf = appeal.getCaseFile();
         delegations.requireActingAsPresident(userId, roles, clock.today(), "skierowanie zażalenia " + cf.getDocket().format());
-        if (panelUserIds.size() != 3) {
-            throw new IllegalArgumentException("Skład rozpoznający zażalenie liczy 3 sędziów (art. 61 ust. 6)");
+        if (panelUserIds.size() != 3 || panelUserIds.stream().distinct().count() != 3) {
+            throw new IllegalArgumentException("Skład rozpoznający zażalenie liczy 3 różnych sędziów (art. 61 ust. 6)");
+        }
+        for (String member : panelUserIds) {
+            judgeDictionary.requireEligible(member, clock.today());   // ADR 0027: skład tylko ze słownika sędziów, w kadencji
         }
         String refusingJudge = cf.current().getJudgeUserId();
         if (refusingJudge != null && panelUserIds.contains(refusingJudge)) {
@@ -104,6 +109,12 @@ public class AppealService {
         return em.createQuery("select d from Deadline d where d.caseFile = :c and d.kind = :k and d.status <> :rev order by d.createdAt desc", Deadline.class)
                 .setParameter("c", cf).setParameter("k", DeadlineType.ZAZALENIE).setParameter("rev", DeadlineStatus.UCHYLONY)
                 .getResultStream().findFirst();
+    }
+
+    /** Zażalenie sprawy czekające na skierowanie do składu albo na wynik (S-18). */
+    public Optional<Appeal> pendingFor(CaseFile cf) {
+        return em.createQuery("select a from Appeal a where a.caseFile = :c and a.outcome is null order by a.id desc", Appeal.class)
+                .setParameter("c", cf).setMaxResults(1).getResultStream().findFirst();
     }
 
     public List<Appeal> all() {
