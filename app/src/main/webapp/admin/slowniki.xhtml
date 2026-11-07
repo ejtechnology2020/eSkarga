@@ -104,6 +104,55 @@
             <p class="hint">Najbliższe: 10.11.2026 — dzień wolny za 15.08.2026 (sobota) · 11.11.2026 — Narodowe Święto Niepodległości.</p>
           </section>
         </p:tab>
+        <p:tab title="Lista kontrolna">
+          <!-- S-24 / UC-06 / ADR 0015: wymogi formalne listy kontrolnej osobno dla Ts (skargi) i Tw (wnioski); kod stały, treść/podstawa/warunek
+               edytowalne, pozycje wycofywane (nie usuwane); zmiany obowiązują dla ocen od teraz, zapisane oceny w aktach zostają -->
+          <div class="flow">
+            <section class="tw fx2" aria-labelledby="h-lk">
+              <div class="tt"><h2 id="h-lk" class="h2-17">Wymogi formalne</h2><span class="count">#{administracja.wymogi.size()}</span>
+                <div class="tabs" role="tablist" aria-label="Repertorium" style="margin-left: 12px;">
+                  <p:commandButton id="lk-ts" value="Ts · skargi" action="#{administracja.setSymbolListy('TS')}" update=":sf:tabs:lk-lista :sf:tabs:lk-edytor" process="@this" styleClass="q #{administracja.symbolListy eq 'TS' ? 'p' : ''}" pt:role="tab" pt:aria-selected="#{administracja.symbolListy eq 'TS'}" />
+                  <p:commandButton id="lk-tw" value="Tw · wnioski" action="#{administracja.setSymbolListy('TW')}" update=":sf:tabs:lk-lista :sf:tabs:lk-edytor" process="@this" styleClass="q #{administracja.symbolListy eq 'TW' ? 'p' : ''}" pt:role="tab" pt:aria-selected="#{administracja.symbolListy eq 'TW'}" />
+                </div>
+                <span class="sp"></span>
+                <p:commandButton id="lk-nowy" value="Nowy wymóg" action="#{administracja.newRequirement}" update=":sf:tabs:lk-edytor" process="@this" styleClass="s p" /></div>
+              <p:dataTable id="lk-lista" value="#{administracja.wymogi}" var="w" rowStyleClass="#{w.rowClass()}" summary="Wymogi formalne listy kontrolnej">
+                <p:column headerText="Kod" style="width: 70px;"><span class="mono">#{w.kod}</span></p:column>
+                <p:column headerText="Wymóg">#{w.wymog}<br/><span class="mut">#{w.podstawa} · #{w.warunekOpis}</span></p:column>
+                <p:column headerText="Kolejność" style="width: 80px;">#{w.kolejnosc}</p:column>
+                <p:column headerText="Stan"><tk:tag value="#{w.aktywny ? 'aktywny' : 'wycofany'}" tone="#{w.aktywny ? 'OK' : 'OFF'}" /><br/><span class="mut">#{w.zmieniono}</span></p:column>
+                <p:column headerText="#{msg['common.actions']}">
+                  <div class="row" style="gap: 4px; flex-wrap: wrap;">
+                    <p:commandButton value="Edytuj" action="#{administracja.editRequirement(w)}" update=":sf:tabs:lk-edytor" process="@this" styleClass="s" />
+                    <p:commandButton value="Wycofaj" action="#{administracja.toggleRequirement(w.id, false)}" update=":sf:tabs:lk-lista :sf:tabs:lk-edytor :growl" process="@this" styleClass="s d" rendered="#{w.aktywny}"
+                                     onclick="return confirm('Wycofać wymóg #{w.kod}? Zniknie z list kontrolnych nowych ocen; oceny zapisane w aktach zostają.');" />
+                    <p:commandButton value="Przywróć" action="#{administracja.toggleRequirement(w.id, true)}" update=":sf:tabs:lk-lista :sf:tabs:lk-edytor :growl" process="@this" styleClass="s" rendered="#{not w.aktywny}" />
+                  </div>
+                </p:column>
+              </p:dataTable>
+            </section>
+            <section class="card fx1" aria-label="Edytor wymogu">
+              <h:panelGroup id="lk-edytor" layout="block" styleClass="col" style="gap: 8px;">
+                <div class="pane-h"><b>#{empty administracja.wymogId ? 'Nowy wymóg' : 'Wymóg '.concat(administracja.wymogKod)} · #{administracja.symbolListy eq 'TS' ? 'Ts (skargi)' : 'Tw (wnioski)'}</b></div>
+                <div class="fld"><p:outputLabel for="lk-kod" value="Kod (stały, np. S-10)" /><p:inputText id="lk-kod" value="#{administracja.wymogKod}" maxlength="20" disabled="#{not empty administracja.wymogId}" styleClass="mono" /></div>
+                <div class="fld"><p:outputLabel for="lk-tresc" value="Treść wymogu" /><p:inputTextarea id="lk-tresc" value="#{administracja.wymogTresc}" rows="3" autoResize="false" /></div>
+                <div class="fld"><p:outputLabel for="lk-podstawa" value="Podstawa prawna" /><p:inputText id="lk-podstawa" value="#{administracja.wymogPodstawa}" maxlength="160" pt:placeholder="art. 53 ust. 1 pkt 1" /></div>
+                <div class="fld"><p:outputLabel for="lk-warunek" value="Warunek stosowania" />
+                  <p:selectOneMenu id="lk-warunek" value="#{administracja.wymogWarunek}">
+                    <f:selectItems value="#{administracja.warunki}" var="c" itemLabel="#{c.label()}" itemValue="#{c.name()}" />
+                  </p:selectOneMenu></div>
+                <div class="fld"><p:outputLabel for="lk-kolejnosc" value="Kolejność na liście" /><p:inputText id="lk-kolejnosc" value="#{administracja.wymogKolejnosc}" type="number" style="width: 6em;" /></div>
+                <div class="row" style="gap: 6px;">
+                  <p:commandButton id="lk-zapisz" value="#{empty administracja.wymogId ? 'Dodaj wymóg' : 'Zapisz zmiany'}" action="#{administracja.saveRequirement}"
+                                   process="@this :sf:tabs:lk-kod :sf:tabs:lk-tresc :sf:tabs:lk-podstawa :sf:tabs:lk-warunek :sf:tabs:lk-kolejnosc" update=":sf:tabs:lk-lista :sf:tabs:lk-edytor :growl" styleClass="s p" />
+                  <p:commandButton value="Anuluj" action="#{administracja.newRequirement}" update=":sf:tabs:lk-edytor" process="@this" styleClass="s q" rendered="#{not empty administracja.wymogId}" />
+                </div>
+                <p class="hint">Lista kontrolna sprawy powstaje z aktywnych wymogów repertorium w chwili oceny: zmiana obowiązuje od teraz, oceny już zapisane w aktach
+                  pozostają (kod wymogu jest stały). Treść wymogów potwierdza Biuro Służby Prawnej (ADR 0015).</p>
+              </h:panelGroup>
+            </section>
+          </div>
+        </p:tab>
       </p:tabView>
     </h:form>
   </ui:define>

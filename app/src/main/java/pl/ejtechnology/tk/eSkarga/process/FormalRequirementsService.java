@@ -11,10 +11,12 @@ import org.operaton.bpm.dmn.engine.DmnDecisionTableResult;
 import org.operaton.bpm.engine.DecisionService;
 
 import pl.ejtechnology.tk.eSkarga.domain.model.Profession;
+import pl.ejtechnology.tk.eSkarga.domain.service.RequirementCatalogService;
 
 /**
- * Lista kontrolna wymogów formalnych (T-024, UC-06, FR-11, FR-13) z tabeli DMN {@code wymogi-formalne} – zmiana wymogów
- * to nowe wdrożenie tabeli, bez zmian w kodzie. BR-05: obowiązek zastępstwa przez adwokata lub radcę prawnego
+ * Lista kontrolna wymogów formalnych (T-024, UC-06, FR-11, FR-13): źródłem jest słownik {@code formal_requirement} zarządzany na S-24
+ * ({@link RequirementCatalogService}, ADR 0015 – aktualizacja 07.11.2026); tabela DMN {@code wymogi-formalne} pozostaje jako
+ * zasiew i zapas, gdy słownik dla repertorium jest pusty. BR-05: obowiązek zastępstwa przez adwokata lub radcę prawnego
  * (art. 44 ust. 1), chyba że skarżący sam należy do zawodów wymienionych w ustawie.
  */
 @Stateless
@@ -28,9 +30,25 @@ public class FormalRequirementsService {
 
     @Inject
     DecisionService decisionService;
+    @Inject
+    RequirementCatalogService catalog;
 
     public List<Requirement> requirements(ProcessVariables.RodzajPisma rodzaj, boolean professionalAttorney, Profession complainantProfession) {
         boolean exempt = isExemptFromRepresentation(complainantProfession);
+        pl.ejtechnology.tk.eSkarga.domain.DocketSymbol symbol = rodzaj == ProcessVariables.RodzajPisma.WNIOSEK ? pl.ejtechnology.tk.eSkarga.domain.DocketSymbol.TW
+                : rodzaj == ProcessVariables.RodzajPisma.SKARGA ? pl.ejtechnology.tk.eSkarga.domain.DocketSymbol.TS : null;
+        if (catalog != null && symbol != null) {
+            List<pl.ejtechnology.tk.eSkarga.domain.model.FormalRequirement> rows = catalog.active(symbol);
+            if (!rows.isEmpty()) {
+                List<Requirement> list = new ArrayList<>();
+                for (var r : rows) {
+                    if (r.getCondition().applies(professionalAttorney, exempt)) {
+                        list.add(new Requirement(r.getCode(), r.getDescription(), r.getLegalBasis()));
+                    }
+                }
+                return list;
+            }
+        }
         DmnDecisionTableResult result = decisionService.evaluateDecisionTableByKey(DECISION_KEY, Map.of(
                 "rodzajPisma", rodzaj.name(),
                 "pelnomocnikZawodowy", professionalAttorney,

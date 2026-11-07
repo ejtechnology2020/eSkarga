@@ -120,6 +120,9 @@ public interface ViewData {
 
     List<DictionaryRow> reviewStandards();
 
+    /** Słownik wymogów formalnych listy kontrolnej dla repertorium (S-24; aktywne i wycofane). */
+    List<pl.ejtechnology.tk.eSkarga.web.model.RequirementRow> requirements(pl.ejtechnology.tk.eSkarga.domain.DocketSymbol symbol);
+
     /** Skany pisma z rejestracji wpływu (po numerze dziennika); w demo pusta lista. */
     List<pl.ejtechnology.tk.eSkarga.web.model.ScanRow> scansOf(String registerNo);
 

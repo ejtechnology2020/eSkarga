@@ -22,6 +22,7 @@ import pl.ejtechnology.tk.eSkarga.domain.CaseStatus;
 import pl.ejtechnology.tk.eSkarga.domain.DeadlineState;
 import pl.ejtechnology.tk.eSkarga.domain.DeadlineType;
 import pl.ejtechnology.tk.eSkarga.domain.DocketNumber;
+import pl.ejtechnology.tk.eSkarga.domain.DocketSymbol;
 import pl.ejtechnology.tk.eSkarga.domain.DocumentKind;
 import pl.ejtechnology.tk.eSkarga.domain.IntakeChannel;
 import pl.ejtechnology.tk.eSkarga.domain.Tone;
@@ -492,6 +493,19 @@ public class DemoDataset implements Serializable, pl.ejtechnology.tk.eSkarga.web
 
     public boolean canReadNotes(String sygnatura) {
         return true;   // w demo zakładka pokazuje dane przykładowe; dostęp w trybie OIDC rozstrzyga NoteService (FR-24)
+    }
+
+    public List<pl.ejtechnology.tk.eSkarga.web.model.RequirementRow> requirements(DocketSymbol symbol) {
+        if (symbol == DocketSymbol.TW) {
+            return List.of(
+                    new pl.ejtechnology.tk.eSkarga.web.model.RequirementRow(101L, "TW", "W-01", "Wskazanie organu, który wydał kwestionowany akt normatywny", "art. 47 ust. 1 pkt 1", "ZAWSZE", "zawsze", 10, true, "03.11.2026 · migracja"),
+                    new pl.ejtechnology.tk.eSkarga.web.model.RequirementRow(102L, "TW", "W-07", "Pełnomocnictwo do sporządzenia wniosku", "art. 44 ust. 2", "BEZ_PELNOMOCNIKA", "gdy pisma nie sporządził adwokat ani radca prawny", 70, true, "03.11.2026 · migracja"));
+        }
+        return List.of(
+                new pl.ejtechnology.tk.eSkarga.web.model.RequirementRow(1L, "TS", "S-01", "Określenie kwestionowanego przepisu ustawy lub innego aktu normatywnego", "art. 53 ust. 1 pkt 1", "ZAWSZE", "zawsze", 10, true, "03.11.2026 · migracja"),
+                new pl.ejtechnology.tk.eSkarga.web.model.RequirementRow(2L, "TS", "S-07", "Załączniki: odpis orzeczenia z datą doręczenia oraz pełnomocnictwo szczególne", "art. 53 ust. 2", "ZAWSZE", "zawsze", 70, true, "03.11.2026 · migracja"),
+                new pl.ejtechnology.tk.eSkarga.web.model.RequirementRow(3L, "TS", "S-09", "Skargę sporządza adwokat lub radca prawny – brak zastępstwa procesowego (BR-05)", "art. 44 ust. 1", "BRAK_ZASTEPSTWA", "gdy brak zastępstwa, a skarżący nie jest zwolniony (art. 44 ust. 1)", 90, true, "03.11.2026 · migracja"),
+                new pl.ejtechnology.tk.eSkarga.web.model.RequirementRow(4L, "TS", "S-10", "Oświadczenie o wyczerpaniu drogi prawnej (wycofany po opinii BSP)", "art. 77 ust. 1", "ZAWSZE", "zawsze", 100, false, "20.10.2026 · Anna Admin"));
     }
 
     public List<ChecklistItem> checklist(String sygnatura) {

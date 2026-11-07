@@ -760,3 +760,8 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   przeniesione do `.pdfv-text`, widżet ustawia `--scale-factor`; nakładka zaznaczeń bez `pointer-events`. **Kopiowanie z cytatem**
   (brief §6): Ctrl+C i przycisk „Kopiuj z cytatem” dopisują „(Ts 312/26, k. 3)” (atrybut `citation` widżetu z sygnatury akt).
   Test widżetu: rozmiar spanów, potrójne kliknięcie, schowek z cytatem.
+- T-024 – 07.11.2026 – **zarządzanie listą kontrolną braków formalnych (Ts/Tw) na S-24**: słownik `formal_requirement` (V11 z zasiewem
+  z DMN, V11_1 uprawnienia), encja `FormalRequirement`, `RequirementCondition` (ZAWSZE / BEZ_PELNOMOCNIKA / BRAK_ZASTEPSTWA – BR-05),
+  `RequirementCatalogService` (add/update/setActive, TK_ADMIN, audyt), `FormalRequirementsService` czyta słownik (DMN zapasem), zakładka
+  „Lista kontrolna” z przełącznikiem Ts/Tw, tabelą i edytorem (kod stały, wycofanie zamiast usunięcia). Testy: `RequirementCatalogServiceTest`,
+  GUI UC-24 (lista). ADR 0015 zaktualizowany.

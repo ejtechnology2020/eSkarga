@@ -57,5 +57,5 @@ Dostęp do ekranu nie oznacza dostępu do każdej sprawy: sędzia i asystent wid
 | Wgląd do akt, publikacja | REFERENT, KIEROWNIK |
 | Pisma ogólne | REFERENT |
 | Archiwizacja | ARCHIWISTA |
-| Szablony pism, słowniki, dni wolne | ADMIN |
+| Szablony pism, słowniki, dni wolne, lista kontrolna wymogów Ts/Tw | ADMIN |
 | Upoważnienia | ADMIN, PREZES |

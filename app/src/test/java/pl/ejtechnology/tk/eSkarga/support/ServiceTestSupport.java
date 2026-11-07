@@ -107,6 +107,7 @@ public abstract class ServiceTestSupport {
         public final CaseDocumentService documents;
         public final pl.ejtechnology.tk.eSkarga.domain.service.UserDirectoryService directory;
         public final SearchService search;
+        public final pl.ejtechnology.tk.eSkarga.domain.service.RequirementCatalogService requirements;
 
         public Services(EntityManager em, PreliminaryReviewProcess process) {
             this.em = em;
@@ -142,6 +143,7 @@ public abstract class ServiceTestSupport {
             this.signing = Wiring.inject(new SigningService(), em, cases, deliveries, docs, store, engine.getTaskService(), audit, clock, judges);
             this.documents = Wiring.inject(new CaseDocumentService(), em, cases, store, audit, clock, search);
             this.directory = Wiring.inject(new pl.ejtechnology.tk.eSkarga.domain.service.UserDirectoryService(), em, clock);
+            this.requirements = Wiring.inject(new pl.ejtechnology.tk.eSkarga.domain.service.RequirementCatalogService(), em, audit, clock);
         }
     }
 

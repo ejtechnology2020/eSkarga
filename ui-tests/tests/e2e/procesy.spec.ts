@@ -277,6 +277,40 @@ test.describe.serial('Procesy eSkargi (OIDC)', () => {
     await expect(lista.locator('tbody tr', { hasText: 'ZARZ_WYZNACZENIE_SEDZIEGO' }).first()).toContainText(/aktywna/);
   });
 
+  test('UC-24 S-24 lista kontrolna: administrator dodaje, zmienia i wycofuje wymóg Ts/Tw', async () => {
+    await page.goto('/admin/slowniki.xhtml?zakladka=lista');
+    const lista = page.locator('[id$="lk-lista"]');
+    await expect(lista).toContainText('S-01');
+    await page.locator('[id$="lk-tw"]').click();
+    await expect(lista).toContainText('W-01', { timeout: 15_000 });
+    await expect(lista).not.toContainText('S-01');
+    await page.locator('[id$="lk-ts"]').click();
+    await expect(lista).toContainText('S-01', { timeout: 15_000 });
+    const kod = `T-${String(Date.now()).slice(-6)}`;
+    await page.locator('[id$="lk-nowy"]').click();
+    await page.fill(jsf('sf:tabs:lk-kod'), kod);
+    await page.fill(jsf('sf:tabs:lk-tresc'), 'Wymóg testowy GUI – do wycofania');
+    await page.fill(jsf('sf:tabs:lk-podstawa'), 'art. 53 ust. 1 pkt 9');
+    await page.fill(jsf('sf:tabs:lk-kolejnosc'), '95');
+    await page.locator('[id$="lk-zapisz"]').click();
+    const wiersz = lista.locator('tbody tr', { hasText: kod });
+    await expect(wiersz).toBeVisible({ timeout: 30_000 });
+    await expect(wiersz).toContainText(/aktywny/);
+    await wiersz.getByRole('button', { name: /^edytuj$/i }).click();
+    await expect(page.locator(jsf('sf:tabs:lk-kod'))).toBeDisabled();
+    await page.fill(jsf('sf:tabs:lk-podstawa'), 'art. 53 ust. 1 pkt 9 (po opinii BSP)');
+    await page.locator('[id$="lk-zapisz"]').click();
+    await expect(lista.locator('tbody tr', { hasText: kod })).toContainText('po opinii BSP', { timeout: 30_000 });
+    page.once('dialog', (d) => d.accept());
+    await lista.locator('tbody tr', { hasText: kod }).getByRole('button', { name: /^wycofaj$/i }).click();
+    await expect(lista.locator('tbody tr', { hasText: kod })).toContainText(/wycofany/, { timeout: 30_000 });
+    // lista kontrolna w aktach nie zawiera wycofanego wymogu
+    await page.goto(`/akta/podglad.xhtml?sygnatura=${encodeURIComponent(sygnatura)}`);
+    await page.getByRole('tab', { name: /lista kontrolna/i }).click();
+    await expect(page.locator('body')).toContainText('Określenie kwestionowanego przepisu');
+    await expect(page.locator('body')).not.toContainText('Wymóg testowy GUI');
+  });
+
   test('UC-10 przełącznik roli zmienia kontekst menu (gdy konto ma kilka ról)', async () => {
     await page.goto('/pulpit.xhtml');
     const rola = page.locator('#tb-rola');

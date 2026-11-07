@@ -124,6 +124,7 @@ public class JpaViewData implements ViewData {
     @Inject CaseAccessService caseAccess;
     @Inject AuditService audit;
     @Inject FormalRequirementsService requirements;
+    @Inject pl.ejtechnology.tk.eSkarga.domain.service.RequirementCatalogService requirementCatalog;
     @Inject pl.ejtechnology.tk.eSkarga.domain.service.LetterService letters;
     @Inject pl.ejtechnology.tk.eSkarga.domain.service.ChecklistService checklist;
     @Inject CurrentUser user;
@@ -816,6 +817,18 @@ public class JpaViewData implements ViewData {
             Tone tone = t.getStatus() == TemplateStatus.AKTYWNA ? Tone.OK : t.getStatus() == TemplateStatus.PROJEKT ? Tone.INFO : Tone.OFF;
             out.add(new TemplateRow(t.getId(), t.getCode(), t.getName(), t.getCode(), "v" + t.getVersion(), t.getCreatedAt() == null ? "" : fmt.dateTime(at(t.getCreatedAt())) + " · " + t.getAuthorUserId(),
                     t.getStatus().name().toLowerCase(), tone, false, uses.getOrDefault(t.getId(), 0L)));
+        }
+        return out;
+    }
+
+    @Override
+    public List<pl.ejtechnology.tk.eSkarga.web.model.RequirementRow> requirements(DocketSymbol symbol) {
+        List<pl.ejtechnology.tk.eSkarga.web.model.RequirementRow> out = new ArrayList<>();
+        for (var r : requirementCatalog.all(symbol)) {
+            Instant t = r.getUpdatedAt() != null ? r.getUpdatedAt() : r.getCreatedAt();
+            String kto = r.getUpdatedBy() != null ? r.getUpdatedBy() : r.getCreatedBy();
+            out.add(new pl.ejtechnology.tk.eSkarga.web.model.RequirementRow(r.getId(), r.getSymbol().name(), r.getCode(), r.getDescription(), r.getLegalBasis(),
+                    r.getCondition().name(), r.getCondition().label(), r.getPosition(), r.isActive(), t == null ? "" : fmt.dateTime(at(t)) + " · " + kto));
         }
         return out;
     }

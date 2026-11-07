@@ -68,6 +68,14 @@ public class AdministracjaBean implements Serializable {
     private String edytowanyStan;
     private Long podgladId;
     private String podgladTytul;
+    /** Lista kontrolna (S-24): repertorium, wymóg w edytorze (null = nowy) i jego pola. */
+    private String symbolListy = "TS";
+    private Long wymogId;
+    private String wymogKod;
+    private String wymogTresc;
+    private String wymogPodstawa;
+    private String wymogWarunek = "ZAWSZE";
+    private int wymogKolejnosc = 999;
     private int tab = 2;
     /** Akt podstawowy (PDF) z p:fileUpload – zapamiętany w widoku do czasu „Zapisz upoważnienie”. */
     public void uploadAkt(org.primefaces.event.FileUploadEvent event) {
@@ -295,6 +303,85 @@ public class AdministracjaBean implements Serializable {
         return podgladId == null || settings.isDemo() ? null : "/admin/szablony/podglad?id=" + podgladId + "&v=" + System.nanoTime();
     }
 
+    // ---- lista kontrolna wymogów formalnych (S-24, UC-06, ADR 0015)
+    @Inject
+    private pl.ejtechnology.tk.eSkarga.domain.service.RequirementCatalogService wymogi;
+
+    public List<pl.ejtechnology.tk.eSkarga.web.model.RequirementRow> getWymogi() {
+        return data.requirements(pl.ejtechnology.tk.eSkarga.domain.DocketSymbol.valueOf(symbolListy));
+    }
+
+    public List<pl.ejtechnology.tk.eSkarga.domain.RequirementCondition> getWarunki() {
+        return java.util.Arrays.asList(pl.ejtechnology.tk.eSkarga.domain.RequirementCondition.values());
+    }
+
+    public void editRequirement(pl.ejtechnology.tk.eSkarga.web.model.RequirementRow r) {
+        wymogId = r.id();
+        wymogKod = r.kod();
+        wymogTresc = r.wymog();
+        wymogPodstawa = r.podstawa();
+        wymogWarunek = r.warunek();
+        wymogKolejnosc = r.kolejnosc();
+    }
+
+    public void newRequirement() {
+        wymogId = null;
+        wymogKod = null;
+        wymogTresc = null;
+        wymogPodstawa = null;
+        wymogWarunek = "ZAWSZE";
+        wymogKolejnosc = getWymogi().stream().mapToInt(pl.ejtechnology.tk.eSkarga.web.model.RequirementRow::kolejnosc).max().orElse(0) + 10;
+    }
+
+    /** Nowy wymóg albo zmiana istniejącego (kod stały – oceny w aktach odwołują się do kodu). */
+    public void saveRequirement() {
+        FacesContext fc = FacesContext.getCurrentInstance();
+        if (settings.isDemo()) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "Tryb demo: wymóg nie jest zapisywany.", null));
+            return;
+        }
+        try {
+            var warunek = pl.ejtechnology.tk.eSkarga.domain.RequirementCondition.valueOf(wymogWarunek);
+            var symbol = pl.ejtechnology.tk.eSkarga.domain.DocketSymbol.valueOf(symbolListy);
+            var r = wymogId == null ? wymogi.add(symbol, wymogKod, wymogTresc, wymogPodstawa, warunek, wymogKolejnosc, currentUser.getLogin())
+                    : wymogi.update(wymogId, wymogTresc, wymogPodstawa, warunek, wymogKolejnosc, currentUser.getLogin());
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, (wymogId == null ? "Dodano wymóg " : "Zapisano wymóg ") + r.getCode() + " (" + symbol.code() + ").",
+                    "Obowiązuje dla ocen od teraz; oceny zapisane w aktach pozostają bez zmian."));
+            newRequirement();
+        } catch (RuntimeException e) {
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się zapisać wymogu.", e.getMessage()));
+        }
+    }
+
+    public void toggleRequirement(long id, boolean active) {
+        if (settings.isDemo()) {
+            return;
+        }
+        try {
+            var r = wymogi.setActive(id, active, currentUser.getLogin());
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, (active ? "Przywrócono " : "Wycofano ") + r.getCode() + ".", null));
+            if (wymogId != null && wymogId == id && !active) {
+                newRequirement();
+            }
+        } catch (RuntimeException e) {
+            FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Nie udało się zmienić wymogu.", e.getMessage()));
+        }
+    }
+
+    public String getSymbolListy() { return symbolListy; }
+    public void setSymbolListy(String s) { if (s != null && !s.equals(symbolListy)) { symbolListy = s; newRequirement(); } }
+    public Long getWymogId() { return wymogId; }
+    public String getWymogKod() { return wymogKod; }
+    public void setWymogKod(String v) { wymogKod = v; }
+    public String getWymogTresc() { return wymogTresc; }
+    public void setWymogTresc(String v) { wymogTresc = v; }
+    public String getWymogPodstawa() { return wymogPodstawa; }
+    public void setWymogPodstawa(String v) { wymogPodstawa = v; }
+    public String getWymogWarunek() { return wymogWarunek; }
+    public void setWymogWarunek(String v) { wymogWarunek = v; }
+    public int getWymogKolejnosc() { return wymogKolejnosc; }
+    public void setWymogKolejnosc(int v) { wymogKolejnosc = v; }
+
     public void seedTemplates() {
         if (!settings.isDemo()) {
             int n = templates.seedDefaults(docs.defaultTemplates(), currentUser.getLogin());
@@ -328,7 +415,7 @@ public class AdministracjaBean implements Serializable {
 
     public void applyState() {
         if (zakladka != null) {
-            tab = switch (zakladka) { case "slowniki" -> 0; case "szablony" -> 1; default -> 2; };
+            tab = switch (zakladka) { case "slowniki" -> 0; case "szablony" -> 1; case "lista" -> 3; default -> 2; };
         }
     }
 
