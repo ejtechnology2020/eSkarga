@@ -92,7 +92,8 @@ public class CaseFileService {
         List<IncomingScan> scans = em.createQuery("select s from IncomingScan s where s.letter = :l order by s.id", IncomingScan.class).setParameter("l", letter).getResultList();
         boolean first = true;
         for (IncomingScan scan : scans) {
-            if (!"application/pdf".equals(scan.getContentType())) {
+            // PDF od razu kartą akt; DOC/DOCX trafia do akt jako oryginał i czeka na konwersję do PDF/A przez workera (ADR 0026); TIFF zostaje skanem wpływu
+            if (!pl.ejtechnology.tk.eSkarga.documents.FileTypes.isCaseDocument(scan.getContentType())) {
                 continue;
             }
             byte[] bytes;
@@ -101,16 +102,23 @@ public class CaseFileService {
             } catch (java.io.IOException e) {
                 throw new IllegalStateException("Nie udało się odczytać skanu " + scan.getFileName() + " z repozytorium", e);
             }
-            String key = "akta/" + cf.getId() + "/" + java.util.UUID.randomUUID() + ".pdf";
-            DocumentStore.Stored stored = store.put(key, new java.io.ByteArrayInputStream(bytes), bytes.length, "application/pdf", false);
+            boolean office = pl.ejtechnology.tk.eSkarga.documents.FileTypes.isOffice(scan.getContentType());
+            String key = "akta/" + cf.getId() + "/" + java.util.UUID.randomUUID() + "." + pl.ejtechnology.tk.eSkarga.documents.FileTypes.extension(scan.getContentType());
+            DocumentStore.Stored stored = store.put(key, new java.io.ByteArrayInputStream(bytes), bytes.length, scan.getContentType(), false);
             if (first) {
                 pismo.attachFile(stored.key(), stored.sha256());
+                if (office) {
+                    pismo.markSource(scan.getContentType(), scan.getFileName());
+                }
                 first = false;
             } else {
                 CaseDocument extra = new CaseDocument(cf, scan.getFileName(), DocumentKind.ZALACZNIK, pismo.getDocumentDate(), userId);
                 int last = lastPage(cf);
                 extra.paginate(1, last + 1, last + 1);
                 extra.attachFile(stored.key(), stored.sha256());
+                if (office) {
+                    extra.markSource(scan.getContentType(), scan.getFileName());
+                }
                 em.persist(extra);
             }
         }

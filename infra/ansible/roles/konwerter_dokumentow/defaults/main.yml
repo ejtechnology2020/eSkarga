@@ -1,0 +1,6 @@
+# Konwerter DOC/DOCX → PDF/A (ADR 0026): Gotenberg (LibreOffice za API HTTP) jako kontener Podman w systemd, tylko na 127.0.0.1
+# obok usługi dokumentów. Obraz z rejestru TK (lustro Nexusa), ta sama wersja co w infra/docker/.env.example.
+konwerter_image: "{{ nexus_docker_registry | default('docker.io') }}/gotenberg/gotenberg:8.21.1"
+konwerter_port: 3000
+konwerter_memory: 1g
+konwerter_api_timeout: 180s

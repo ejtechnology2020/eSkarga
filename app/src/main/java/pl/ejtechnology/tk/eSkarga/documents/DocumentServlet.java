@@ -81,12 +81,29 @@ public class DocumentServlet extends HttpServlet {
             return;
         }
         boolean download = "1".equals(req.getParameter("pobierz"));
+        String caseRef = doc.getCaseFile().getDocket().format();
+        // ADR 0026: oryginał DOC/DOCX (?zrodlo=1 po konwersji albo dokument czekający na konwersję) – tylko do pobrania, bez znaku wodnego
+        // (to nie PDF) i bez podglądu; każde pobranie w dzienniku zdarzeń
+        boolean original = "1".equals(req.getParameter("zrodlo")) && doc.getSourceStorageKey() != null;
+        if (original || doc.isAwaitingConversion()) {
+            String key = original ? doc.getSourceStorageKey() : doc.getStorageKey();
+            String name = doc.getSourceFileName() == null || doc.getSourceFileName().isBlank() ? "oryginal." + FileTypes.extension(doc.getSourceContentType()) : doc.getSourceFileName();
+            resp.setHeader("Cache-Control", "no-store");
+            resp.setContentType(doc.getSourceContentType());
+            resp.setHeader("X-Content-Type-Options", "nosniff");
+            resp.setHeader("Content-Disposition", "attachment; filename=\"" + name.replaceAll("[^A-Za-z0-9._-]", "_") + "\"");
+            audit.record(currentUser.getLogin(), currentUser.getRole().name(), original ? "pobranie oryginału " + FileTypes.label(doc.getSourceContentType()) : "pobranie dokumentu "
+                    + FileTypes.label(doc.getSourceContentType()) + " przed konwersją", doc.pagesLabel(), caseRef, req.getRemoteAddr());
+            try (InputStream in = store.get(key, Optional.empty())) {
+                in.transferTo(resp.getOutputStream());
+            }
+            return;
+        }
         Optional<DocumentStore.Range> range = download ? Optional.empty() : parseRange(req.getHeader("Range"));
         resp.setHeader("Cache-Control", "no-store");
         resp.setHeader("Accept-Ranges", "bytes");
         resp.setContentType("application/pdf");
         resp.setHeader("X-Content-Type-Options", "nosniff");
-        String caseRef = doc.getCaseFile().getDocket().format();
         if (download) {
             if (!store.verifySha256(doc.getStorageKey(), doc.getSha256())) {
                 audit.recordDenial(currentUser.getLogin(), currentUser.getRole().name(), "BŁĄD: niezgodny skrót SHA-256 dokumentu", doc.pagesLabel(), caseRef, req.getRemoteAddr());

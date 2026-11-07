@@ -32,9 +32,14 @@ public class CaseDocumentService {
 
     /** Wynik przetworzenia z usługi dokumentów (przez workera). */
     public record ProcessingResult(byte[] pdf, String sha256, boolean pdfaCompliant, boolean ocrDone, String signatureReportJson, boolean anySignature,
-                                   boolean allSignaturesValid, String text) {
+                                   boolean allSignaturesValid, String text, String convertedFrom) {
         public ProcessingResult(byte[] pdf, String sha256, boolean pdfaCompliant, boolean ocrDone, String signatureReportJson, boolean anySignature, boolean allSignaturesValid) {
-            this(pdf, sha256, pdfaCompliant, ocrDone, signatureReportJson, anySignature, allSignaturesValid, null);
+            this(pdf, sha256, pdfaCompliant, ocrDone, signatureReportJson, anySignature, allSignaturesValid, null, null);
+        }
+
+        public ProcessingResult(byte[] pdf, String sha256, boolean pdfaCompliant, boolean ocrDone, String signatureReportJson, boolean anySignature,
+                                boolean allSignaturesValid, String text) {
+            this(pdf, sha256, pdfaCompliant, ocrDone, signatureReportJson, anySignature, allSignaturesValid, text, null);
         }
     }
 
@@ -59,16 +64,20 @@ public class CaseDocumentService {
         if (cf.current().getStatus().isReadOnly()) {
             throw new IllegalStateException("Sprawa " + cf.getDocket().format() + " jest tylko do odczytu (BR-08)");
         }
-        if (!"application/pdf".equals(contentType) || content == null || content.length < 5 || !new String(content, 0, 5, java.nio.charset.StandardCharsets.ISO_8859_1).equals("%PDF-")) {
-            throw new IllegalArgumentException("Dozwolone są wyłącznie pliki PDF (sygnatura pliku), T-055");
+        String detected = pl.ejtechnology.tk.eSkarga.documents.FileTypes.detect(content);
+        if (kind != DocumentKind.NIEJAWNY && (detected == null || !pl.ejtechnology.tk.eSkarga.documents.FileTypes.isCaseDocument(detected) || (contentType != null && !contentType.equals(detected)))) {
+            throw new IllegalArgumentException("Dozwolone są pliki PDF, DOCX i DOC (sygnatura pliku), T-055 / ADR 0026");
         }
         CaseDocument doc = new CaseDocument(cf, title, kind, clock.today(), userId);
         int last = cases.lastPage(cf);
         doc.paginate(1, last + 1, last + Math.max(1, pages));
         if (kind != DocumentKind.NIEJAWNY) {
-            String key = "akta/" + cf.getId() + "/" + UUID.randomUUID() + ".pdf";
-            DocumentStore.Stored stored = store.put(key, new ByteArrayInputStream(content), content.length, contentType, false);
+            String key = "akta/" + cf.getId() + "/" + UUID.randomUUID() + "." + pl.ejtechnology.tk.eSkarga.documents.FileTypes.extension(detected);
+            DocumentStore.Stored stored = store.put(key, new ByteArrayInputStream(content), content.length, detected, false);
             doc.attachFile(stored.key(), stored.sha256());
+            if (pl.ejtechnology.tk.eSkarga.documents.FileTypes.isOffice(detected)) {
+                doc.markSource(detected, title);
+            }
         }
         em.persist(doc);
         if (search != null) {
@@ -122,10 +131,14 @@ public class CaseDocumentService {
             return doc; // idempotencja – worker ponowił zapis
         }
         if (result.pdf() != null && result.sha256() != null && !result.sha256().equalsIgnoreCase(doc.getSha256())) {
-            String key = doc.getStorageKey().replace(".pdf", "") + "-v" + (doc.getVersion() + 1) + ".pdf";
+            String original = doc.getStorageKey();
+            String key = original.replaceFirst("\\.[A-Za-z0-9]+$", "") + "-v" + (doc.getVersion() + 1) + ".pdf";
             DocumentStore.Stored stored = store.put(key, new ByteArrayInputStream(result.pdf()), result.pdf().length, "application/pdf", false);
             doc.attachFile(stored.key(), stored.sha256());
             doc.setVersion(doc.getVersion() + 1);
+            if (result.convertedFrom() != null && !result.convertedFrom().isBlank()) {
+                doc.markConverted(original);   // ADR 0026: oryginał DOC/DOCX zostaje w repozytorium, kartą akt jest PDF/A
+            }
         }
         doc.setPdfaCompliant(result.pdfaCompliant());
         doc.setOcrDone(result.ocrDone());
@@ -134,7 +147,8 @@ public class CaseDocumentService {
         if (search != null) {
             search.indexDocument(doc, result.text());
         }
-        audit.record(actor, "WORKER", "przetworzenie dokumentu (PDF/A: " + result.pdfaCompliant() + ", OCR: " + result.ocrDone() + ", podpis: " + doc.getSignatureStatus() + ")",
+        audit.record(actor, "WORKER", "przetworzenie dokumentu (PDF/A: " + result.pdfaCompliant() + ", OCR: " + result.ocrDone() + ", podpis: " + doc.getSignatureStatus()
+                + (result.convertedFrom() == null || result.convertedFrom().isBlank() ? "" : ", z " + result.convertedFrom().toUpperCase()) + ")",
                 doc.pagesLabel(), doc.getCaseFile().getDocket().format(), null);
         return doc;
     }

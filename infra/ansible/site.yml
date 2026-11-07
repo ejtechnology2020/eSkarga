@@ -13,7 +13,7 @@
 - name: Aplikacja (WildFly 41 + dystrybucja Operaton, standalone-ha, 2 węzły)
   hosts: app
   become: true
-  roles: [wildfly_operaton, eskarga_services]
+  roles: [wildfly_operaton, konwerter_dokumentow, eskarga_services]
 
 - name: Równoważenie ruchu (HAProxy)
   hosts: lb

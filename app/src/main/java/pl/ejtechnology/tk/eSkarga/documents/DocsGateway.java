@@ -18,7 +18,11 @@ public interface DocsGateway {
     }
 
     /** Wynik przetworzenia dokumentu (OCR, PDF/A, podpisy). */
-    record Processed(byte[] pdf, String sha256, boolean pdfaCompliant, boolean ocrDone, String signatureReportJson, boolean anySignature, boolean allSignaturesValid) {
+    record Processed(byte[] pdf, String sha256, boolean pdfaCompliant, boolean ocrDone, String signatureReportJson, boolean anySignature, boolean allSignaturesValid,
+                     String convertedFrom) {
+        public Processed(byte[] pdf, String sha256, boolean pdfaCompliant, boolean ocrDone, String signatureReportJson, boolean anySignature, boolean allSignaturesValid) {
+            this(pdf, sha256, pdfaCompliant, ocrDone, signatureReportJson, anySignature, allSignaturesValid, null);
+        }
     }
 
     /** Pismo z szablonu (kod + źródło wersji z bazy) i płaskiego modelu → PDF/A-2b po veraPDF. */

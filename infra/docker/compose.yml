@@ -38,6 +38,7 @@ services:
       ESKARGA_OIDC_MFAREQUIREDVALUE: ${OIDC_MFA_VALUE:-mfa,wysoki}
       ESKARGA_WORKERS_JWKSURI: ${OIDC_PROVIDER_URI:-http://host.docker.internal:8180/realms/id-users}/protocol/openid-connect/certs
       ESKARGA_DOCS_TSAURL: http://tsa:3180/
+      ESKARGA_DOCS_CONVERTERURL: http://konwerter:3000       # konwersja DOC/DOCX → PDF/A (Gotenberg, ADR 0026)
       ESKARGA_DOCS_TRUSTSTORE: ${ESKARGA_DOCS_TRUSTSTORE:-}           # dev: /opt/eskarga/podpis/truststore.p12 (infra\windows\podpis.cmd)
       ESKARGA_DOCS_TRUSTSTOREPASSWORD: ${ESKARGA_DOCS_TRUSTSTOREPASSWORD:-}
       ESKARGA_S3_ENDPOINT: http://s3:9000
@@ -78,6 +79,8 @@ services:
       s3-init:
         condition: service_completed_successfully
       tsa:
+        condition: service_started
+      konwerter:
         condition: service_started
     healthcheck:
       # gotowość aplikacji (HealthServlet: baza, S3, silnik); Cockpit Operaton bez silnika logował pełny stos co 20 s
@@ -215,6 +218,13 @@ services:
       - "${PORT_TSA:-3180}:3180"
     volumes:
       - tsa-data:/tsa/data
+
+  konwerter:
+    # Konwersja DOC/DOCX → PDF/A dla usługi dokumentów (ADR 0026): LibreOffice za API HTTP w osobnym kontenerze (izolacja niezaufanych
+    # plików od WildFly). Tylko w sieci Compose – bez portu na hoście; prod: ta sama usługa jako kontener Podman w systemd (rola Ansible).
+    image: ${GOTENBERG_IMAGE:-gotenberg/gotenberg:8.21.1}
+    command: ["gotenberg", "--api-timeout=180s", "--libreoffice-max-queue-size=20", "--libreoffice-auto-start=true"]
+    mem_limit: 1g
 
   id-users-rejestracja:
     # Rejestruje klientów eSkargi (eskarga, eskarga-workers) w Keycloaku ID-users działającym na hoście i nadaje role

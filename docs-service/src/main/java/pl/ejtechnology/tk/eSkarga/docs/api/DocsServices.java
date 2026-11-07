@@ -36,6 +36,7 @@ public class DocsServices {
     private PdfAValidator pdfa;
     private PdfWatermark watermark;
     private OcrService ocr;
+    private pl.ejtechnology.tk.eSkarga.docs.convert.DocumentConverter converter;
     private SignatureValidationService signatures;
     private TwoStepPadesSigner signer;
     private PdfRedactor redactor;
@@ -50,6 +51,10 @@ public class DocsServices {
         pdfa = new VeraPdfValidator();
         watermark = new PdfWatermark(fontDir);
         ocr = OcrService.detect();
+        // konwerter DOC/DOCX → PDF (ADR 0026): Gotenberg jako osobny kontener/usługa; bez adresu – czytelny błąd konfiguracji przy pierwszym użyciu
+        String converterUrl = Settings.value("eskarga.docs.converterUrl", "");
+        converter = converterUrl.isBlank() ? pl.ejtechnology.tk.eSkarga.docs.convert.DocumentConverter.none()
+                : new pl.ejtechnology.tk.eSkarga.docs.convert.GotenbergConverter(converterUrl, java.time.Duration.ofSeconds(Long.parseLong(Settings.value("eskarga.docs.converterTimeoutSeconds", "120"))));
         redactor = new PdfRedactor();
         signer = new TwoStepPadesSigner(TimestampSources.fromSettings());
         List<X509Certificate> anchors = new ArrayList<>();
@@ -83,6 +88,9 @@ public class DocsServices {
     public PdfAValidator pdfa() { return pdfa; }
     public PdfWatermark watermark() { return watermark; }
     public OcrService ocr() { return ocr; }
+    public pl.ejtechnology.tk.eSkarga.docs.convert.DocumentConverter converter() { return converter; }
+    /** Do testów: podmiana konwertera bez sieci. */
+    void converter(pl.ejtechnology.tk.eSkarga.docs.convert.DocumentConverter c) { this.converter = c; }
     public SignatureValidationService signatures() { return signatures; }
     public TwoStepPadesSigner signer() { return signer; }
     public PdfRedactor redactor() { return redactor; }

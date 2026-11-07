@@ -76,7 +76,8 @@ public final class DocumentProcessingWorker {
         if (!file.ok()) {
             throw new IllegalStateException("plik: HTTP " + file.status());
         }
-        JsonHttp.Reply result = http.postBytes(cfg.docsApiUrl() + "/dokumenty/przetworz?ocr=true", file.bytes(), "application/pdf");
+        // PDF albo oryginał DOC/DOCX (ADR 0026) – usługa dokumentów rozpoznaje format po sygnaturze i w razie potrzeby konwertuje
+        JsonHttp.Reply result = http.postBytes(cfg.docsApiUrl() + "/dokumenty/przetworz?ocr=true", file.bytes(), "application/octet-stream");
         if (!result.ok() || result.json() == null) {
             throw new IllegalStateException("usługa dokumentów: HTTP " + result.status());
         }
@@ -88,6 +89,7 @@ public final class DocumentProcessingWorker {
         if (!saved.ok()) {
             throw new IllegalStateException("zapis wyniku: HTTP " + saved.status());
         }
-        LOG.info("Dokument {} przetworzony (PDF/A: {}, OCR: {})", id, result.json().getBoolean("pdfaZgodny", false), result.json().getBoolean("ocrWykonany", false));
+        LOG.info("Dokument {} przetworzony (PDF/A: {}, OCR: {}, konwersja: {})", id, result.json().getBoolean("pdfaZgodny", false), result.json().getBoolean("ocrWykonany", false),
+                result.json().getString("skonwertowanoZ", ""));
     }
 }

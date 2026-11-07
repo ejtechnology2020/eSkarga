@@ -21,9 +21,16 @@
   </div>
   <h:panelGroup rendered="#{not doc.isNiejawny()}">
     <div class="pane-sub"><span>karta akt #{doc.karty.replace('k. ', '')}</span><span class="sp"></span><button type="button" class="btn s q" aria-expanded="false">Pokaż miniatury stron</button></div>
-    <h:panelGroup rendered="#{not currentUser.demo and not empty doc}" layout="block" styleClass="viewer">
+    <!-- ADR 0026: dokument Word czeka na konwersję do PDF/A (worker + usługa dokumentów) – do tego czasu tylko oryginał do pobrania -->
+    <h:panelGroup rendered="#{not currentUser.demo and not empty doc and doc.isCzekaNaKonwersje()}" layout="block" styleClass="pane-b">
+      <tk:message tone="info" icon="clock"><b>Dokument Word czeka na konwersję do PDF/A.</b> Podgląd pojawi się po przetworzeniu przez usługę dokumentów (zwykle w ciągu minuty).
+        <h:outputLink value="#{request.contextPath}/akta/dokument/#{doc.id}" styleClass="btn s" style="margin-left: 8px;">Pobierz oryginał</h:outputLink></tk:message>
+    </h:panelGroup>
+    <h:panelGroup rendered="#{not currentUser.demo and not empty doc and not doc.isCzekaNaKonwersje()}" layout="block" styleClass="viewer">
       <tk:pdfViewer src="#{request.contextPath}/akta/dokument/#{doc.id}" title="#{doc.tytul}" pageFrom="#{doc.karty.replaceAll('[^0-9].*', '').replace('k', '')}"
                     highlights="#{akta.highlightsJson(doc)}" canHighlight="#{akta.zespolSedziego}" downloadUrl="#{request.contextPath}/akta/dokument/#{doc.id}?pobierz=1" />
+      <p class="mut" jsf:rendered="#{doc.isMaOryginal()}" xmlns:jsf="jakarta.faces">Karta akt to PDF/A z konwersji dokumentu Word (ADR 0026) ·
+        <h:outputLink value="#{request.contextPath}/akta/dokument/#{doc.id}?zrodlo=1">pobierz oryginał (#{doc.zrodloNazwa})</h:outputLink></p>
       <p class="mut" jsf:rendered="#{akta.zespolSedziego}" xmlns:jsf="jakarta.faces">Zaznaczenia i komentarze widzi tylko zespół sędziego. Nie trafiają do akt jawnych.</p>
     </h:panelGroup>
     <div class="viewer" jsf:rendered="#{currentUser.demo}" xmlns:jsf="jakarta.faces">

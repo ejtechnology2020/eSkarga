@@ -86,10 +86,11 @@ public class DocsServiceClient implements DocsGateway {
 
     @Override
     public Processed process(byte[] pdf, boolean ocr) {
-        JsonObject r = json(post("/dokumenty/przetworz?ocr=" + ocr, pdf, "application/pdf", "application/json"));
+        String type = FileTypes.detect(pdf);
+        JsonObject r = json(post("/dokumenty/przetworz?ocr=" + ocr, pdf, type == null ? "application/octet-stream" : type, "application/json"));
         JsonObject report = r.getJsonObject("raportPodpisu");
         return new Processed(Base64.getDecoder().decode(r.getString("pdf")), r.getString("sha256"), r.getBoolean("pdfaZgodny"), r.getBoolean("ocrWykonany"),
-                report.toString(), report.getBoolean("podpisany", false), report.getBoolean("wszystkieWazne", true));
+                report.toString(), report.getBoolean("podpisany", false), report.getBoolean("wszystkieWazne", true), r.getString("skonwertowanoZ", ""));
     }
 
     @Override

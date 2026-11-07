@@ -84,15 +84,9 @@ public class IncomingRegister {
     }
 
     /** PDF ({@code %PDF-}) albo TIFF ({@code II*\0} / {@code MM\0*}) po sygnaturze pliku; null, gdy inny format. */
+    /** PDF, TIFF, DOCX, DOC po sygnaturze pliku ({@link pl.ejtechnology.tk.eSkarga.documents.FileTypes}); inne pliki odrzucane (T-055). */
     public static String detectScanType(byte[] content) {
-        if (content.length >= 5 && content[0] == '%' && content[1] == 'P' && content[2] == 'D' && content[3] == 'F' && content[4] == '-') {
-            return "application/pdf";
-        }
-        if (content.length >= 4 && ((content[0] == 'I' && content[1] == 'I' && content[2] == 42 && content[3] == 0)
-                || (content[0] == 'M' && content[1] == 'M' && content[2] == 0 && content[3] == 42))) {
-            return "image/tiff";
-        }
-        return null;
+        return pl.ejtechnology.tk.eSkarga.documents.FileTypes.detect(content);
     }
 
     /** Skan razem z pismem (fetch join) – serwlet czyta {@code scan.getLetter()} poza transakcją EJB. */

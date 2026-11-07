@@ -74,7 +74,7 @@ public class RejestracjaBean implements Serializable {
         FacesContext fc = FacesContext.getCurrentInstance();
         byte[] tresc = f.getContent();
         if (IncomingRegister.detectScanType(tresc) == null) {
-            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Odrzucono " + f.getFileName(), "Dozwolone są tylko pliki PDF lub TIFF."));
+            fc.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Odrzucono " + f.getFileName(), "Dozwolone są pliki PDF, TIFF, DOCX lub DOC."));
             return;
         }
         if (tresc.length > IncomingRegister.MAX_SCAN_BYTES) {

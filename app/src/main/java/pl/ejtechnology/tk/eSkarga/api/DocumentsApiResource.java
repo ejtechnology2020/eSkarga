@@ -35,18 +35,21 @@ public class DocumentsApiResource {
     public JsonObject pending() {
         JsonArrayBuilder arr = Json.createArrayBuilder();
         for (CaseDocument d : documents.pendingProcessing()) {
-            arr.add(Json.createObjectBuilder().add("id", d.getId()).add("sygnatura", d.getCaseFile().getDocket().format()).add("tytul", d.getTitle()).add("sha256", d.getSha256()));
+            arr.add(Json.createObjectBuilder().add("id", d.getId()).add("sygnatura", d.getCaseFile().getDocket().format()).add("tytul", d.getTitle()).add("sha256", d.getSha256())
+                    .add("typ", d.isAwaitingConversion() ? d.getSourceContentType() : "application/pdf"));
         }
         return Json.createObjectBuilder().add("dokumenty", arr).build();
     }
 
     @GET
     @Path("/{id}/plik")
-    @Produces("application/pdf")
+    @Produces({"application/pdf", MediaType.APPLICATION_OCTET_STREAM})
     public Response file(@PathParam("id") long id) {
         CaseDocument d = documents.require(id);
         InputStream in = documents.content(d, Optional.empty());
-        return Response.ok(in).header("Cache-Control", "no-store").header("X-Document-Sha256", d.getSha256()).build();
+        // dokument Word przed konwersją (ADR 0026): oryginał jako octet-stream – usługa dokumentów rozpoznaje format po sygnaturze
+        String type = d.isAwaitingConversion() ? MediaType.APPLICATION_OCTET_STREAM : "application/pdf";
+        return Response.ok(in).type(type).header("Cache-Control", "no-store").header("X-Document-Sha256", d.getSha256()).build();
     }
 
     /** Wynik z usługi dokumentów (ten sam JSON, który zwraca {@code /dokumenty/przetworz}). */
@@ -58,7 +61,8 @@ public class DocumentsApiResource {
         byte[] pdf = body.containsKey("pdf") ? Base64.getDecoder().decode(body.getString("pdf")) : null;
         documents.applyProcessing(id, new CaseDocumentService.ProcessingResult(pdf, body.getString("sha256", null), body.getBoolean("pdfaZgodny", false),
                 body.getBoolean("ocrWykonany", false), report == null ? null : report.toString(), report != null && report.getBoolean("podpisany", false),
-                report == null || report.getBoolean("wszystkieWazne", true), body.getString("tekst", null)), "worker:" + (sc.getUserPrincipal() == null ? "?" : sc.getUserPrincipal().getName()));
+                report == null || report.getBoolean("wszystkieWazne", true), body.getString("tekst", null), body.getString("skonwertowanoZ", null)),
+                "worker:" + (sc.getUserPrincipal() == null ? "?" : sc.getUserPrincipal().getName()));
         return Response.noContent().build();
     }
 }

@@ -1,0 +1,16 @@
+[Unit]
+Description=eSkarga – konwerter DOC/DOCX do PDF/A (Gotenberg, ADR 0026)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Restart=always
+RestartSec=5
+ExecStartPre=-/usr/bin/podman rm -f eskarga-konwerter
+ExecStart=/usr/bin/podman run --rm --name eskarga-konwerter --network=host --memory={{ konwerter_memory }} --read-only --tmpfs /tmp \
+  {{ konwerter_image }} gotenberg --api-port={{ konwerter_port }} --api-bind-ip=127.0.0.1 --api-timeout={{ konwerter_api_timeout }} \
+  --libreoffice-max-queue-size=20 --libreoffice-auto-start=true --chromium-disable-routes=true
+ExecStop=/usr/bin/podman stop -t 15 eskarga-konwerter
+
+[Install]
+WantedBy=multi-user.target

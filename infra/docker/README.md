@@ -174,3 +174,12 @@ usługa dokumentów osadza Liberation Serif w PDF/A (`ESKARGA_PDF_FONTDIR`), bez
 `Brak czcionki LiberationSerif-Regular.ttf …`. Po zmianie obrazu: `infra\windows\start.cmd -Przebuduj`.
 Błędy 500 usługi dokumentów mają w logu kod `DOC-500-…` (logger `pl.ejtechnology.tk.eSkarga.docs.blad`) – ten sam kod wraca
 w komunikacie aplikacji.
+
+## Dokumenty Word (DOC/DOCX) w aktach – konwerter (ADR 0026)
+
+Kontener `konwerter` (Gotenberg: LibreOffice za API HTTP, obraz `GOTENBERG_IMAGE` z `.env`) zamienia DOC/DOCX na PDF/A-2b na zlecenie
+usługi dokumentów (`ESKARGA_DOCS_CONVERTERURL=http://konwerter:3000`). Rejestracja wpływu i dołączanie do akt przyjmują PDF, TIFF,
+DOCX i DOC (po sygnaturze pliku). Dokument Word trafia do akt jako oryginał, worker `dokument-przetworz` wysyła go do usługi
+dokumentów, a ta po konwersji zwraca PDF/A, który staje się kartą akt; oryginał zostaje w S3 do pobrania z widoku akt
+(„pobierz oryginał”). Bez kontenera konwersja kończy się komunikatem „Konwerter dokumentów DOC/DOCX nie jest skonfigurowany”.
+Pierwsze uruchomienie pobiera obraz (ok. 700 MB). Po `git pull`: `infra\windows\start.cmd` (nowy kontener) albo `wdroz.cmd`.

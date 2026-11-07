@@ -1,0 +1,4 @@
+- name: restart konwerter
+  ansible.builtin.systemd:
+    name: eskarga-konwerter
+    state: restarted

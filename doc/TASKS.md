@@ -750,3 +750,8 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   z `BearerTokenFilter` dla `workers = true`; `system = true` dla nasłuchu procesu (`markTransferred`). 19 usług `domain.service`
   z regułą na klasie i 60 reguł na metodach zmieniających stan; `ServiceRoleGuardTest` wymusza regułę na każdej takiej metodzie
   (lista `INTERNAL` dla dziennika, liczników, polityki dostępu, rejestru osób, procesu, wyszukiwania). `doc/role-i-ekrany.md`.
+- ADR 0026 – 07.11.2026 – **DOC/DOCX w aktach**: `FileTypes`/`OfficeFormat` (sygnatura pliku), rejestracja i `upload` przyjmują Word,
+  oryginał w S3 (`source_*`, V10), worker + `/dokumenty/przetworz` → konwersja przez `GotenbergConverter` (kontener `konwerter`
+  w Compose, rola Ansible `konwerter_dokumentow` z Podman/systemd na 127.0.0.1) → PDF/A kartą akt, „pobierz oryginał”, plansza
+  „czeka na konwersję”; audyt „z DOCX”. Testy: `OfficeFormatTest`, `GotenbergConverterTest`, `DocumentsResourceOfficeTest`,
+  `FileTypesTest`, `OfficeDocumentsTest`, GUI UC-01/UC-04 (fixture `pismo.docx`). Odrzucone: Tika, soffice w WildFly, POI/docx4j.

@@ -90,6 +90,17 @@ public class CaseDocument {
     @Column(name = "signature_report", length = 2000)
     private String signatureReport;
 
+    /** Typ oryginału DOC/DOCX (ADR 0026); NULL = plik był PDF. */
+    @Column(name = "source_content_type", length = 120)
+    private String sourceContentType;
+
+    /** Klucz oryginału DOC/DOCX po konwersji; dopóki NULL, {@code storageKey} wskazuje oryginał czekający na konwersję. */
+    @Column(name = "source_storage_key", length = 400)
+    private String sourceStorageKey;
+
+    @Column(name = "source_file_name", length = 300)
+    private String sourceFileName;
+
     @Column(name = "created_by", nullable = false, length = 120)
     private String createdBy;
 
@@ -122,6 +133,29 @@ public class CaseDocument {
         }
         this.storageKey = storageKey;
         this.sha256 = sha256;
+    }
+
+    /** Plik oryginału to dokument Word – kartą akt stanie się PDF/A z konwersji (ADR 0026). */
+    public void markSource(String contentType, String fileName) {
+        this.sourceContentType = contentType;
+        this.sourceFileName = fileName;
+    }
+
+    /** Po konwersji: oryginał zostaje pod {@code sourceStorageKey}, {@code storageKey} wskazuje PDF/A. */
+    public void markConverted(String originalKey) {
+        if (this.sourceStorageKey == null) {
+            this.sourceStorageKey = originalKey;
+        }
+    }
+
+    /** Czy plik pod {@code storageKey} jest PDF (oryginał PDF albo dokument Word już skonwertowany). */
+    public boolean isPdf() {
+        return sourceContentType == null || sourceStorageKey != null;
+    }
+
+    /** Dokument Word, który czeka na konwersję – bez podglądu, tylko oryginał do pobrania. */
+    public boolean isAwaitingConversion() {
+        return sourceContentType != null && sourceStorageKey == null;
     }
 
     public String pagesLabel() {
@@ -157,6 +191,9 @@ public class CaseDocument {
     public void setOcrDone(boolean ocrDone) { this.ocrDone = ocrDone; }
     public String getSignatureReport() { return signatureReport; }
     public void setSignatureReport(String signatureReport) { this.signatureReport = signatureReport; }
+    public String getSourceContentType() { return sourceContentType; }
+    public String getSourceStorageKey() { return sourceStorageKey; }
+    public String getSourceFileName() { return sourceFileName; }
     public String getCreatedBy() { return createdBy; }
     public Instant getCreatedAt() { return createdAt; }
 }

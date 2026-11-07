@@ -37,14 +37,22 @@ public class DocumentsResource {
     @Inject
     DocsServices services;
 
-    /** Wejście: PDF; wyjście: metadane + dokument po przetworzeniu (base64). */
+    /**
+     * Wejście: PDF albo dokument Word (DOC/DOCX rozpoznany po sygnaturze – najpierw konwersja do PDF przez konwerter, ADR 0026);
+     * wyjście: metadane + dokument po przetworzeniu (base64), {@code skonwertowanoZ} = „docx”/„doc” albo pusty.
+     */
     @POST
     @Path("/przetworz")
-    @Consumes("application/pdf")
+    @Consumes({"application/pdf", MediaType.APPLICATION_OCTET_STREAM, pl.ejtechnology.tk.eSkarga.docs.convert.OfficeFormat.DOCX_TYPE, pl.ejtechnology.tk.eSkarga.docs.convert.OfficeFormat.DOC_TYPE})
     @Produces(MediaType.APPLICATION_JSON)
     public JsonObject process(byte[] pdf, @QueryParam("ocr") @DefaultValue("true") boolean ocr) {
         byte[] current = pdf;
         boolean decrypted = false;
+        String office = pl.ejtechnology.tk.eSkarga.docs.convert.OfficeFormat.detect(current);
+        if (office != null) {
+            current = services.converter().toPdf(current, "dokument." + office);
+            ocr = false;   // dokument z edytora ma warstwę tekstową – OCR zbędny
+        }
         if (PubSecDecryptor.isEncrypted(current) && services.hsm() != null) {
             current = new PubSecDecryptor(services.hsm(), "pubsec", new char[0]).decrypt(current);
             decrypted = true;
@@ -60,6 +68,7 @@ public class DocumentsResource {
                 .add("sha256", sha256(current))
                 .add("rozmiar", current.length)
                 .add("odszyfrowany", decrypted)
+                .add("skonwertowanoZ", office == null ? "" : office)
                 .add("pdfaZgodny", pdfa.compliant())
                 .add("naruszeniaPdfa", violations)
                 .add("ocrWykonany", ocrResult.ocrDone())

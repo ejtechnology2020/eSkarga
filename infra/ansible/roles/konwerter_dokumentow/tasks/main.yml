@@ -1,0 +1,28 @@
+- name: Podman (kontener konwertera bez demona Dockera)
+  ansible.builtin.apt:
+    name: [podman, uidmap]
+    state: present
+    update_cache: true
+- name: Obraz konwertera z rejestru TK
+  containers.podman.podman_image:
+    name: "{{ konwerter_image }}"
+- name: Usługa systemd konwertera (Gotenberg, tylko 127.0.0.1:{{ konwerter_port }})
+  ansible.builtin.template:
+    src: konwerter.service.j2
+    dest: /etc/systemd/system/eskarga-konwerter.service
+    mode: "0644"
+  notify: restart konwerter
+- name: Konwerter włączony i uruchomiony
+  ansible.builtin.systemd:
+    name: eskarga-konwerter
+    enabled: true
+    state: started
+    daemon_reload: true
+- name: Konwerter odpowiada (health)
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ konwerter_port }}/health"
+    status_code: 200
+  register: konwerter_health
+  retries: 10
+  delay: 6
+  until: konwerter_health.status == 200

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { ESKARGA, HASLO, LOGIN, WLACZONE, ZAKLADA_KONTO, dzis, jsf, kontoTestowe, pdfTestowy, zaloguj } from './srodowisko';
 
@@ -51,6 +53,10 @@ test.describe.serial('Procesy eSkargi (OIDC)', () => {
     await page.fill(jsf('rej:f-zal'), '2');
     await page.locator('#rej input[type=file]').setInputFiles({ name: 'skarga.pdf', mimeType: 'application/pdf', buffer: pdfTestowy() });
     await expect(page.locator('#rej .thumbs, #rej [id$="skany"]').first()).toContainText('skarga.pdf', { timeout: 30_000 });
+    // ADR 0026: dokument Word przyjęty po sygnaturze pliku; do akt trafi jako oryginał i zostanie skonwertowany do PDF/A przez workera
+    await page.locator('#rej input[type=file]').setInputFiles({ name: 'pismo.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      buffer: readFileSync(resolve(__dirname, 'fixtures/pismo.docx')) });
+    await expect(page.locator('#rej .thumbs, #rej [id$="skany"]').first()).toContainText('pismo.docx', { timeout: 30_000 });
     await page.getByRole('button', { name: /zarejestruj i drukuj/i }).click();
     const numer = page.locator('.fs28');
     await expect(numer).toHaveText(/DW \d{4}\/\d{5}/);
@@ -104,6 +110,23 @@ test.describe.serial('Procesy eSkargi (OIDC)', () => {
     await dokumenty.first().locator('a.case.link').click();
     await expect(page.locator('.pdfv')).toBeVisible();
     await expect(page.locator('.pdfv .pdfv-count')).toHaveText(/^\s*1\s*$/, { timeout: 30_000 });
+    // załącznik DOCX (ADR 0026): zaraz po założeniu „oczekuje na konwersję”, po cyklu workera karta akt PDF/A z oryginałem do pobrania
+    const docx = page.locator('ol.tl.doc li', { hasText: 'pismo.docx' }).first();
+    await expect(docx, 'DOCX z rejestracji wpływu w spisie akt').toBeVisible();
+    await expect(docx).toContainText(/oczekuje na konwersję|PDF\/A|oczekuje na przetworzenie/);
+    await docx.locator('a.case.link').click();
+    await expect(page.locator('body')).toContainText(/czeka na konwersję|pobierz oryginał/i, { timeout: 15_000 });
+    await expect
+      .poll(async () => (await page.locator('ol.tl.doc li', { hasText: 'pismo.docx' }).first().textContent()) ?? '', {
+        message: 'worker dokument-przetworz + konwerter (Gotenberg) zamieniają DOCX na PDF/A',
+        timeout: 120_000,
+        intervals: [5_000],
+      })
+      .toMatch(/PDF\/A.*z DOCX/);
+    await page.reload();
+    await page.locator('ol.tl.doc li', { hasText: 'pismo.docx' }).first().locator('a.case.link').click();
+    await expect(page.locator('.pdfv .pdfv-count')).toHaveText(/^\s*\d+\s*$/, { timeout: 30_000 });
+    await expect(page.getByRole('link', { name: /pobierz oryginał/i })).toBeVisible();
   });
 
   test('UC-05 S-08 repertorium Ts zawiera nową sprawę', async () => {

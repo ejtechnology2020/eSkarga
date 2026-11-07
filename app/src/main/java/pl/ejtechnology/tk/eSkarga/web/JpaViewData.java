@@ -568,9 +568,13 @@ public class JpaViewData implements ViewData {
                 continue; // FR-24
             }
             boolean startsDeadline = deliveries.deadlines(cf.get()).stream().anyMatch(x -> x.getDelivery() != null && x.getDelivery().getDocument().getId().equals(d.getId()));
-            out.add(new RecordPage(String.valueOf(d.getId()), d.pagesLabel(), d.getDocumentDate(), d.getTitle(), d.getKind(),
-                    d.isClassified() ? "dokument niejawny – tylko metadane" : (d.isPdfaCompliant() ? "PDF/A" : "oczekuje na przetworzenie") + (d.isOcrDone() ? ", OCR" : ""),
-                    d.getCreatedAt() != null && d.getCreatedAt().isAfter(clock.instant().minusSeconds(86_400)), false, startsDeadline));
+            String opis = d.isClassified() ? "dokument niejawny – tylko metadane"
+                    : d.isAwaitingConversion() ? pl.ejtechnology.tk.eSkarga.documents.FileTypes.label(d.getSourceContentType()) + " – oczekuje na konwersję do PDF/A"
+                    : (d.isPdfaCompliant() ? "PDF/A" : "oczekuje na przetworzenie") + (d.isOcrDone() ? ", OCR" : "")
+                            + (d.getSourceStorageKey() != null ? ", z " + pl.ejtechnology.tk.eSkarga.documents.FileTypes.label(d.getSourceContentType()) : "");
+            out.add(new RecordPage(String.valueOf(d.getId()), d.pagesLabel(), d.getDocumentDate(), d.getTitle(), d.getKind(), opis,
+                    d.getCreatedAt() != null && d.getCreatedAt().isAfter(clock.instant().minusSeconds(86_400)), false, startsDeadline,
+                    d.isClassified() || d.isPdf(), d.getSourceStorageKey() == null ? null : (d.getSourceFileName() == null ? "oryginał " + pl.ejtechnology.tk.eSkarga.documents.FileTypes.label(d.getSourceContentType()) : d.getSourceFileName())));
         }
         return out;
     }

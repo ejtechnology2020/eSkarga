@@ -47,7 +47,7 @@ public final class JsonHttp {
     }
 
     private HttpRequest.Builder base(String url) {
-        HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(60)).header("Accept", "application/json, application/pdf");
+        HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(60)).header("Accept", "application/json, application/pdf, application/octet-stream");
         if (tokens != null && tokens.configured()) {
             b.header("Authorization", "Bearer " + tokens.token());
         }
