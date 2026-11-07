@@ -67,6 +67,7 @@
       textLayer.className = 'pdfv-text';
       textLayer.style.width = canvas.width + 'px';
       textLayer.style.height = canvas.height + 'px';
+      textLayer.style.setProperty('--scale-factor', String(viewport.scale));   // pdf.js 6 liczy rozmiar spanów z tej zmiennej
       holder.appendChild(textLayer);
       try {
         const textContent = await page.getTextContent();
@@ -193,10 +194,45 @@
       }).observe(scroll);
     }
 
+    // Kopiowanie z cytatem (brief §6): zaznaczony tekst warstwy tekstowej trafia do schowka z dopiskiem „Ts 312/26, k. 3”.
+    function selectionInViewer() {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) { return null; }
+      const node = sel.getRangeAt(0).commonAncestorContainer;
+      const el = node.nodeType === 1 ? node : node.parentElement;
+      if (!el || !root.contains(el)) { return null; }
+      const holder = el.closest('.pdfv-pg') || (sel.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest('.pdfv-pg'));
+      const pageNo = holder ? parseInt(holder.dataset.page, 10) : current;
+      return { text: sel.toString().replace(/\s+\n/g, '\n').trim(), page: pageNo };
+    }
+    function withCitation(s) {
+      const cite = (root.dataset.citation || '').trim();
+      const karta = pageFrom + s.page - 1;
+      return cite ? s.text + '\n(' + cite + ', k. ' + karta + ')' : s.text;
+    }
+    root.addEventListener('copy', function (ev) {
+      const s = selectionInViewer();
+      if (!s || !s.text || !ev.clipboardData) { return; }
+      ev.clipboardData.setData('text/plain', withCitation(s));
+      ev.preventDefault();
+      const found = root.querySelector('.pdfv-found');
+      if (found) { found.textContent = 'skopiowano z cytatem'; found.classList.add('pdfv-copied'); setTimeout(function () { found.textContent = ''; found.classList.remove('pdfv-copied'); }, 2500); }
+    });
+
     root.addEventListener('click', function (ev) {
       const btn = ev.target.closest('[data-act]');
       if (!btn) { return; }
       switch (btn.dataset.act) {
+        case 'copy': {
+          const s = selectionInViewer();
+          const found = root.querySelector('.pdfv-found');
+          if (!s || !s.text) { if (found) { found.textContent = 'najpierw zaznacz tekst w dokumencie'; } break; }
+          const payload = withCitation(s);
+          const done = function () { if (found) { found.textContent = 'skopiowano z cytatem'; found.classList.add('pdfv-copied'); setTimeout(function () { found.textContent = ''; found.classList.remove('pdfv-copied'); }, 2500); } };
+          if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(payload).then(done, function () { document.execCommand('copy'); done(); }); }
+          else { document.execCommand('copy'); done(); }
+          break;
+        }
         case 'zoom-in': autoFit = false; setScale(scale + SCALE_STEP); break;
         case 'zoom-out': autoFit = false; setScale(scale - SCALE_STEP); break;
         case 'fit': autoFit = true; setScale(fitScale()); break;

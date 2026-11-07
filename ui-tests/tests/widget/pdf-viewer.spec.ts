@@ -134,6 +134,25 @@ test.describe('Widżet PDF (pdf.js, CSP z web.xml)', () => {
     await sprawdzRender(page);
   });
 
+  test('tekst da się zaznaczyć i skopiować z cytatem (sygnatura, karta)', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.goto(s.url);
+    await expect(page.locator('.pdfv-text')).toContainText('Skarga', { timeout: 20_000 });
+    // spany warstwy tekstowej mają rozmiar (pdf.js 6 liczy go z --scale-factor i reguł CSS) – inaczej nie ma czego zaznaczyć
+    const rozmiar = await page.locator('.pdfv-text span').first().boundingBox();
+    expect(rozmiar?.width ?? 0, 'span warstwy tekstowej ma szerokość').toBeGreaterThan(20);
+    expect(rozmiar?.height ?? 0, 'span warstwy tekstowej ma wysokość').toBeGreaterThan(8);
+    await page.locator('.pdfv-text span').first().click({ clickCount: 3 });
+    const zaznaczenie = await page.evaluate(() => window.getSelection()?.toString() ?? '');
+    expect(zaznaczenie, 'potrójne kliknięcie zaznacza tekst dokumentu').toContain('Skarga');
+    await page.locator('.pdfv').evaluate((el) => el.setAttribute('data-citation', 'Ts 312/26'));
+    await page.getByRole('button', { name: /kopiuj z cytatem/i }).click();
+    await expect(page.locator('.pdfv-found')).toHaveText(/skopiowano z cytatem/);
+    const schowek = await page.evaluate(() => navigator.clipboard.readText());
+    expect(schowek).toContain('Skarga');
+    expect(schowek, 'cytat: sygnatura i karta').toMatch(/\(Ts 312\/26, k\. 1\)$/);
+  });
+
   test('renderuje skan wstawiony do DOM po odpowiedzi AJAX (kolejka, dziennik, akta)', async ({ page }) => {
     await page.goto(s.url + '?tryb=ajax');
     await sprawdzRender(page);

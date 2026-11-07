@@ -755,3 +755,8 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   w Compose, rola Ansible `konwerter_dokumentow` z Podman/systemd na 127.0.0.1) → PDF/A kartą akt, „pobierz oryginał”, plansza
   „czeka na konwersję”; audyt „z DOCX”. Testy: `OfficeFormatTest`, `GotenbergConverterTest`, `DocumentsResourceOfficeTest`,
   `FileTypesTest`, `OfficeDocumentsTest`, GUI UC-01/UC-04 (fixture `pismo.docx`). Odrzucone: Tika, soffice w WildFly, POI/docx4j.
+- T-034 – 07.11.2026 – **zaznaczanie i kopiowanie tekstu w podglądzie PDF**: warstwa tekstowa pdf.js 6 była w DOM, ale spany miały
+  zerowy rozmiar (pdf.js liczy go z `--scale-factor` i reguł `.textLayer` z `pdf_viewer.css`, których widżet nie miał) – reguły
+  przeniesione do `.pdfv-text`, widżet ustawia `--scale-factor`; nakładka zaznaczeń bez `pointer-events`. **Kopiowanie z cytatem**
+  (brief §6): Ctrl+C i przycisk „Kopiuj z cytatem” dopisują „(Ts 312/26, k. 3)” (atrybut `citation` widżetu z sygnatury akt).
+  Test widżetu: rozmiar spanów, potrójne kliknięcie, schowek z cytatem.

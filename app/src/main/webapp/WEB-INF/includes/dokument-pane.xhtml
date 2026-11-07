@@ -28,7 +28,8 @@
     </h:panelGroup>
     <h:panelGroup rendered="#{not currentUser.demo and not empty doc and not doc.isCzekaNaKonwersje()}" layout="block" styleClass="viewer">
       <tk:pdfViewer src="#{request.contextPath}/akta/dokument/#{doc.id}" title="#{doc.tytul}" pageFrom="#{doc.karty.replaceAll('[^0-9].*', '').replace('k', '')}"
-                    highlights="#{akta.highlightsJson(doc)}" canHighlight="#{akta.zespolSedziego}" downloadUrl="#{request.contextPath}/akta/dokument/#{doc.id}?pobierz=1" />
+                    highlights="#{akta.highlightsJson(doc)}" canHighlight="#{akta.zespolSedziego}" downloadUrl="#{request.contextPath}/akta/dokument/#{doc.id}?pobierz=1"
+                    citation="#{akta.sygnatura}" />
       <p class="mut" jsf:rendered="#{doc.isMaOryginal()}" xmlns:jsf="jakarta.faces">Karta akt to PDF/A z konwersji dokumentu Word (ADR 0026) ·
         <h:outputLink value="#{request.contextPath}/akta/dokument/#{doc.id}?zrodlo=1">pobierz oryginał (#{doc.zrodloNazwa})</h:outputLink></p>
       <p class="mut" jsf:rendered="#{akta.zespolSedziego}" xmlns:jsf="jakarta.faces">Zaznaczenia i komentarze widzi tylko zespół sędziego. Nie trafiają do akt jawnych.</p>

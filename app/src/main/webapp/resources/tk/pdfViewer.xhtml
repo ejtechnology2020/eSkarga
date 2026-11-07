@@ -13,12 +13,14 @@
     <cc:attribute name="highlights" default="[]" />
     <cc:attribute name="canHighlight" default="false" />
     <cc:attribute name="downloadUrl" default="" />
+    <!-- sygnatura do „kopiowania z cytatem” (brief §6): zaznaczony tekst trafia do schowka z dopiskiem „Ts 312/26, k. 3” -->
+    <cc:attribute name="citation" default="" />
     <!-- kilka dokumentów jednego pisma (np. skany wpływu): lista obiektów z id, nazwa, pdf(); adresy budowane jako docBase/id (+ ?pobierz=1) -->
     <cc:attribute name="docs" />
     <cc:attribute name="docBase" default="" />
   </cc:interface>
   <cc:implementation>
-    <div id="#{cc.clientId}" class="pdfv" data-src="#{cc.attrs.src}" data-download="#{cc.attrs.downloadUrl}" data-page-from="#{cc.attrs.pageFrom}" data-highlights="#{cc.attrs.highlights}"
+    <div id="#{cc.clientId}" class="pdfv" data-src="#{cc.attrs.src}" data-download="#{cc.attrs.downloadUrl}" data-page-from="#{cc.attrs.pageFrom}" data-highlights="#{cc.attrs.highlights}" data-citation="#{cc.attrs.citation}"
          data-can-highlight="#{cc.attrs.canHighlight}" data-worker="#{request.contextPath}/webjars/pdfjs-dist/6.4.299/build/pdf.worker.min.mjs"
          data-lib="#{request.contextPath}/webjars/pdfjs-dist/6.4.299/build/pdf.min.mjs" role="region" aria-label="#{cc.attrs.title}">
       <h:panelGroup rendered="#{not empty cc.attrs.docs and cc.attrs.docs.size() gt 1}" layout="block" styleClass="pdfv-docs" role="tablist" pt:aria-label="Dokumenty pisma">
@@ -44,6 +46,7 @@
           <span class="pdfv-found mut" aria-live="polite"></span>
         </div>
         <span class="sp"></span>
+        <button type="button" class="btn s q" data-act="copy" title="Zaznacz tekst w dokumencie i skopiuj go z sygnaturą i kartą (Ctrl+C też dodaje cytat)">Kopiuj z cytatem</button>
         <h:outputLink rendered="#{not empty cc.attrs.downloadUrl}" value="#{cc.attrs.downloadUrl}" styleClass="btn s pdfv-download" pt:download="">Pobierz</h:outputLink>
         <button type="button" class="btn s" data-act="print">Drukuj</button>
       </div>
