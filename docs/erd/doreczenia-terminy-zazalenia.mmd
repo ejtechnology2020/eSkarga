@@ -1,0 +1,82 @@
+erDiagram
+  delivery {
+    bigint id PK
+    bigint document_id FK "NOT NULL"
+    bigint addressee_party_id FK
+    varchar(30) channel "NOT NULL"
+    varchar(80) dispatch_no
+    date sent_on
+    date delivered_on
+    varchar(20) method
+    varchar(80) idempotency_key UK "NOT NULL"
+    timestamptz created_at "NOT NULL; default now()"
+  }
+  deadline {
+    bigint id PK
+    bigint case_file_id FK "NOT NULL"
+    bigint delivery_id FK
+    varchar(20) kind "NOT NULL"
+    date starts_on "NOT NULL"
+    date ends_on "NOT NULL"
+    date suspended_from
+    date suspended_to
+    varchar(20) status "NOT NULL"
+    timestamptz created_at "NOT NULL; default now()"
+  }
+  appeal {
+    bigint id PK
+    bigint case_file_id FK "NOT NULL"
+    date filed_on "NOT NULL"
+    boolean in_time
+    varchar(400) panel_user_ids
+    date session_on
+    varchar(40) outcome
+    timestamptz created_at "NOT NULL; default now()"
+  }
+  holiday {
+    date day PK
+    varchar(200) description "NOT NULL"
+    varchar(120) created_by "NOT NULL"
+    timestamptz created_at "NOT NULL; default now()"
+  }
+  archive_category {
+    varchar(60) closing_mode PK
+    varchar(10) category "NOT NULL"
+    integer retention_years
+    varchar(120) updated_by
+    timestamptz updated_at
+  }
+  archive_transfer {
+    bigint id PK
+    varchar(30) transfer_no UK "NOT NULL"
+    bigint case_file_id FK "NOT NULL"
+    varchar(10) category "NOT NULL"
+    integer retention_until
+    integer pages "NOT NULL"
+    varchar(400) package_key
+    char(64) package_sha256
+    varchar(120) transferred_by "NOT NULL"
+    timestamptz transferred_at "NOT NULL; default now()"
+  }
+  access_request {
+    bigint id PK
+    bigint case_file_id FK "NOT NULL"
+    varchar(400) requester "NOT NULL"
+    boolean participant "NOT NULL"
+    varchar(600) scope
+    numeric(10_2) fee_pln
+    timestamptz reading_room_at
+    boolean anonymised_ready "NOT NULL; default false"
+    timestamptz created_at "NOT NULL; default now()"
+  }
+  publication {
+    bigint id PK
+    bigint document_id FK "NOT NULL"
+    varchar(400) anonymised_key
+    integer replacements "NOT NULL; default 0"
+    varchar(120) approved_by
+    timestamptz approved_at
+    timestamptz published_at
+    varchar(20) status "NOT NULL"
+  }
+  delivery ||--o{ deadline : "delivery_id"

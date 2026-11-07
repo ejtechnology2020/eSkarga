@@ -1,0 +1,81 @@
+erDiagram
+  case_assignment {
+    bigint id PK
+    bigint case_file_id FK,UK "NOT NULL"
+    varchar(120) user_id UK "NOT NULL"
+    varchar(20) role UK "NOT NULL"
+    date assigned_on UK "NOT NULL"
+    date released_on
+  }
+  delegation {
+    bigint id PK
+    varchar(120) user_id "NOT NULL"
+    varchar(60) function_code "NOT NULL"
+    date valid_from "NOT NULL"
+    date valid_to "NOT NULL"
+    varchar(200) basis_doc_ref
+    timestamptz revoked_at
+    varchar(120) created_by "NOT NULL"
+    timestamptz created_at "NOT NULL; default now()"
+    varchar(300) basis_doc_key
+    varchar(64) basis_doc_sha256
+  }
+  judge {
+    bigint id PK
+    varchar(100) user_id UK "NOT NULL"
+    varchar(200) display_name "NOT NULL"
+    varchar(20) function_code "NOT NULL"
+    date term_from "NOT NULL"
+    date term_to
+    boolean active "NOT NULL; default true"
+    varchar(120) created_by "NOT NULL"
+    timestamptz created_at "NOT NULL"
+    varchar(120) updated_by
+    timestamptz updated_at
+  }
+  app_user_seen {
+    bigint id PK
+    varchar(100) login UK "NOT NULL"
+    varchar(200) display_name
+    varchar(400) roles "NOT NULL"
+    timestamptz first_seen_at "NOT NULL"
+    timestamptz last_login_at "NOT NULL"
+    integer login_count "NOT NULL; default 1"
+  }
+  audit_event {
+    bigint id PK
+    timestamptz occurred_at "NOT NULL"
+    varchar(120) user_id "NOT NULL"
+    varchar(60) user_role
+    varchar(80) action "NOT NULL"
+    varchar(200) object_ref
+    varchar(20) case_ref
+    varchar(45) remote_addr
+    char(64) prev_hash "NOT NULL"
+    char(64) hash "NOT NULL"
+  }
+  court {
+    bigint id PK
+    varchar(30) code UK "NOT NULL"
+    varchar(300) name "NOT NULL"
+    boolean active "NOT NULL; default true"
+  }
+  authority {
+    bigint id PK
+    varchar(30) code UK "NOT NULL"
+    varchar(300) name "NOT NULL"
+    boolean active "NOT NULL; default true"
+  }
+  letter_type {
+    bigint id PK
+    varchar(30) code UK "NOT NULL"
+    varchar(300) name "NOT NULL"
+    boolean active "NOT NULL; default true"
+  }
+  review_standard {
+    bigint id PK
+    varchar(30) code UK "NOT NULL"
+    varchar(200) provision "NOT NULL"
+    varchar(400) description
+    boolean active "NOT NULL; default true"
+  }

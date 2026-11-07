@@ -1,0 +1,126 @@
+erDiagram
+  incoming_counter {
+    integer year PK
+    integer last_value "NOT NULL; default 0"
+  }
+  incoming_letter {
+    bigint id PK
+    varchar(20) register_no UK "NOT NULL"
+    timestamptz received_at "NOT NULL"
+    date filed_on
+    boolean filed_on_uncertain "NOT NULL; default false"
+    varchar(20) channel "NOT NULL"
+    varchar(400) sender "NOT NULL"
+    integer attachments "NOT NULL; default 0"
+    integer copies "NOT NULL; default 0"
+    boolean classified "NOT NULL; default false"
+    varchar(30) qualification
+    bigint case_file_id FK
+    varchar(120) created_by "NOT NULL"
+    timestamptz created_at "NOT NULL; default now()"
+  }
+  incoming_scan {
+    bigint id PK
+    bigint letter_id FK "NOT NULL"
+    varchar(255) file_name "NOT NULL"
+    varchar(100) content_type "NOT NULL"
+    bigint size_bytes "NOT NULL"
+    char(64) sha256 "NOT NULL"
+    varchar(400) storage_key "NOT NULL"
+    varchar(100) uploaded_by "NOT NULL"
+    timestamptz uploaded_at "NOT NULL"
+  }
+  general_letter {
+    bigint id PK
+    bigint letter_id FK "NOT NULL"
+    varchar(600) subject
+    date reply_due_on
+    date replied_on
+    bigint reply_document_id FK
+    varchar(60) template_code
+  }
+  docket_counter {
+    varchar(3) symbol PK
+    integer year PK
+    integer last_value "NOT NULL; default 0"
+  }
+  case_file {
+    bigint id PK
+    varchar(3) docket_symbol UK "NOT NULL"
+    integer docket_number UK "NOT NULL"
+    integer docket_year UK "NOT NULL"
+    date entered_on "NOT NULL"
+    varchar(64) process_instance_id
+    varchar(120) created_by "NOT NULL"
+    timestamptz created_at "NOT NULL; default now()"
+  }
+  case_file_version {
+    bigint id PK
+    bigint case_file_id UK,FK "NOT NULL"
+    integer version UK "NOT NULL"
+    varchar(40) status "NOT NULL"
+    varchar(120) judge_user_id
+    boolean flag_urgent "NOT NULL; default false"
+    boolean flag_anonymise "NOT NULL; default false"
+    boolean flag_suspended "NOT NULL; default false"
+    varchar(1000) review_subject
+    varchar(1000) review_standard
+    date closed_on
+    varchar(60) closing_mode
+    varchar(20) related_docket
+    varchar(2000) justification
+    varchar(120) created_by "NOT NULL"
+    timestamptz created_at "NOT NULL; default now()"
+    boolean is_correction "NOT NULL; default false"
+  }
+  correction_decision {
+    bigint id PK
+    bigint version_id FK "NOT NULL"
+    varchar(20) decision "NOT NULL"
+    varchar(120) decided_by "NOT NULL"
+    timestamptz decided_at "NOT NULL"
+    varchar(2000) remarks
+  }
+  party {
+    bigint id PK
+    bigint case_file_id FK "NOT NULL"
+    varchar(30) role "NOT NULL"
+    varchar(400) display_name "NOT NULL"
+    varchar(600) delivery_address
+    varchar(120) e_delivery_address
+    timestamptz created_at "NOT NULL; default now()"
+  }
+  power_of_attorney {
+    bigint id PK
+    bigint party_id FK "NOT NULL"
+    varchar(30) kind "NOT NULL"
+    varchar(30) profession
+    varchar(60) registry_no
+    date granted_on
+    varchar(400) scope
+  }
+  final_ruling {
+    bigint id PK
+    bigint case_file_id FK "NOT NULL"
+    varchar(400) authority "NOT NULL"
+    varchar(120) ruling_ref
+    date issued_on
+    date delivered_on
+    boolean extraordinary_remedy "NOT NULL; default false"
+  }
+  review_subject {
+    bigint id PK
+    bigint case_file_id FK "NOT NULL"
+    varchar(400) act "NOT NULL"
+    varchar(120) unit
+    varchar(400) standard
+  }
+  case_file ||--o| case_file_version : "case_file_id"
+  case_file_version ||--o{ correction_decision : "version_id"
+  case_file ||--o{ final_ruling : "case_file_id"
+  incoming_letter ||--o{ general_letter : "letter_id"
+  case_file ||--o{ incoming_letter : "case_file_id"
+  incoming_letter ||--o{ incoming_scan : "letter_id"
+  case_file ||--o{ party : "case_file_id"
+  party ||--o{ power_of_attorney : "party_id"
+  case_file ||--o{ review_subject : "case_file_id"

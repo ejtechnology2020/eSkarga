@@ -771,3 +771,6 @@ Oznaczenie `[~]` = zadanie rozpoczęte, część kryteriów spełniona.
   3 sędziów ze słownika z wykluczeniem sędziego odmowy, przewodniczący/sprawozdawca, termin posiedzenia → `referToPanel`,
   Prezes/Wiceprezes podpowiadany jako przewodniczący). Testy: `JudgeDictionaryServiceTest`, skład w `DeliveryAndAppealServiceTest`,
   `JpaViewDataTest`, GUI UC-24 (słownik sędziów) przed UC-08.
+- T-010 – 07.11.2026 – **ERD modelu fizycznego**: `infra/scripts/erd-fizyczny.py` czyta katalog PostgreSQL (information_schema, pg_indexes)
+  po migracjach i generuje `docs/erd/model-fizyczny.md` (Mermaid: przegląd kluczy i relacji + 4 grupy z pełnymi kolumnami, typami,
+  NOT NULL, domyślnymi; indeks tabel) oraz pliki `.mmd`; 36 tabel, 26 FK (V1–V12.1). `er-diagram.py` (z encji JPA) zostaje jako widok logiczny.

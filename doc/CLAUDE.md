@@ -87,6 +87,7 @@ docker compose -f infra/docker/compose.yml up -d --build   # środowisko dev obo
 docker compose -f infra/docker/compose.yml logs -f app
 docker compose -f infra/docker/compose.yml --profile monitoring up -d   # Prometheus :9090, Grafana :3000
 python3 infra/scripts/er-diagram.py             # diagram ER z encji → docs/model-er.md
+python3 infra/scripts/erd-fizyczny.py           # ERD modelu fizycznego z katalogu PostgreSQL (PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE, baza po migracjach) → docs/erd/model-fizyczny.md
 cd ui-tests && npm ci && npm run test:demo      # Playwright + axe na działającej aplikacji w trybie demo (ESKARGA_URL)
 ESKARGA_E2E=1 ESKARGA_E2E_KC_ADMIN_HASLO=… npm --prefix ui-tests run test:oidc   # procesy przez ID-users (TOTP, S-03→S-06→S-07→S-14→S-08→S-04, wylogowanie); Windows: infra\windows\testy-gui.cmd
 ```

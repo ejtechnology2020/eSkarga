@@ -1,0 +1,182 @@
+erDiagram
+  access_request {
+    bigint id PK
+    bigint case_file_id FK
+  }
+  app_user_seen {
+    bigint id PK
+    varchar(100) login UK
+  }
+  appeal {
+    bigint id PK
+    bigint case_file_id FK
+  }
+  archive_category {
+    varchar(60) closing_mode PK
+  }
+  archive_transfer {
+    bigint id PK
+    varchar(30) transfer_no UK
+    bigint case_file_id FK
+  }
+  audit_event {
+    bigint id PK
+  }
+  authority {
+    bigint id PK
+    varchar(30) code UK
+  }
+  case_assignment {
+    bigint id PK
+    bigint case_file_id FK,UK
+    varchar(120) user_id UK
+    varchar(20) role UK
+    date assigned_on UK
+  }
+  case_document {
+    bigint id PK
+    bigint case_file_id FK
+    bigint template_version_id FK
+  }
+  case_file {
+    bigint id PK
+    varchar(3) docket_symbol UK
+    integer docket_number UK
+    integer docket_year UK
+  }
+  case_file_version {
+    bigint id PK
+    bigint case_file_id UK,FK
+    integer version UK
+  }
+  checklist_entry {
+    bigint id PK
+    bigint case_file_id FK
+  }
+  correction_decision {
+    bigint id PK
+    bigint version_id FK
+  }
+  court {
+    bigint id PK
+    varchar(30) code UK
+  }
+  deadline {
+    bigint id PK
+    bigint case_file_id FK
+    bigint delivery_id FK
+  }
+  delegation {
+    bigint id PK
+  }
+  delivery {
+    bigint id PK
+    bigint document_id FK
+    bigint addressee_party_id FK
+    varchar(80) idempotency_key UK
+  }
+  docket_counter {
+    varchar(3) symbol PK
+    integer year PK
+  }
+  final_ruling {
+    bigint id PK
+    bigint case_file_id FK
+  }
+  formal_requirement {
+    bigint id PK
+    varchar(4) symbol UK
+    varchar(20) code UK
+  }
+  general_letter {
+    bigint id PK
+    bigint letter_id FK
+    bigint reply_document_id FK
+  }
+  highlight {
+    bigint id PK
+    bigint document_id FK
+  }
+  holiday {
+    date day PK
+  }
+  incoming_counter {
+    integer year PK
+  }
+  incoming_letter {
+    bigint id PK
+    varchar(20) register_no UK
+    bigint case_file_id FK
+  }
+  incoming_scan {
+    bigint id PK
+    bigint letter_id FK
+  }
+  internal_note {
+    bigint id PK
+    bigint case_file_id FK
+  }
+  judge {
+    bigint id PK
+    varchar(100) user_id UK
+  }
+  letter_template {
+    bigint id PK
+    varchar(60) code UK
+    integer version UK
+  }
+  letter_type {
+    bigint id PK
+    varchar(30) code UK
+  }
+  party {
+    bigint id PK
+    bigint case_file_id FK
+  }
+  power_of_attorney {
+    bigint id PK
+    bigint party_id FK
+  }
+  procedural_act {
+    bigint id PK
+    bigint case_file_id FK
+    bigint document_id FK
+  }
+  publication {
+    bigint id PK
+    bigint document_id FK
+  }
+  review_standard {
+    bigint id PK
+    varchar(30) code UK
+  }
+  review_subject {
+    bigint id PK
+    bigint case_file_id FK
+  }
+  case_file ||--o{ access_request : "case_file_id"
+  case_file ||--o{ appeal : "case_file_id"
+  case_file ||--o{ archive_transfer : "case_file_id"
+  case_file ||--o| case_assignment : "case_file_id"
+  case_file ||--o{ case_document : "case_file_id"
+  letter_template ||--o{ case_document : "template_version_id"
+  case_file ||--o| case_file_version : "case_file_id"
+  case_file ||--o{ checklist_entry : "case_file_id"
+  case_file_version ||--o{ correction_decision : "version_id"
+  case_file ||--o{ deadline : "case_file_id"
+  delivery ||--o{ deadline : "delivery_id"
+  party ||--o{ delivery : "addressee_party_id"
+  case_document ||--o{ delivery : "document_id"
+  case_file ||--o{ final_ruling : "case_file_id"
+  incoming_letter ||--o{ general_letter : "letter_id"
+  case_document ||--o{ general_letter : "reply_document_id"
+  case_document ||--o{ highlight : "document_id"
+  case_file ||--o{ incoming_letter : "case_file_id"
+  incoming_letter ||--o{ incoming_scan : "letter_id"
+  case_file ||--o{ internal_note : "case_file_id"
+  case_file ||--o{ party : "case_file_id"
+  party ||--o{ power_of_attorney : "party_id"
+  case_file ||--o{ procedural_act : "case_file_id"
+  case_document ||--o{ procedural_act : "document_id"
+  case_document ||--o{ publication : "document_id"
+  case_file ||--o{ review_subject : "case_file_id"

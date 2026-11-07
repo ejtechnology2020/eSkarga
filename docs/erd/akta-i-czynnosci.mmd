@@ -1,0 +1,94 @@
+erDiagram
+  case_document {
+    bigint id PK
+    bigint case_file_id FK "NOT NULL"
+    integer volume_no "NOT NULL; default 1"
+    integer page_from
+    integer page_to
+    varchar(400) title "NOT NULL"
+    varchar(30) kind "NOT NULL"
+    date document_date
+    varchar(400) storage_key
+    char(64) sha256
+    integer version "NOT NULL; default 1"
+    boolean classified "NOT NULL; default false"
+    boolean internal_note "NOT NULL; default false"
+    varchar(400) anonymised_key
+    varchar(30) signature_status
+    bigint template_version_id FK
+    varchar(120) created_by "NOT NULL"
+    timestamptz created_at "NOT NULL; default now()"
+    boolean pdfa_compliant "NOT NULL; default false"
+    boolean ocr_done "NOT NULL; default false"
+    varchar(2000) signature_report
+    varchar(120) source_content_type
+    varchar(400) source_storage_key
+    varchar(300) source_file_name
+  }
+  procedural_act {
+    bigint id PK
+    bigint case_file_id FK "NOT NULL"
+    varchar(40) kind "NOT NULL"
+    varchar(60) subtype
+    timestamptz acted_on "NOT NULL"
+    varchar(120) author_user_id "NOT NULL"
+    varchar(400) panel_user_ids
+    varchar(200) legal_basis
+    bigint document_id FK
+    varchar(30) status "NOT NULL"
+  }
+  letter_template {
+    bigint id PK
+    varchar(60) code UK "NOT NULL"
+    varchar(200) name "NOT NULL"
+    integer version UK "NOT NULL"
+    varchar(20) status "NOT NULL"
+    text source_xhtml "NOT NULL"
+    varchar(120) author_user_id "NOT NULL"
+    varchar(120) approved_by
+    timestamptz created_at "NOT NULL; default now()"
+  }
+  highlight {
+    bigint id PK
+    bigint document_id FK "NOT NULL"
+    varchar(120) author_user_id "NOT NULL"
+    integer page_no "NOT NULL"
+    varchar(4000) geometry_json "NOT NULL"
+    varchar(2000) comment_text
+    timestamptz created_at "NOT NULL; default now()"
+  }
+  internal_note {
+    bigint id PK
+    bigint case_file_id FK "NOT NULL"
+    varchar(120) author_user_id "NOT NULL"
+    varchar(300) title "NOT NULL"
+    text body "NOT NULL"
+    timestamptz created_at "NOT NULL; default now()"
+  }
+  checklist_entry {
+    bigint id PK
+    bigint case_file_id FK "NOT NULL"
+    varchar(60) requirement_code "NOT NULL"
+    varchar(20) state "NOT NULL"
+    varchar(500) note
+    varchar(40) page_ref
+    varchar(120) decided_by "NOT NULL"
+    timestamp decided_at "NOT NULL"
+  }
+  formal_requirement {
+    bigint id PK
+    varchar(4) symbol UK "NOT NULL"
+    varchar(20) code UK "NOT NULL"
+    varchar(600) description "NOT NULL"
+    varchar(160) legal_basis "NOT NULL"
+    varchar(30) condition_code "NOT NULL"
+    integer position "NOT NULL"
+    boolean active "NOT NULL; default true"
+    varchar(120) created_by "NOT NULL"
+    timestamptz created_at "NOT NULL"
+    varchar(120) updated_by
+    timestamptz updated_at
+  }
+  letter_template ||--o{ case_document : "template_version_id"
+  case_document ||--o{ highlight : "document_id"
+  case_document ||--o{ procedural_act : "document_id"
